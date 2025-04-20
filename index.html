@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Differential Growth 2D</title>
+  <title>Crecimiento Diferencial 2D</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main></main>
+  <div id="ui">
+    <label for="inputPuntos">Número de puntos iniciales:</label><br />
+    <input type="text" id="inputPuntos" value="50" /><br />
+    <button id="playPauseBtn">▶ Iniciar</button>
+    <button id="restartBtn">🔄 Reiniciar</button>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <script src="sketch.js"></script>
 </body>
