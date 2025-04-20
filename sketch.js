@@ -9,20 +9,12 @@ let iniciado = false;
 function setup() {
   createCanvas(800, 800);
 
-  // Input de puntos iniciales
-  createP('Número de puntos iniciales:');
-  inputPuntos = createInput('50');
-  inputPuntos.position(10, 40);
-  inputPuntos.size(100);
+  // Conecta elementos del HTML (ya están definidos en index.html)
+  inputPuntos = select('#inputPuntos');
+  playPauseBtn = select('#playPauseBtn');
+  restartBtn = select('#restartBtn');
 
-  // Botón Play/Pause
-  playPauseBtn = createButton('▶ Iniciar');
-  playPauseBtn.position(10, 70);
   playPauseBtn.mousePressed(togglePlayPause);
-
-  // Botón Reiniciar
-  restartBtn = createButton('🔄 Reiniciar');
-  restartBtn.position(120, 70);
   restartBtn.mousePressed(reiniciarCrecimiento);
 
   noFill();
@@ -45,13 +37,13 @@ function iniciarCrecimiento() {
     return;
   }
 
-  // Calcula distancias basadas en los puntos
+  // Cálculo dinámico de distancias permitidas
   let circunferencia = TWO_PI * radio;
   let distProm = circunferencia / cantidad;
   minDist = distProm * 0.5;
   maxDist = distProm * 1.5;
 
-  // Genera puntos iniciales en círculo
+  // Crear puntos en círculo
   points = [];
   for (let i = 0; i < cantidad; i++) {
     let angle = TWO_PI * i / cantidad;
@@ -74,7 +66,7 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
 
-  // Dibujar polilínea cerrada
+  // Dibuja curva cerrada
   stroke(0);
   strokeWeight(1);
   beginShape();
@@ -83,7 +75,7 @@ function draw() {
   }
   endShape(CLOSE);
 
-  // Dibujar nodos
+  // Dibuja nodos
   fill(0);
   noStroke();
   for (let p of points) {
@@ -121,7 +113,7 @@ function draw() {
 
     nuevosPuntos.push(actual);
 
-    // Insertar punto si está muy lejos del siguiente
+    // Agrega punto si hay mucha distancia
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
