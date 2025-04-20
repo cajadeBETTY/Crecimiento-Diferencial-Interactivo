@@ -69,16 +69,43 @@ function iniciarCrecimiento() {
     return;
   }
 
+  // Parámetros de ruido
+  let tipo = tipoRuidoSelect.value();
+  let amp = float(sliderAmplitud.value());
+  let freq = float(sliderFrecuencia.value());
+
   let circunferencia = TWO_PI * radio;
   let distInicial = circunferencia / cantidad;
   minDist = distInicial * 1.2;
   maxDist = distInicial * 1.2;
 
   points = [];
+
   for (let i = 0; i < cantidad; i++) {
     let angle = TWO_PI * i / cantidad;
     let x = width / 2 + radio * cos(angle);
     let y = height / 2 + radio * sin(angle);
+
+    // === Aplicar ruido directamente a los puntos iniciales ===
+    let ruido = createVector(0, 0);
+
+    if (tipo === 'perlin') {
+      let n = noise(x * freq, y * freq);
+      let angleOffset = n * TWO_PI;
+      ruido = p5.Vector.fromAngle(angleOffset).mult(amp);
+    } else if (tipo === 'perlinImproved') {
+      let nx = noise(x * freq);
+      let ny = noise(y * freq);
+      ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+    } else if (tipo === 'valor') {
+      ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+    } else if (tipo === 'simple') {
+      ruido = p5.Vector.random2D().mult(amp);
+    }
+
+    x += ruido.x;
+    y += ruido.y;
+
     points.push(createVector(x, y));
   }
 
@@ -233,6 +260,8 @@ function mouseReleased() {
 }
 
 function mouseDragged() {
+  if (isMouseOverUI()) return;
+
   if (isDragging) {
     let dx = mouseX - lastMouseX;
     let dy = mouseY - lastMouseY;
@@ -246,3 +275,11 @@ function mouseDragged() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
+
+function isMouseOverUI() {
+  const ui = document.getElementById("ui");
+  const bounds = ui.getBoundingClientRect();
+  return mouseX >= bounds.left && mouseX <= bounds.right &&
+         mouseY >= bounds.top && mouseY <= bounds.bottom;
+}
+
