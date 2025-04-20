@@ -9,7 +9,7 @@ let iniciado = false;
 function setup() {
   createCanvas(800, 800);
 
-  // Conecta elementos del HTML (ya están definidos en index.html)
+  // Conecta a los elementos HTML existentes
   inputPuntos = select('#inputPuntos');
   playPauseBtn = select('#playPauseBtn');
   restartBtn = select('#restartBtn');
@@ -37,11 +37,11 @@ function iniciarCrecimiento() {
     return;
   }
 
-  // Cálculo dinámico de distancias permitidas
+  // Calcular distancias dinámicamente según la cantidad de puntos
   let circunferencia = TWO_PI * radio;
-  let distProm = circunferencia / cantidad;
-  minDist = distProm * 0.5;
-  maxDist = distProm * 1.5;
+  let distInicial = circunferencia / cantidad;
+  minDist = distInicial * 1.1; // más grande para detonar movimiento
+  maxDist = distInicial * 1.5;
 
   // Crear puntos en círculo
   points = [];
@@ -57,16 +57,16 @@ function iniciarCrecimiento() {
 }
 
 function reiniciarCrecimiento() {
+  points = [];
   running = false;
   iniciado = false;
-  points = [];
   playPauseBtn.html('▶ Iniciar');
 }
 
 function draw() {
   background(255);
 
-  // Dibuja curva cerrada
+  // Dibuja curva
   stroke(0);
   strokeWeight(1);
   beginShape();
@@ -113,7 +113,7 @@ function draw() {
 
     nuevosPuntos.push(actual);
 
-    // Agrega punto si hay mucha distancia
+    // Agrega un nuevo punto si la distancia es mayor a la permitida
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
