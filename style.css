@@ -1,8 +1,27 @@
 body {
   margin: 0;
   background-color: #fff;
+  font-family: sans-serif;
 }
+
 canvas {
   display: block;
   margin: auto;
+}
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+#ui input,
+#ui button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-size: 14px;
 }
