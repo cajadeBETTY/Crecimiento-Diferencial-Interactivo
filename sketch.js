@@ -21,7 +21,6 @@ let noiseOffset = 0;
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  // UI
   inputPuntos = select('#inputPuntos');
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
@@ -101,13 +100,11 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
 
-  // Transformación global
   push();
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
 
-  // Dibujar curva actual
   if (points.length > 0) {
     stroke(0);
     strokeWeight(1 / zoom);
@@ -121,7 +118,6 @@ function draw() {
     for (let p of points) circle(p.x, p.y, 4 / zoom);
   }
 
-  // Previsualización si aún no inicia
   if (!iniciado) {
     let cantidad = int(inputPuntos.value());
     let r = float(sliderRadio.value());
@@ -150,10 +146,8 @@ function draw() {
 
   pop();
 
-  // Fin si no corriendo
   if (!running || points.length >= maxPoints) return;
 
-  // Crecimiento
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -175,36 +169,49 @@ function draw() {
       }
     }
 
- let tipo = tipoRuidoSelect.value();
-let amp = float(sliderAmplitud.value());
-let freq = float(sliderFrecuencia.value());
-let ruido = createVector(0, 0);
+    // === Aplicar ruido siempre ===
+    let tipo = tipoRuidoSelect.value();
+    let amp = float(sliderAmplitud.value());
+    let freq = float(sliderFrecuencia.value());
+    let ruido = createVector(0, 0);
 
-if (tipo === 'perlin') {
-  let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
-  let angle = n * TWO_PI;
-  ruido = p5.Vector.fromAngle(angle).mult(amp);
-} else if (tipo === 'perlinImproved') {
-  let nx = noise(actual.x * freq, noiseOffset);
-  let ny = noise(actual.y * freq, noiseOffset + 1000);
-  ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-} else if (tipo === 'valor') {
-  let vx = random(-1, 1) * amp;
-  let vy = random(-1, 1) * amp;
-  ruido = createVector(vx, vy);
-} else if (tipo === 'simple') {
-  ruido = p5.Vector.random2D().mult(amp);
+    if (tipo === 'perlin') {
+      let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
+      let angle = n * TWO_PI;
+      ruido = p5.Vector.fromAngle(angle).mult(amp);
+    } else if (tipo === 'perlinImproved') {
+      let nx = noise(actual.x * freq, noiseOffset);
+      let ny = noise(actual.y * freq, noiseOffset + 1000);
+      ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+    } else if (tipo === 'valor') {
+      let vx = random(-1, 1) * amp;
+      let vy = random(-1, 1) * amp;
+      ruido = createVector(vx, vy);
+    } else if (tipo === 'simple') {
+      ruido = p5.Vector.random2D().mult(amp);
+    }
+
+    if (cercanos > 0) {
+      fuerza.div(cercanos);
+      fuerza.add(ruido);
+    } else {
+      fuerza = ruido.copy();
+    }
+
+    actual.add(fuerza);
+    nuevosPuntos.push(actual);
+
+    let siguiente = points[(i + 1) % points.length];
+    let dNext = p5.Vector.dist(actual, siguiente);
+    if (dNext > maxDist) {
+      let mid = p5.Vector.add(actual, siguiente).div(2);
+      nuevosPuntos.push(mid);
+    }
+  }
+
+  points = nuevosPuntos;
+  noiseOffset += 0.01;
 }
-
-if (cercanos > 0) {
-  fuerza.div(cercanos);
-  fuerza.add(ruido);
-} else {
-  fuerza = ruido.copy();  // usar solo el ruido si no hay vecinos
-}
-
-actual.add(fuerza);
-
 
 function mouseWheel(event) {
   let zoomSpeed = 0.001;
