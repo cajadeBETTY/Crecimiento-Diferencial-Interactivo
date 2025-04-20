@@ -86,7 +86,7 @@ function draw() {
   scale(zoom);
   translate(-width / 2, -height / 2);
 
-  // Dibuja curva
+  // Dibujar curva
   stroke(0);
   strokeWeight(1);
   beginShape();
@@ -95,7 +95,7 @@ function draw() {
   }
   endShape(CLOSE);
 
-  // Dibuja nodos
+  // Dibujar nodos
   fill(0);
   noStroke();
   for (let p of points) {
@@ -153,9 +153,11 @@ function mouseWheel(event) {
 }
 
 function mousePressed() {
-  isDragging = true;
-  lastMouseX = mouseX;
-  lastMouseY = mouseY;
+  if (mouseButton === LEFT) {
+    isDragging = true;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
 }
 
 function mouseReleased() {
