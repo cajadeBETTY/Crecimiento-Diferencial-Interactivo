@@ -13,6 +13,12 @@ let offsetY = 0;
 let isDragging = false;
 let lastMouseX, lastMouseY;
 
+let tipoRuidoSelect;
+let sliderAmplitud, sliderFrecuencia;
+let valorAmplitudSpan, valorFrecuenciaSpan;
+let noiseOffset = 0;
+
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -25,6 +31,18 @@ function setup() {
   sliderRadio.input(() => {
     radioValorSpan.html(sliderRadio.value());
   });
+tipoRuidoSelect = select('#tipoRuido');
+sliderAmplitud = select('#sliderAmplitud');
+sliderFrecuencia = select('#sliderFrecuencia');
+valorAmplitudSpan = select('#valorAmplitud');
+valorFrecuenciaSpan = select('#valorFrecuencia');
+
+sliderAmplitud.input(() => {
+  valorAmplitudSpan.html(sliderAmplitud.value());
+});
+sliderFrecuencia.input(() => {
+  valorFrecuenciaSpan.html(sliderFrecuencia.value());
+});
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
@@ -170,10 +188,38 @@ if (!iniciado) {
       }
     }
 
-    if (cercanos > 0) {
-      fuerza.div(cercanos);
-      actual.add(fuerza);
-    }
+if (cercanos > 0) {
+  fuerza.div(cercanos);
+
+  // Aplicar ruido
+  let tipo = tipoRuidoSelect.value();
+  let amp = float(sliderAmplitud.value());
+  let freq = float(sliderFrecuencia.value());
+
+  let ruido = createVector(0, 0);
+
+  if (tipo === 'perlin') {
+    let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
+    let angle = n * TWO_PI;
+    ruido = p5.Vector.fromAngle(angle).mult(amp);
+  } else if (tipo === 'perlinImproved') {
+    let nx = noise(actual.x * freq, noiseOffset);
+    let ny = noise(actual.y * freq, noiseOffset + 1000);
+    ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+  } else if (tipo === 'valor') {
+    let vx = random(-1, 1) * amp;
+    let vy = random(-1, 1) * amp;
+    ruido = createVector(vx, vy);
+  } else if (tipo === 'simple') {
+    ruido = p5.Vector.random2D().mult(amp);
+  }
+
+  fuerza.add(ruido);
+  actual.add(fuerza);
+}
+
+noiseOffset += 0.01;
+
 
     nuevosPuntos.push(actual);
 
