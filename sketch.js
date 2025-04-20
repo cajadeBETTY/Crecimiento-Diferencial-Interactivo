@@ -40,8 +40,8 @@ function iniciarCrecimiento() {
   // Calcular distancias dinámicamente según la cantidad de puntos
   let circunferencia = TWO_PI * radio;
   let distInicial = circunferencia / cantidad;
-  minDist = distInicial * 1.1; // más grande para detonar movimiento
-  maxDist = distInicial * 1.5;
+  minDist = distInicial * 1.2; // más grande para detonar movimiento
+  maxDist = distInicial * 1.2;
 
   // Crear puntos en círculo
   points = [];
