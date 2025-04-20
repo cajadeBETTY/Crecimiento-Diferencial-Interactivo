@@ -18,10 +18,10 @@ let sliderAmplitud, sliderFrecuencia;
 let valorAmplitudSpan, valorFrecuenciaSpan;
 let noiseOffset = 0;
 
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // UI
   inputPuntos = select('#inputPuntos');
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
@@ -31,18 +31,19 @@ function setup() {
   sliderRadio.input(() => {
     radioValorSpan.html(sliderRadio.value());
   });
-tipoRuidoSelect = select('#tipoRuido');
-sliderAmplitud = select('#sliderAmplitud');
-sliderFrecuencia = select('#sliderFrecuencia');
-valorAmplitudSpan = select('#valorAmplitud');
-valorFrecuenciaSpan = select('#valorFrecuencia');
 
-sliderAmplitud.input(() => {
-  valorAmplitudSpan.html(sliderAmplitud.value());
-});
-sliderFrecuencia.input(() => {
-  valorFrecuenciaSpan.html(sliderFrecuencia.value());
-});
+  tipoRuidoSelect = select('#tipoRuido');
+  sliderAmplitud = select('#sliderAmplitud');
+  sliderFrecuencia = select('#sliderFrecuencia');
+  valorAmplitudSpan = select('#valorAmplitud');
+  valorFrecuenciaSpan = select('#valorFrecuencia');
+
+  sliderAmplitud.input(() => {
+    valorAmplitudSpan.html(sliderAmplitud.value());
+  });
+  sliderFrecuencia.input(() => {
+    valorFrecuenciaSpan.html(sliderFrecuencia.value());
+  });
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
@@ -94,79 +95,65 @@ function reiniciarCrecimiento() {
   offsetX = 0;
   offsetY = 0;
   zoom = 1.0;
+  noiseOffset = 0;
 }
 
 function draw() {
   background(255);
 
+  // Transformación global
   push();
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
 
-// === Dibujo de la curva, sin escalar grosores ===
-push();
-translate(width / 2 + offsetX, height / 2 + offsetY);
-scale(zoom);
-translate(-width / 2, -height / 2);
+  // Dibujar curva actual
+  if (points.length > 0) {
+    stroke(0);
+    strokeWeight(1 / zoom);
+    noFill();
+    beginShape();
+    for (let p of points) vertex(p.x, p.y);
+    endShape(CLOSE);
 
-// Polilínea cerrada
-noFill();
-stroke(0);
-strokeWeight(1 / zoom); // evita que engrosen al hacer zoom
-beginShape();
-for (let p of points) {
-  vertex(p.x, p.y);
-}
-endShape(CLOSE);
-
-// Nodos
-noStroke();
-fill(0);
-for (let p of points) {
-  circle(p.x, p.y, 4 / zoom); // escala inversa al zoom
-}
-
-pop();
-
-  // === Dibujar círculo inicial antes de iniciar ===
-if (!iniciado) {
-  let cantidad = int(inputPuntos.value());
-  let r = float(sliderRadio.value());
-
-  push();
-  translate(width / 2 + offsetX, height / 2 + offsetY);
-  scale(zoom);
-  translate(-width / 2, -height / 2);
-
-  stroke(150);
-  strokeWeight(1 / zoom);
-  noFill();
-  beginShape();
-  for (let i = 0; i < cantidad; i++) {
-    let angle = TWO_PI * i / cantidad;
-    let x = width / 2 + r * cos(angle);
-    let y = height / 2 + r * sin(angle);
-    vertex(x, y);
+    fill(0);
+    noStroke();
+    for (let p of points) circle(p.x, p.y, 4 / zoom);
   }
-  endShape(CLOSE);
 
-  fill(0);
-  noStroke();
-  for (let i = 0; i < cantidad; i++) {
-    let angle = TWO_PI * i / cantidad;
-    let x = width / 2 + r * cos(angle);
-    let y = height / 2 + r * sin(angle);
-    circle(x, y, 4 / zoom);
+  // Previsualización si aún no inicia
+  if (!iniciado) {
+    let cantidad = int(inputPuntos.value());
+    let r = float(sliderRadio.value());
+
+    stroke(150);
+    strokeWeight(1 / zoom);
+    noFill();
+    beginShape();
+    for (let i = 0; i < cantidad; i++) {
+      let angle = TWO_PI * i / cantidad;
+      let x = width / 2 + r * cos(angle);
+      let y = height / 2 + r * sin(angle);
+      vertex(x, y);
+    }
+    endShape(CLOSE);
+
+    fill(0);
+    noStroke();
+    for (let i = 0; i < cantidad; i++) {
+      let angle = TWO_PI * i / cantidad;
+      let x = width / 2 + r * cos(angle);
+      let y = height / 2 + r * sin(angle);
+      circle(x, y, 4 / zoom);
+    }
   }
 
   pop();
-}
 
-
-
+  // Fin si no corriendo
   if (!running || points.length >= maxPoints) return;
 
+  // Crecimiento
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -188,41 +175,38 @@ if (!iniciado) {
       }
     }
 
-if (cercanos > 0) {
-  fuerza.div(cercanos);
+    if (cercanos > 0) {
+      fuerza.div(cercanos);
 
-  // Aplicar ruido
-  let tipo = tipoRuidoSelect.value();
-  let amp = float(sliderAmplitud.value());
-  let freq = float(sliderFrecuencia.value());
+      // Aplicar ruido
+      let tipo = tipoRuidoSelect.value();
+      let amp = float(sliderAmplitud.value());
+      let freq = float(sliderFrecuencia.value());
+      let ruido = createVector(0, 0);
 
-  let ruido = createVector(0, 0);
+      if (tipo === 'perlin') {
+        let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
+        let angle = n * TWO_PI;
+        ruido = p5.Vector.fromAngle(angle).mult(amp);
+      } else if (tipo === 'perlinImproved') {
+        let nx = noise(actual.x * freq, noiseOffset);
+        let ny = noise(actual.y * freq, noiseOffset + 1000);
+        ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+      } else if (tipo === 'valor') {
+        let vx = random(-1, 1) * amp;
+        let vy = random(-1, 1) * amp;
+        ruido = createVector(vx, vy);
+      } else if (tipo === 'simple') {
+        ruido = p5.Vector.random2D().mult(amp);
+      }
 
-  if (tipo === 'perlin') {
-    let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
-    let angle = n * TWO_PI;
-    ruido = p5.Vector.fromAngle(angle).mult(amp);
-  } else if (tipo === 'perlinImproved') {
-    let nx = noise(actual.x * freq, noiseOffset);
-    let ny = noise(actual.y * freq, noiseOffset + 1000);
-    ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-  } else if (tipo === 'valor') {
-    let vx = random(-1, 1) * amp;
-    let vy = random(-1, 1) * amp;
-    ruido = createVector(vx, vy);
-  } else if (tipo === 'simple') {
-    ruido = p5.Vector.random2D().mult(amp);
-  }
-
-  fuerza.add(ruido);
-  actual.add(fuerza);
-}
-
-noiseOffset += 0.01;
-
+      fuerza.add(ruido);
+      actual.add(fuerza);
+    }
 
     nuevosPuntos.push(actual);
 
+    // Insertar punto si distancia es grande
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
@@ -232,6 +216,7 @@ noiseOffset += 0.01;
   }
 
   points = nuevosPuntos;
+  noiseOffset += 0.01;
 }
 
 function mouseWheel(event) {
@@ -260,11 +245,10 @@ function mouseDragged() {
     offsetX += dx;
     offsetY += dy;
     lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-}
-
-    lastMouseY = mouseY;
-  }
 }
