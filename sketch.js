@@ -175,49 +175,36 @@ function draw() {
       }
     }
 
-    if (cercanos > 0) {
-      fuerza.div(cercanos);
+ let tipo = tipoRuidoSelect.value();
+let amp = float(sliderAmplitud.value());
+let freq = float(sliderFrecuencia.value());
+let ruido = createVector(0, 0);
 
-      // Aplicar ruido
-      let tipo = tipoRuidoSelect.value();
-      let amp = float(sliderAmplitud.value());
-      let freq = float(sliderFrecuencia.value());
-      let ruido = createVector(0, 0);
-
-      if (tipo === 'perlin') {
-        let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
-        let angle = n * TWO_PI;
-        ruido = p5.Vector.fromAngle(angle).mult(amp);
-      } else if (tipo === 'perlinImproved') {
-        let nx = noise(actual.x * freq, noiseOffset);
-        let ny = noise(actual.y * freq, noiseOffset + 1000);
-        ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-      } else if (tipo === 'valor') {
-        let vx = random(-1, 1) * amp;
-        let vy = random(-1, 1) * amp;
-        ruido = createVector(vx, vy);
-      } else if (tipo === 'simple') {
-        ruido = p5.Vector.random2D().mult(amp);
-      }
-
-      fuerza.add(ruido);
-      actual.add(fuerza);
-    }
-
-    nuevosPuntos.push(actual);
-
-    // Insertar punto si distancia es grande
-    let siguiente = points[(i + 1) % points.length];
-    let dNext = p5.Vector.dist(actual, siguiente);
-    if (dNext > maxDist) {
-      let mid = p5.Vector.add(actual, siguiente).div(2);
-      nuevosPuntos.push(mid);
-    }
-  }
-
-  points = nuevosPuntos;
-  noiseOffset += 0.01;
+if (tipo === 'perlin') {
+  let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
+  let angle = n * TWO_PI;
+  ruido = p5.Vector.fromAngle(angle).mult(amp);
+} else if (tipo === 'perlinImproved') {
+  let nx = noise(actual.x * freq, noiseOffset);
+  let ny = noise(actual.y * freq, noiseOffset + 1000);
+  ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+} else if (tipo === 'valor') {
+  let vx = random(-1, 1) * amp;
+  let vy = random(-1, 1) * amp;
+  ruido = createVector(vx, vy);
+} else if (tipo === 'simple') {
+  ruido = p5.Vector.random2D().mult(amp);
 }
+
+if (cercanos > 0) {
+  fuerza.div(cercanos);
+  fuerza.add(ruido);
+} else {
+  fuerza = ruido.copy();  // usar solo el ruido si no hay vecinos
+}
+
+actual.add(fuerza);
+
 
 function mouseWheel(event) {
   let zoomSpeed = 0.001;
