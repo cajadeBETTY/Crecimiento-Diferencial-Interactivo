@@ -14,7 +14,7 @@ let isDragging = false;
 let lastMouseX, lastMouseY;
 
 function setup() {
-  createCanvas(800, 800);
+  createCanvas(windowWidth, windowHeight);
 
   inputPuntos = select('#inputPuntos');
   sliderRadio = select('#sliderRadio');
@@ -86,23 +86,66 @@ function draw() {
   scale(zoom);
   translate(-width / 2, -height / 2);
 
-  // Dibujar curva
-  stroke(0);
-  strokeWeight(1);
+// === Dibujo de la curva, sin escalar grosores ===
+push();
+translate(width / 2 + offsetX, height / 2 + offsetY);
+scale(zoom);
+translate(-width / 2, -height / 2);
+
+// Polilínea cerrada
+noFill();
+stroke(0);
+strokeWeight(1 / zoom); // evita que engrosen al hacer zoom
+beginShape();
+for (let p of points) {
+  vertex(p.x, p.y);
+}
+endShape(CLOSE);
+
+// Nodos
+noStroke();
+fill(0);
+for (let p of points) {
+  circle(p.x, p.y, 4 / zoom); // escala inversa al zoom
+}
+
+pop();
+
+  // === Dibujar círculo inicial antes de iniciar ===
+if (!iniciado) {
+  let cantidad = int(inputPuntos.value());
+  let r = float(sliderRadio.value());
+
+  push();
+  translate(width / 2 + offsetX, height / 2 + offsetY);
+  scale(zoom);
+  translate(-width / 2, -height / 2);
+
+  stroke(150);
+  strokeWeight(1 / zoom);
+  noFill();
   beginShape();
-  for (let p of points) {
-    vertex(p.x, p.y);
+  for (let i = 0; i < cantidad; i++) {
+    let angle = TWO_PI * i / cantidad;
+    let x = width / 2 + r * cos(angle);
+    let y = height / 2 + r * sin(angle);
+    vertex(x, y);
   }
   endShape(CLOSE);
 
-  // Dibujar nodos
   fill(0);
   noStroke();
-  for (let p of points) {
-    circle(p.x, p.y, 4);
+  for (let i = 0; i < cantidad; i++) {
+    let angle = TWO_PI * i / cantidad;
+    let x = width / 2 + r * cos(angle);
+    let y = height / 2 + r * sin(angle);
+    circle(x, y, 4 / zoom);
   }
 
   pop();
+}
+
+
 
   if (!running || points.length >= maxPoints) return;
 
@@ -171,6 +214,11 @@ function mouseDragged() {
     offsetX += dx;
     offsetY += dy;
     lastMouseX = mouseX;
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
     lastMouseY = mouseY;
   }
 }
