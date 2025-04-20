@@ -1,18 +1,30 @@
 let points = [];
 let running = false;
 let maxPoints = 1000;
-let inputPuntos, playPauseBtn, restartBtn;
+let inputPuntos, sliderRadio, radioValorSpan;
+let playPauseBtn, restartBtn;
 let radio = 96;
 let minDist, maxDist;
 let iniciado = false;
 
+let zoom = 1.0;
+let offsetX = 0;
+let offsetY = 0;
+let isDragging = false;
+let lastMouseX, lastMouseY;
+
 function setup() {
   createCanvas(800, 800);
 
-  // Conecta a los elementos HTML existentes
   inputPuntos = select('#inputPuntos');
+  sliderRadio = select('#sliderRadio');
+  radioValorSpan = select('#radioValor');
   playPauseBtn = select('#playPauseBtn');
   restartBtn = select('#restartBtn');
+
+  sliderRadio.input(() => {
+    radioValorSpan.html(sliderRadio.value());
+  });
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
@@ -32,18 +44,18 @@ function togglePlayPause() {
 
 function iniciarCrecimiento() {
   let cantidad = int(inputPuntos.value());
-  if (isNaN(cantidad) || cantidad < 3) {
-    alert("Por favor ingresa un número válido mayor a 2.");
+  radio = float(sliderRadio.value());
+
+  if (isNaN(cantidad) || cantidad < 3 || isNaN(radio) || radio <= 0) {
+    alert("Por favor ingresa valores válidos.");
     return;
   }
 
-  // Calcular distancias dinámicamente según la cantidad de puntos
   let circunferencia = TWO_PI * radio;
   let distInicial = circunferencia / cantidad;
-  minDist = distInicial * 1.2; // más grande para detonar movimiento
+  minDist = distInicial * 1.2;
   maxDist = distInicial * 1.2;
 
-  // Crear puntos en círculo
   points = [];
   for (let i = 0; i < cantidad; i++) {
     let angle = TWO_PI * i / cantidad;
@@ -61,10 +73,18 @@ function reiniciarCrecimiento() {
   running = false;
   iniciado = false;
   playPauseBtn.html('▶ Iniciar');
+  offsetX = 0;
+  offsetY = 0;
+  zoom = 1.0;
 }
 
 function draw() {
   background(255);
+
+  push();
+  translate(width / 2 + offsetX, height / 2 + offsetY);
+  scale(zoom);
+  translate(-width / 2, -height / 2);
 
   // Dibuja curva
   stroke(0);
@@ -81,7 +101,8 @@ function draw() {
   for (let p of points) {
     circle(p.x, p.y, 4);
   }
-  noFill();
+
+  pop();
 
   if (!running || points.length >= maxPoints) return;
 
@@ -113,7 +134,6 @@ function draw() {
 
     nuevosPuntos.push(actual);
 
-    // Agrega un nuevo punto si la distancia es mayor a la permitida
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
@@ -123,4 +143,32 @@ function draw() {
   }
 
   points = nuevosPuntos;
+}
+
+function mouseWheel(event) {
+  let zoomSpeed = 0.001;
+  let factor = 1 - event.delta * zoomSpeed;
+  zoom *= factor;
+  return false;
+}
+
+function mousePressed() {
+  isDragging = true;
+  lastMouseX = mouseX;
+  lastMouseY = mouseY;
+}
+
+function mouseReleased() {
+  isDragging = false;
+}
+
+function mouseDragged() {
+  if (isDragging) {
+    let dx = mouseX - lastMouseX;
+    let dy = mouseY - lastMouseY;
+    offsetX += dx;
+    offsetY += dy;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
 }
