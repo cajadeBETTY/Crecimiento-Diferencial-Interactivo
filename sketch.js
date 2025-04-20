@@ -18,6 +18,9 @@ let sliderAmplitud, sliderFrecuencia;
 let valorAmplitudSpan, valorFrecuenciaSpan;
 let noiseOffset = 0;
 
+let sliderRepulsion, valorRepulsionSpan;
+
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -48,6 +51,14 @@ function setup() {
   restartBtn.mousePressed(reiniciarCrecimiento);
 
   noFill();
+
+sliderRepulsion = select('#sliderRepulsion');
+valorRepulsionSpan = select('#valorRepulsion');
+
+sliderRepulsion.input(() => {
+  valorRepulsionSpan.html(sliderRepulsion.value());
+});
+
 }
 
 function togglePlayPause() {
@@ -186,13 +197,16 @@ function draw() {
       if (i !== j) {
         let otro = points[j];
         let d = dist(actual.x, actual.y, otro.x, otro.y);
-        if (d < minDist) {
-          let dir = p5.Vector.sub(actual, otro);
-          dir.normalize();
-          dir.div(d);
-          fuerza.add(dir);
-          cercanos++;
-        }
+       if (d < minDist) {
+  let dir = p5.Vector.sub(actual, otro);
+  let repulsionFactor = float(sliderRepulsion.value());
+
+  dir.normalize();
+  dir.mult(repulsionFactor / d);  // repulsión más fuerte si están muy cerca
+  fuerza.add(dir);
+  cercanos++;
+}
+
       }
     }
 
