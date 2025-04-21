@@ -26,6 +26,10 @@ let mostrarHistorial = false;
 let mostrarNodos = true;
 let historialFormas = [];
 
+let frameHistorial = 0;
+let frecuenciaHistorial = 2;  // cada 2 frames
+
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -79,6 +83,11 @@ function setup() {
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
+clearHistorialBtn.mousePressed(() => {
+  historialFormas = [];
+  frameHistorial = 0;  // ✅ Reinicia contador
+});
+
 
   noFill();
 }
@@ -159,9 +168,14 @@ function draw() {
   background(255);
   push();
 
-  let tipoVisual = tipoVisualSelect.value(); // ✅ Mover arriba para evitar undefined
+  // === Aplicar zoom y pan antes de todo ===
+  translate(width / 2 + offsetX, height / 2 + offsetY);
+  scale(zoom);
+  translate(-width / 2, -height / 2);
 
-  // === Dibujar historial acumulado ===
+  let tipoVisual = tipoVisualSelect.value();
+
+  // === Dibujar historial dentro del mismo espacio ===
   if (mostrarHistorial && historialFormas.length > 0) {
     stroke(180);
     strokeWeight(1 / zoom);
@@ -184,11 +198,6 @@ function draw() {
     }
   }
 
-  // === Transformaciones ===
-  translate(width / 2 + offsetX, height / 2 + offsetY);
-  scale(zoom);
-  translate(-width / 2, -height / 2);
-
   // === Dibujar curva activa ===
   if (points.length > 0) {
     stroke(0);
@@ -206,9 +215,7 @@ function draw() {
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
     } else {
-      for (let p of points) {
-        vertex(p.x, p.y);
-      }
+      for (let p of points) vertex(p.x, p.y);
     }
     endShape(CLOSE);
 
@@ -221,7 +228,7 @@ function draw() {
     }
   }
 
-  // === Previsualización del círculo inicial ===
+  // === Previsualización antes de iniciar ===
   if (!iniciado) {
     let cantidad = int(inputPuntos.value());
     let r = float(sliderRadio.value());
@@ -253,16 +260,17 @@ function draw() {
 
   pop();
 
-  // === Terminar si no se está corriendo ===
+  // === Fin de dibujado si no corre ===
   if (!running || points.length >= maxPoints) return;
 
-  // === Guardar historial antes de modificar ===
-  if (mostrarHistorial) {
+  // === Guardar historial cada X frames ===
+  if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
     let copia = points.map(p => createVector(p.x, p.y));
     historialFormas.push(copia);
   }
+  frameHistorial++;
 
-  // === Crecimiento diferencial ===
+  // === Algoritmo de crecimiento ===
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -285,7 +293,7 @@ function draw() {
       }
     }
 
-    // === Aplicar ruido ===
+    // === Agregar ruido ===
     let tipo = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
@@ -315,7 +323,6 @@ function draw() {
     actual.add(fuerza);
     nuevosPuntos.push(actual);
 
-    // === Insertar punto si distancia excede máximo ===
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
