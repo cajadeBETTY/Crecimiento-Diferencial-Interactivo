@@ -1,65 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crecimiento Diferencial 2D</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      font-size: 12px; /* ✅ letras pequeñas */
+    }
+
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      padding: 10px 15px;
+      max-width: 300px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+    }
+
+    legend {
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="range"],
+    select {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    button {
+      font-size: 12px;
+      margin: 2px 0;
+    }
+  </style>
 </head>
 <body>
   <div id="ui">
-    <label for="inputPuntos">Número de puntos iniciales:</label><br />
-    <input type="text" id="inputPuntos" value="50" /><br />
+    <fieldset>
+      <legend><strong>GENERAL</strong></legend>
 
-    <label for="sliderRadio">Radio del círculo:</label><br />
-    <input type="range" id="sliderRadio" min="10" max="300" value="96" step="1" /><br />
-    <span id="radioValor">96</span> px<br />
+      <label for="sliderRadio">Radio del círculo (mm):</label>
+      <input type="range" id="sliderRadio" min="10" max="300" value="96" step="1" />
+      <span id="radioValor">96</span> mm
 
-    <button id="playPauseBtn">▶ Iniciar</button>
-    <button id="restartBtn">🔄 Reiniciar</button>
-<hr>
-<label for="tipoRuido">Tipo de ruido:</label><br />
-<select id="tipoRuido">
-  <option value="ninguno">Sin ruido</option>
-  <option value="perlin">Perlin clásico</option>
-  <option value="perlinImproved">Perlin mejorado</option>
-  <option value="valor">Ruido por valor</option>
-  <option value="simple">Ruido simple</option>
-</select><br /><br />
+      <label for="inputPuntos">Número de puntos iniciales:</label>
+      <input type="number" id="inputPuntos" value="50" min="3" />
 
-<label for="sliderAmplitud">Amplitud:</label><br />
-<input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1"><br />
-<span id="valorAmplitud">1.0</span><br />
+      <label for="inputMinDist">Distancia mínima:</label>
+      <input type="number" id="inputMinDist" value="5" step="0.1" min="0.1" />
 
-<label for="sliderFrecuencia">Frecuencia:</label><br />
-<input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1"><br />
-<span id="valorFrecuencia">0.1</span><br />
+      <label for="inputMaxDist">Distancia máxima:</label>
+      <input type="number" id="inputMaxDist" value="5" step="0.1" min="0.1" />
 
-    <label for="sliderRepulsion">Repulsión entre puntos:</label><br />
-<input type="range" id="sliderRepulsion" min="0.1" max="5" step="0.1" value="1.5"><br />
-<span id="valorRepulsion">1.5</span><br />
+      <label for="sliderRepulsion">Factor de repulsión:</label>
+      <input type="range" id="sliderRepulsion" min="0.1" max="5" step="0.1" value="1.5" />
+      <span id="valorRepulsion">1.5</span>
 
-    <label for="inputMinDist">Distancia mínima:</label><br />
-<input type="number" id="inputMinDist" value="5" step="0.1" min="0.1"><br />
+      <button id="playPauseBtn">▶ Iniciar</button>
+      <button id="restartBtn">🔄 Reiniciar</button>
+    </fieldset>
 
-<label for="inputMaxDist">Distancia máxima:</label><br />
-<input type="number" id="inputMaxDist" value="15" step="0.1" min="0.1"><br /><br />
+    <fieldset>
+      <legend><strong>VISUALIZACIÓN</strong></legend>
 
-    <label for="tipoVisual">Modo de visualización:</label><br />
-<select id="tipoVisual">
-  <option value="poligonal">Poligonal</option>
-  <option value="curva">Curva suave</option>
-</select><br /><br />
- <button id="toggleHistorialBtn">🕘 Ver historial</button>
-<button id="clearHistorialBtn">🧹 Limpiar historial</button>
+      <button id="toggleNodosBtn">🔘 Ocultar nodos</button>
 
-    <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label><br />
-<input type="number" id="inputFrecuenciaHistorial" value="50" min="1" max="999"><br /><br />
+      <label for="tipoVisual">Modo de visualización:</label>
+      <select id="tipoVisual">
+        <option value="poligonal">Poligonal</option>
+        <option value="curva">Curva suave</option>
+      </select>
 
+      <button id="toggleHistorialBtn">🕘 Ver historial</button>
+      <button id="clearHistorialBtn">🧹 Limpiar historial</button>
 
-<button id="toggleNodosBtn">🔘 Ocultar nodos</button>
+      <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
+      <input type="number" id="inputFrecuenciaHistorial" value="50" min="1" max="999" />
+    </fieldset>
 
+    <fieldset>
+      <legend><strong>EXPERIMENTAL</strong></legend>
 
+      <label for="tipoRuido">Tipo de ruido:</label>
+      <select id="tipoRuido">
+        <option value="ninguno">Sin ruido</option>
+        <option value="perlin">Perlin clásico</option>
+        <option value="perlinImproved">Perlin mejorado</option>
+        <option value="valor">Ruido por valor</option>
+        <option value="simple">Ruido simple</option>
+      </select>
+
+      <label for="sliderAmplitud">Amplitud:</label>
+      <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1" />
+      <span id="valorAmplitud">1.0</span>
+
+      <label for="sliderFrecuencia">Frecuencia:</label>
+      <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1" />
+      <span id="valorFrecuencia">0.1</span>
+    </fieldset>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
