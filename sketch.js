@@ -32,6 +32,7 @@ let frecuenciaHistorial = 10;  // cada 2 frames
 let inputFrecuenciaHistorial;
 let inputMinDist, inputMaxDist;
 
+let inputMaxPoints;
 
 
 function setup() {
@@ -39,6 +40,7 @@ function setup() {
 
   inputMinDist = select('#inputMinDist');
 inputMaxDist = select('#inputMaxDist');
+inputMaxPoints = select('#inputMaxPoints');
 
   inputPuntos = select('#inputPuntos');
   sliderRadio = select('#sliderRadio');
@@ -193,6 +195,8 @@ function draw() {
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
+  maxPoints = int(inputMaxPoints.value());
+
 
   let tipoVisual = tipoVisualSelect.value();
 
@@ -228,13 +232,14 @@ function draw() {
     beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
-      curveVertex(points[len - 2].x, points[len - 2].y);
-      curveVertex(points[len - 1].x, points[len - 1].y);
-      for (let i = 0; i < len; i++) {
-        curveVertex(points[i].x, points[i].y);
-      }
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[1].x, points[1].y);
+curveVertex(points[0].x, points[0].y); // repetir primeros dos
+curveVertex(points[0].x, points[0].y);
+for (let i = 0; i < points.length; i++) {
+  curveVertex(points[i].x, points[i].y);
+}
+curveVertex(points[0].x, points[0].y);
+curveVertex(points[0].x, points[0].y);
+
     } else {
       for (let p of points) vertex(p.x, p.y);
     }
