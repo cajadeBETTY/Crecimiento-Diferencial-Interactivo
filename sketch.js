@@ -29,9 +29,16 @@ let historialFormas = [];
 let frameHistorial = 0;
 let frecuenciaHistorial = 10;  // cada 2 frames
 
+let inputFrecuenciaHistorial;
+let inputMinDist, inputMaxDist;
+
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  inputMinDist = select('#inputMinDist');
+inputMaxDist = select('#inputMaxDist');
 
   inputPuntos = select('#inputPuntos');
   sliderRadio = select('#sliderRadio');
@@ -79,15 +86,20 @@ function setup() {
 
   clearHistorialBtn.mousePressed(() => {
     historialFormas = [];
+    frameHistorial = 0; // ✅ Reinicia el contador de frames
   });
+
+  // === NUEVOS INPUTS ===
+  inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
+  inputFrecuenciaHistorial.input(() => {
+    frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
+  });
+
+  inputMinDist = select('#inputMinDist');
+  inputMaxDist = select('#inputMaxDist');
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
-clearHistorialBtn.mousePressed(() => {
-  historialFormas = [];
-  frameHistorial = 0;  // ✅ Reinicia contador
-});
-
 
   noFill();
 }
@@ -111,14 +123,21 @@ function iniciarCrecimiento() {
     return;
   }
 
+  // Parámetros de ruido
   let tipo = tipoRuidoSelect.value();
   let amp = float(sliderAmplitud.value());
   let freq = float(sliderFrecuencia.value());
 
+  // Distancia mínima y máxima definidas por el usuario
+  let minInput = float(inputMinDist.value());
+  let maxInput = float(inputMaxDist.value());
+
   let circunferencia = TWO_PI * radio;
   let distInicial = circunferencia / cantidad;
-  minDist = distInicial * 1.2;
-  maxDist = distInicial * 1.2;
+
+  // Fallback si no hay valores válidos
+  minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
+  maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
 
   points = [];
 
@@ -127,6 +146,7 @@ function iniciarCrecimiento() {
     let x = width / 2 + radio * cos(angle);
     let y = height / 2 + radio * sin(angle);
 
+    // === Aplicar ruido inicial a la curva base ===
     let ruido = createVector(0, 0);
     if (tipo === 'perlin') {
       let n = noise(x * freq, y * freq);
@@ -151,6 +171,7 @@ function iniciarCrecimiento() {
   iniciado = true;
   running = true;
 }
+
 
 function reiniciarCrecimiento() {
   points = [];
