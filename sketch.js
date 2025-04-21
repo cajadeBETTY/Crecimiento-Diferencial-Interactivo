@@ -429,13 +429,36 @@ function exportarSVG() {
   svgCanvas.scale(zoom);
   svgCanvas.translate(-w / 2, -h / 2);
 
-  svgCanvas.noFill();
-  svgCanvas.stroke(0);
   svgCanvas.strokeWeight(1 / zoom);
+  svgCanvas.noFill();
 
+  const tipoVisual = tipoVisualSelect.value();
+
+  // === Dibujar historial si está activado ===
+  if (mostrarHistorial && historialFormas.length > 0) {
+    svgCanvas.stroke(180);
+    for (let forma of historialFormas) {
+      svgCanvas.beginShape();
+      for (let p of forma) {
+        if (tipoVisual === 'curva') {
+          svgCanvas.curveVertex(p.x, p.y);
+        } else {
+          svgCanvas.vertex(p.x, p.y);
+        }
+      }
+      if (tipoVisual === 'curva') {
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+        svgCanvas.curveVertex(forma[1 % forma.length].x, forma[1 % forma.length].y);
+      }
+      svgCanvas.endShape(CLOSE);
+    }
+  }
+
+  // === Dibujar curva actual ===
   if (points.length > 0) {
+    svgCanvas.stroke(0);
     svgCanvas.beginShape();
-    if (tipoVisualSelect.value() === 'curva') {
+    if (tipoVisual === 'curva') {
       svgCanvas.curveVertex(points[0].x, points[0].y);
       svgCanvas.curveVertex(points[0].x, points[0].y);
       for (let i = 0; i < points.length; i++) {
@@ -449,6 +472,15 @@ function exportarSVG() {
       }
     }
     svgCanvas.endShape(CLOSE);
+
+    // === Dibujar nodos si están activados ===
+    if (mostrarNodos) {
+      svgCanvas.noStroke();
+      svgCanvas.fill(0);
+      for (let p of points) {
+        svgCanvas.circle(p.x, p.y, 4 / zoom);
+      }
+    }
   }
 
   save(svgCanvas, 'crecimiento_diferencial.svg');
