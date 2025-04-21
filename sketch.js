@@ -34,24 +34,31 @@ let inputMinDist, inputMaxDist;
 
 let inputMaxPoints;
 let btnExportPNG, btnExportSVG;
+let exportandoSVG = false;
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // === INPUTS numéricos ===
   inputMinDist = select('#inputMinDist');
-inputMaxDist = select('#inputMaxDist');
-inputMaxPoints = select('#inputMaxPoints');
-
+  inputMaxDist = select('#inputMaxDist');
+  inputMaxPoints = select('#inputMaxPoints');
+  inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
   inputPuntos = select('#inputPuntos');
+
+  inputFrecuenciaHistorial.input(() => {
+    frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
+  });
+
+  // === RADIO ===
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
-  playPauseBtn = select('#playPauseBtn');
-  restartBtn = select('#restartBtn');
-
   sliderRadio.input(() => {
     radioValorSpan.html(sliderRadio.value());
   });
 
+  // === RUIDO ===
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
   sliderFrecuencia = select('#sliderFrecuencia');
@@ -65,12 +72,14 @@ inputMaxPoints = select('#inputMaxPoints');
     valorFrecuenciaSpan.html(sliderFrecuencia.value());
   });
 
+  // === REPULSIÓN ===
   sliderRepulsion = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
   sliderRepulsion.input(() => {
     valorRepulsionSpan.html(sliderRepulsion.value());
   });
 
+  // === VISUALIZACIÓN ===
   tipoVisualSelect = select('#tipoVisual');
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
@@ -88,30 +97,26 @@ inputMaxPoints = select('#inputMaxPoints');
 
   clearHistorialBtn.mousePressed(() => {
     historialFormas = [];
-    frameHistorial = 0; // ✅ Reinicia el contador de frames
+    frameHistorial = 0;
   });
 
-  // === NUEVOS INPUTS ===
-  inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
-  inputFrecuenciaHistorial.input(() => {
-    frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
-  });
-
-  inputMinDist = select('#inputMinDist');
-  inputMaxDist = select('#inputMaxDist');
-
+  // === BOTONES FUNCIONALES ===
+  playPauseBtn = select('#playPauseBtn');
+  restartBtn = select('#restartBtn');
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
-btnExportPNG = select('#btnExportPNG');
-btnExportSVG = select('#btnExportSVG');
 
-btnExportPNG.mousePressed(() => {
-  saveCanvas('crecimiento_diferencial', 'png');
-});
+  // === EXPORTAR ===
+  btnExportPNG = select('#btnExportPNG');
+  btnExportSVG = select('#btnExportSVG');
 
-btnExportSVG.mousePressed(() => {
-  saveSVG('crecimiento_diferencial.svg');
-});
+  btnExportPNG.mousePressed(() => {
+    saveCanvas('crecimiento_diferencial', 'png');
+  });
+
+  btnExportSVG.mousePressed(() => {
+    exportarSVG();
+  });
 
   noFill();
 }
@@ -412,4 +417,39 @@ function isMouseOverUI() {
   const bounds = ui.getBoundingClientRect();
   return mouseX >= bounds.left && mouseX <= bounds.right &&
          mouseY >= bounds.top && mouseY <= bounds.bottom;
+}
+
+function exportarSVG() {
+  let w = windowWidth;
+  let h = windowHeight;
+
+  let svgCanvas = createGraphics(w, h, SVG);
+
+  svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
+  svgCanvas.scale(zoom);
+  svgCanvas.translate(-w / 2, -h / 2);
+
+  svgCanvas.noFill();
+  svgCanvas.stroke(0);
+  svgCanvas.strokeWeight(1 / zoom);
+
+  if (points.length > 0) {
+    svgCanvas.beginShape();
+    if (tipoVisualSelect.value() === 'curva') {
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      for (let i = 0; i < points.length; i++) {
+        svgCanvas.curveVertex(points[i].x, points[i].y);
+      }
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+    } else {
+      for (let p of points) {
+        svgCanvas.vertex(p.x, p.y);
+      }
+    }
+    svgCanvas.endShape(CLOSE);
+  }
+
+  save(svgCanvas, 'crecimiento_diferencial.svg');
 }
