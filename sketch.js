@@ -424,7 +424,7 @@ function exportarSVG() {
   let h = windowHeight;
 
   let svgCanvas = createGraphics(w, h, SVG);
-  textFont('sans-serif'); // Evita errores de tipografía
+  textFont('sans-serif'); // evita errores en algunos navegadores
 
   svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
   svgCanvas.scale(zoom);
@@ -435,7 +435,7 @@ function exportarSVG() {
 
   const tipoVisual = tipoVisualSelect.value();
 
-  // === Dibujar historial si está activado ===
+  // === Dibujar historial si está activo
   if (mostrarHistorial && historialFormas.length > 0) {
     svgCanvas.stroke(180);
     for (let forma of historialFormas) {
@@ -455,7 +455,7 @@ function exportarSVG() {
     }
   }
 
-  // === Dibujar curva actual ===
+  // === Dibujar curva actual
   if (points.length > 0) {
     svgCanvas.stroke(0);
     svgCanvas.beginShape();
@@ -474,7 +474,6 @@ function exportarSVG() {
     }
     svgCanvas.endShape(CLOSE);
 
-    // === Dibujar nodos si están activados ===
     if (mostrarNodos) {
       svgCanvas.noStroke();
       svgCanvas.fill(0);
@@ -484,7 +483,7 @@ function exportarSVG() {
     }
   }
 
-  // === Exportar con timestamp ===
+  // ✅ Cambiar aquí: usar .save() directamente sobre svgCanvas
   let timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
-  save(svgCanvas, `crecimiento_diferencial_${timestamp}.svg`);
+  svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
