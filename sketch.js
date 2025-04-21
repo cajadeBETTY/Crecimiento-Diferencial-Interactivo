@@ -33,7 +33,7 @@ let inputFrecuenciaHistorial;
 let inputMinDist, inputMaxDist;
 
 let inputMaxPoints;
-
+let btnExportPNG, btnExportSVG;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -102,6 +102,16 @@ inputMaxPoints = select('#inputMaxPoints');
 
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
+btnExportPNG = select('#btnExportPNG');
+btnExportSVG = select('#btnExportSVG');
+
+btnExportPNG.mousePressed(() => {
+  saveCanvas('crecimiento_diferencial', 'png');
+});
+
+btnExportSVG.mousePressed(() => {
+  saveSVG('crecimiento_diferencial.svg');
+});
 
   noFill();
 }
