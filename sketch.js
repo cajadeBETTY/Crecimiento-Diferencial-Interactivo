@@ -157,23 +157,26 @@ function reiniciarCrecimiento() {
 
 function draw() {
   background(255);
-
   push();
 
+  let tipoVisual = tipoVisualSelect.value(); // ✅ Mover arriba para evitar undefined
+
+  // === Dibujar historial acumulado ===
   if (mostrarHistorial && historialFormas.length > 0) {
     stroke(180);
     strokeWeight(1 / zoom);
     noFill();
+
     for (let forma of historialFormas) {
       beginShape();
       for (let p of forma) {
-        if (tipoVisualSelect.value() === 'curva') {
+        if (tipoVisual === 'curva') {
           curveVertex(p.x, p.y);
         } else {
           vertex(p.x, p.y);
         }
       }
-      if (tipoVisualSelect.value() === 'curva') {
+      if (tipoVisual === 'curva') {
         curveVertex(forma[0].x, forma[0].y);
         curveVertex(forma[1].x, forma[1].y);
       }
@@ -181,12 +184,12 @@ function draw() {
     }
   }
 
+  // === Transformaciones ===
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
 
-  let tipoVisual = tipoVisualSelect.value();
-
+  // === Dibujar curva activa ===
   if (points.length > 0) {
     stroke(0);
     strokeWeight(1 / zoom);
@@ -203,7 +206,9 @@ function draw() {
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
     } else {
-      for (let p of points) vertex(p.x, p.y);
+      for (let p of points) {
+        vertex(p.x, p.y);
+      }
     }
     endShape(CLOSE);
 
@@ -216,6 +221,7 @@ function draw() {
     }
   }
 
+  // === Previsualización del círculo inicial ===
   if (!iniciado) {
     let cantidad = int(inputPuntos.value());
     let r = float(sliderRadio.value());
@@ -247,13 +253,16 @@ function draw() {
 
   pop();
 
+  // === Terminar si no se está corriendo ===
   if (!running || points.length >= maxPoints) return;
 
+  // === Guardar historial antes de modificar ===
   if (mostrarHistorial) {
     let copia = points.map(p => createVector(p.x, p.y));
     historialFormas.push(copia);
   }
 
+  // === Crecimiento diferencial ===
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -276,6 +285,7 @@ function draw() {
       }
     }
 
+    // === Aplicar ruido ===
     let tipo = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
@@ -305,6 +315,7 @@ function draw() {
     actual.add(fuerza);
     nuevosPuntos.push(actual);
 
+    // === Insertar punto si distancia excede máximo ===
     let siguiente = points[(i + 1) % points.length];
     let dNext = p5.Vector.dist(actual, siguiente);
     if (dNext > maxDist) {
