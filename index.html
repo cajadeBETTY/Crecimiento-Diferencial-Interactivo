@@ -12,16 +12,29 @@
       font-size: 12px; /* ✅ letras pequeñas */
     }
 
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 8px;
-      padding: 10px 15px;
-      max-width: 300px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 10px 15px;
+  max-height: 95vh; /* ✅ Altura máxima relativa a la pantalla */
+  overflow-y: auto;  /* ✅ Scroll vertical */
+  max-width: 300px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  font-size: 12px;
+}
+
+.titulo-seccion {
+  font-weight: bold;
+  font-size: 13px;
+  background: #f5f5f5;
+  padding: 3px 6px;
+  margin: -8px -12px 8px -12px;
+  border-radius: 4px;
+}
+
 
     fieldset {
       border: 1px solid #ccc;
