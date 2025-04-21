@@ -19,6 +19,7 @@ let valorAmplitudSpan, valorFrecuenciaSpan;
 let noiseOffset = 0;
 
 let sliderRepulsion, valorRepulsionSpan;
+let tipoVisualSelect;
 
 
 function setup() {
@@ -58,6 +59,7 @@ valorRepulsionSpan = select('#valorRepulsion');
 sliderRepulsion.input(() => {
   valorRepulsionSpan.html(sliderRepulsion.value());
 });
+tipoVisualSelect = select('#tipoVisual');
 
 }
 
@@ -143,19 +145,40 @@ function draw() {
   scale(zoom);
   translate(-width / 2, -height / 2);
 
+  let tipoVisual = tipoVisualSelect.value();
+
+  // === Dibujar curva actual ===
   if (points.length > 0) {
     stroke(0);
     strokeWeight(1 / zoom);
     noFill();
+
     beginShape();
-    for (let p of points) vertex(p.x, p.y);
+    if (tipoVisual === 'curva') {
+      let len = points.length;
+      curveVertex(points[len - 2].x, points[len - 2].y);
+      curveVertex(points[len - 1].x, points[len - 1].y);
+      for (let i = 0; i < len; i++) {
+        curveVertex(points[i].x, points[i].y);
+      }
+      curveVertex(points[0].x, points[0].y);
+      curveVertex(points[1].x, points[1].y);
+    } else {
+      for (let p of points) {
+        vertex(p.x, p.y);
+      }
+    }
     endShape(CLOSE);
 
+    // Dibujar nodos
     fill(0);
     noStroke();
-    for (let p of points) circle(p.x, p.y, 4 / zoom);
+    for (let p of points) {
+      circle(p.x, p.y, 4 / zoom);
+    }
   }
 
+  // === Dibujar preview inicial antes de iniciar ===
   if (!iniciado) {
     let cantidad = int(inputPuntos.value());
     let r = float(sliderRadio.value());
@@ -163,6 +186,7 @@ function draw() {
     stroke(150);
     strokeWeight(1 / zoom);
     noFill();
+
     beginShape();
     for (let i = 0; i < cantidad; i++) {
       let angle = TWO_PI * i / cantidad;
@@ -186,6 +210,7 @@ function draw() {
 
   if (!running || points.length >= maxPoints) return;
 
+  // === Crecimiento diferencial ===
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -197,20 +222,18 @@ function draw() {
       if (i !== j) {
         let otro = points[j];
         let d = dist(actual.x, actual.y, otro.x, otro.y);
-       if (d < minDist) {
-  let dir = p5.Vector.sub(actual, otro);
-  let repulsionFactor = float(sliderRepulsion.value());
-
-  dir.normalize();
-  dir.mult(repulsionFactor / d);  // repulsión más fuerte si están muy cerca
-  fuerza.add(dir);
-  cercanos++;
-}
-
+        if (d < minDist) {
+          let dir = p5.Vector.sub(actual, otro);
+          let repulsionFactor = float(sliderRepulsion.value());
+          dir.normalize();
+          dir.mult(repulsionFactor / d);
+          fuerza.add(dir);
+          cercanos++;
+        }
       }
     }
 
-    // === Aplicar ruido siempre ===
+    // Aplicar ruido
     let tipo = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
@@ -225,9 +248,7 @@ function draw() {
       let ny = noise(actual.y * freq, noiseOffset + 1000);
       ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
     } else if (tipo === 'valor') {
-      let vx = random(-1, 1) * amp;
-      let vy = random(-1, 1) * amp;
-      ruido = createVector(vx, vy);
+      ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
     } else if (tipo === 'simple') {
       ruido = p5.Vector.random2D().mult(amp);
     }
@@ -253,6 +274,7 @@ function draw() {
   points = nuevosPuntos;
   noiseOffset += 0.01;
 }
+
 
 function mouseWheel(event) {
   let zoomSpeed = 0.001;
