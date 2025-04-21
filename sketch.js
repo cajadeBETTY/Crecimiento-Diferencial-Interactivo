@@ -27,7 +27,7 @@ let mostrarNodos = true;
 let historialFormas = [];
 
 let frameHistorial = 0;
-let frecuenciaHistorial = 2;  // cada 2 frames
+let frecuenciaHistorial = 10;  // cada 2 frames
 
 
 function setup() {
