@@ -424,6 +424,7 @@ function exportarSVG() {
   let h = windowHeight;
 
   let svgCanvas = createGraphics(w, h, SVG);
+  textFont('sans-serif'); // Evita errores de tipografía
 
   svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
   svgCanvas.scale(zoom);
@@ -448,7 +449,7 @@ function exportarSVG() {
       }
       if (tipoVisual === 'curva') {
         svgCanvas.curveVertex(forma[0].x, forma[0].y);
-        svgCanvas.curveVertex(forma[1 % forma.length].x, forma[1 % forma.length].y);
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
       }
       svgCanvas.endShape(CLOSE);
     }
@@ -483,5 +484,7 @@ function exportarSVG() {
     }
   }
 
-  save(svgCanvas, 'crecimiento_diferencial.svg');
+  // === Exportar con timestamp ===
+  let timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+  save(svgCanvas, `crecimiento_diferencial_${timestamp}.svg`);
 }
