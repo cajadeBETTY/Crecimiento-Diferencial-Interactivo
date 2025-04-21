@@ -21,11 +21,10 @@ let noiseOffset = 0;
 let sliderRepulsion, valorRepulsionSpan;
 let tipoVisualSelect;
 
-let toggleHistorialBtn, toggleNodosBtn;
+let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
 let mostrarHistorial = false;
 let mostrarNodos = true;
 let historialFormas = [];
-
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -53,32 +52,35 @@ function setup() {
     valorFrecuenciaSpan.html(sliderFrecuencia.value());
   });
 
+  sliderRepulsion = select('#sliderRepulsion');
+  valorRepulsionSpan = select('#valorRepulsion');
+  sliderRepulsion.input(() => {
+    valorRepulsionSpan.html(sliderRepulsion.value());
+  });
+
+  tipoVisualSelect = select('#tipoVisual');
+  toggleHistorialBtn = select('#toggleHistorialBtn');
+  toggleNodosBtn = select('#toggleNodosBtn');
+  clearHistorialBtn = select('#clearHistorialBtn');
+
+  toggleHistorialBtn.mousePressed(() => {
+    mostrarHistorial = !mostrarHistorial;
+    toggleHistorialBtn.html(mostrarHistorial ? "🕘 Ocultar historial" : "🕘 Ver historial");
+  });
+
+  toggleNodosBtn.mousePressed(() => {
+    mostrarNodos = !mostrarNodos;
+    toggleNodosBtn.html(mostrarNodos ? "🔘 Ocultar nodos" : "🔘 Mostrar nodos");
+  });
+
+  clearHistorialBtn.mousePressed(() => {
+    historialFormas = [];
+  });
+
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
 
-
   noFill();
-
-sliderRepulsion = select('#sliderRepulsion');
-valorRepulsionSpan = select('#valorRepulsion');
-
-sliderRepulsion.input(() => {
-  valorRepulsionSpan.html(sliderRepulsion.value());
-});
-tipoVisualSelect = select('#tipoVisual');
-toggleHistorialBtn = select('#toggleHistorialBtn');
-toggleNodosBtn = select('#toggleNodosBtn');
-
-toggleHistorialBtn.mousePressed(() => {
-  mostrarHistorial = !mostrarHistorial;
-  toggleHistorialBtn.html(mostrarHistorial ? "🕘 Ocultar historial" : "🕘 Ver historial");
-});
-
-toggleNodosBtn.mousePressed(() => {
-  mostrarNodos = !mostrarNodos;
-  toggleNodosBtn.html(mostrarNodos ? "🔘 Ocultar nodos" : "🔘 Mostrar nodos");
-});
-
 }
 
 function togglePlayPause() {
@@ -100,7 +102,6 @@ function iniciarCrecimiento() {
     return;
   }
 
-  // Parámetros de ruido
   let tipo = tipoRuidoSelect.value();
   let amp = float(sliderAmplitud.value());
   let freq = float(sliderFrecuencia.value());
@@ -117,9 +118,7 @@ function iniciarCrecimiento() {
     let x = width / 2 + radio * cos(angle);
     let y = height / 2 + radio * sin(angle);
 
-    // === Aplicar ruido directamente a los puntos iniciales ===
     let ruido = createVector(0, 0);
-
     if (tipo === 'perlin') {
       let n = noise(x * freq, y * freq);
       let angleOffset = n * TWO_PI;
@@ -153,38 +152,34 @@ function reiniciarCrecimiento() {
   offsetY = 0;
   zoom = 1.0;
   noiseOffset = 0;
-historialFormas = [];
-
+  historialFormas = [];
 }
 
 function draw() {
   background(255);
 
   push();
-if (mostrarHistorial && historialFormas.length > 0) {
-  stroke(180);
-  strokeWeight(1 / zoom);
-  noFill();
 
-  for (let forma of historialFormas) {
-    beginShape();
-    for (let p of forma) {
-      if (tipoVisual === 'curva') {
-        curveVertex(p.x, p.y);
-      } else {
-        vertex(p.x, p.y);
+  if (mostrarHistorial && historialFormas.length > 0) {
+    stroke(180);
+    strokeWeight(1 / zoom);
+    noFill();
+    for (let forma of historialFormas) {
+      beginShape();
+      for (let p of forma) {
+        if (tipoVisualSelect.value() === 'curva') {
+          curveVertex(p.x, p.y);
+        } else {
+          vertex(p.x, p.y);
+        }
       }
+      if (tipoVisualSelect.value() === 'curva') {
+        curveVertex(forma[0].x, forma[0].y);
+        curveVertex(forma[1].x, forma[1].y);
+      }
+      endShape(CLOSE);
     }
-
-    // Repetir primeros para cerrar bien curva
-    if (tipoVisual === 'curva') {
-      curveVertex(forma[0].x, forma[0].y);
-      curveVertex(forma[1].x, forma[1].y);
-    }
-
-    endShape(CLOSE);
   }
-}
 
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
@@ -192,7 +187,6 @@ if (mostrarHistorial && historialFormas.length > 0) {
 
   let tipoVisual = tipoVisualSelect.value();
 
-  // === Dibujar curva actual ===
   if (points.length > 0) {
     stroke(0);
     strokeWeight(1 / zoom);
@@ -209,24 +203,19 @@ if (mostrarHistorial && historialFormas.length > 0) {
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
     } else {
-      for (let p of points) {
-        vertex(p.x, p.y);
-      }
+      for (let p of points) vertex(p.x, p.y);
     }
     endShape(CLOSE);
 
-    // Dibujar nodos
-    fill(0);
-    noStroke();
-   if (mostrarNodos) {
-  for (let p of points) {
-    circle(p.x, p.y, 4 / zoom);
-  }
-}
-
+    if (mostrarNodos) {
+      fill(0);
+      noStroke();
+      for (let p of points) {
+        circle(p.x, p.y, 4 / zoom);
+      }
+    }
   }
 
-  // === Dibujar preview inicial antes de iniciar ===
   if (!iniciado) {
     let cantidad = int(inputPuntos.value());
     let r = float(sliderRadio.value());
@@ -244,13 +233,15 @@ if (mostrarHistorial && historialFormas.length > 0) {
     }
     endShape(CLOSE);
 
-    fill(0);
-    noStroke();
-    for (let i = 0; i < cantidad; i++) {
-      let angle = TWO_PI * i / cantidad;
-      let x = width / 2 + r * cos(angle);
-      let y = height / 2 + r * sin(angle);
-      circle(x, y, 4 / zoom);
+    if (mostrarNodos) {
+      fill(0);
+      noStroke();
+      for (let i = 0; i < cantidad; i++) {
+        let angle = TWO_PI * i / cantidad;
+        let x = width / 2 + r * cos(angle);
+        let y = height / 2 + r * sin(angle);
+        circle(x, y, 4 / zoom);
+      }
     }
   }
 
@@ -258,7 +249,11 @@ if (mostrarHistorial && historialFormas.length > 0) {
 
   if (!running || points.length >= maxPoints) return;
 
-  // === Crecimiento diferencial ===
+  if (mostrarHistorial) {
+    let copia = points.map(p => createVector(p.x, p.y));
+    historialFormas.push(copia);
+  }
+
   let nuevosPuntos = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -281,7 +276,6 @@ if (mostrarHistorial && historialFormas.length > 0) {
       }
     }
 
-    // Aplicar ruido
     let tipo = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
@@ -320,14 +314,8 @@ if (mostrarHistorial && historialFormas.length > 0) {
   }
 
   points = nuevosPuntos;
-if (mostrarHistorial) {
-  let copia = nuevosPuntos.map(p => createVector(p.x, p.y));
-  historialFormas.push(copia);
-}
-
   noiseOffset += 0.01;
 }
-
 
 function mouseWheel(event) {
   let zoomSpeed = 0.001;
@@ -371,4 +359,3 @@ function isMouseOverUI() {
   return mouseX >= bounds.left && mouseX <= bounds.right &&
          mouseY >= bounds.top && mouseY <= bounds.bottom;
 }
-
