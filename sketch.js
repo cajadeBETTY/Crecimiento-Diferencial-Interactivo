@@ -500,8 +500,9 @@ function exportarSVG() {
 }
 
 function ajustarCoordenadas(p, w, h) {
-  let adjX = (p.x + offsetX) * zoom;
-  let adjY = (p.y + offsetY) * zoom;
+  // Centrar al medio del SVG manualmente
+  let adjX = (p.x - width / 2) * zoom + w / 2;
+  let adjY = (p.y - height / 2) * zoom + h / 2;
   return createVector(adjX, adjY);
 }
 
