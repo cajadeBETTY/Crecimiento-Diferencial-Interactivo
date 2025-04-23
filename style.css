@@ -33,6 +33,23 @@ canvas {
   box-sizing: border-box;
 }
 
+/* Estilo para el input file */
+#ui input[type="file"] {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+/* Mejora visual para el select de forma genérica */
+#ui select {
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* Encabezado de sección */
 .titulo-seccion {
   font-weight: bold;
   font-size: 13px;
