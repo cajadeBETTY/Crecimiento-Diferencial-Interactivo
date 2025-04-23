@@ -97,22 +97,25 @@ function setup() {
   btnExportPNG.mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   btnExportSVG.mousePressed(() => exportarSVG());
 
-  // NUEVOS ELEMENTOS
-  formaGenericaSelect = select('#formaGenericaSelect');
-  inputLados = select('#inputLadosPoligono');
+// NUEVOS ELEMENTOS
+formaGenericaSelect = select('#formaGenericaSelect');
+inputLados = select('#inputLadosPoligono');
+sliderRadio = select('#sliderRadio');  // 🔥 Mover esto aquí arriba
 
-  formaGenericaSelect.changed(() => {
-    if (formaGenericaSelect.value() === 'poligono') {
-      inputLados.removeAttribute('disabled');
-      sliderRadio.removeAttribute('disabled');
-    } else if (formaGenericaSelect.value() === 'circulo') {
-      inputLados.attribute('disabled', '');
-      sliderRadio.removeAttribute('disabled');
-    } else {
-      inputLados.attribute('disabled', '');
-      sliderRadio.attribute('disabled', '');
-    }
-  });
+// Lógica para habilitar/deshabilitar controles
+formaGenericaSelect.changed(() => {
+  if (formaGenericaSelect.value() === 'poligono') {
+    inputLados.removeAttribute('disabled');
+    sliderRadio.removeAttribute('disabled');
+  } else if (formaGenericaSelect.value() === 'circulo') {
+    inputLados.attribute('disabled', '');
+    sliderRadio.removeAttribute('disabled');
+  } else {
+    inputLados.attribute('disabled', '');
+    sliderRadio.attribute('disabled', '');
+  }
+});
+
 
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
@@ -208,17 +211,15 @@ function iniciarCrecimiento() {
 
 function handleFile(file) {
   if (file.type === 'image' && file.subtype === 'svg') {
-    // Crear un DOM parser para leer el SVG
     let parser = new DOMParser();
     let svgDoc = parser.parseFromString(file.data, "image/svg+xml");
 
-    // Buscar todos los paths en el SVG
     let paths = svgDoc.querySelectorAll('path');
-    points = [];  // Limpiar puntos existentes
+    points = [];
 
     paths.forEach(path => {
       let pathLength = path.getTotalLength();
-      let numSamples = 100;  // Cantidad de puntos por path
+      let numSamples = 100;
 
       for (let i = 0; i < numSamples; i++) {
         let pt = path.getPointAtLength((i / numSamples) * pathLength);
@@ -226,11 +227,38 @@ function handleFile(file) {
       }
     });
 
+    // 🔥 Centrar puntos cargados
+    if (points.length > 0) {
+      let bbox = getBoundingBox(points);
+      let offsetX = width / 2 - (bbox.xMin + bbox.xMax) / 2;
+      let offsetY = height / 2 - (bbox.yMin + bbox.yMax) / 2;
+      for (let p of points) {
+        p.x += offsetX;
+        p.y += offsetY;
+      }
+    }
+
+    iniciado = true;
+    running = true;
     console.log("SVG cargado con " + points.length + " puntos.");
   } else {
     alert("Por favor sube un archivo SVG válido.");
   }
 }
+
+// 🔧 Función auxiliar para calcular bounding box
+function getBoundingBox(pts) {
+  let xMin = pts[0].x, xMax = pts[0].x;
+  let yMin = pts[0].y, yMax = pts[0].y;
+  for (let p of pts) {
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  }
+  return { xMin, xMax, yMin, yMax };
+}
+
 
 
 
