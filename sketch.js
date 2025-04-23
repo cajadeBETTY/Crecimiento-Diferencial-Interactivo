@@ -98,7 +98,7 @@ function setup() {
   btnExportSVG.mousePressed(() => exportarSVG());
 
   // NUEVOS ELEMENTOS
-  formaGenericaSelect = select('#selectFormaGenerica');
+  formaGenericaSelect = select('#formaGenericaSelect');
   inputLados = select('#inputLadosPoligono');
 
   formaGenericaSelect.changed(() => {
@@ -122,6 +122,8 @@ function setup() {
 
   noFill();
 }
+
+
 
 
 function togglePlayPause() {
