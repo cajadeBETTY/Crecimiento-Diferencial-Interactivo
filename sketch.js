@@ -97,25 +97,24 @@ function setup() {
   btnExportPNG.mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   btnExportSVG.mousePressed(() => exportarSVG());
 
-// NUEVOS ELEMENTOS
-formaGenericaSelect = select('#formaGenericaSelect');
-inputLados = select('#inputLadosPoligono');
-sliderRadio = select('#sliderRadio');  // 🔥 Mover esto aquí arriba
+  // NUEVOS ELEMENTOS
+  formaGenericaSelect = select('#formaGenericaSelect');
+  inputLados = select('#inputLadosPoligono');
 
-// Lógica para habilitar/deshabilitar controles
-formaGenericaSelect.changed(() => {
-  if (formaGenericaSelect.value() === 'poligono') {
-    inputLados.removeAttribute('disabled');
-    sliderRadio.removeAttribute('disabled');
-  } else if (formaGenericaSelect.value() === 'circulo') {
-    inputLados.attribute('disabled', '');
-    sliderRadio.removeAttribute('disabled');
-  } else {
-    inputLados.attribute('disabled', '');
-    sliderRadio.attribute('disabled', '');
+  if (formaGenericaSelect && inputLados) {
+    formaGenericaSelect.changed(() => {
+      if (formaGenericaSelect.value() === 'poligono') {
+        inputLados.removeAttribute('disabled');
+        sliderRadio.removeAttribute('disabled');
+      } else if (formaGenericaSelect.value() === 'circulo') {
+        inputLados.attribute('disabled', '');
+        sliderRadio.removeAttribute('disabled');
+      } else {
+        inputLados.attribute('disabled', '');
+        sliderRadio.attribute('disabled', '');
+      }
+    });
   }
-});
-
 
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
