@@ -141,49 +141,28 @@ function togglePlayPause() {
 function iniciarCrecimiento() {
   console.log("Iniciando crecimiento...");
 
-  let cantidad = int(inputPuntos.value());
+  points = []; // Limpiar puntos existentes
+
   let tipoForma = formaGenericaSelect.value();
   radio = float(sliderRadio.value());
+  let cantidad = int(inputPuntos.value());
 
-  points = [];
+  if (tipoForma === 'circulo' || tipoForma === 'poligono') {
+    let lados = (tipoForma === 'poligono') ? int(inputLados.value()) : cantidad;
 
-  if (tipoForma === 'circulo') {
-    for (let i = 0; i < cantidad; i++) {
-      let angle = TWO_PI * i / cantidad;
-      let x = width / 2 + radio * cos(angle);
-      let y = height / 2 + radio * sin(angle);
-      points.push(createVector(x, y));
-    }
-  } else if (tipoForma === 'poligono') {
-    let lados = int(inputLados.value());
     for (let i = 0; i < lados; i++) {
       let angle = TWO_PI * i / lados;
       let x = width / 2 + radio * cos(angle);
       let y = height / 2 + radio * sin(angle);
       points.push(createVector(x, y));
     }
-  } else if (points.length === 0) {
-    alert("Por favor selecciona una forma genérica o sube un SVG.");
-    return;
-  }
 
-  // Aplicar parámetros de ruido y distancias solo si es círculo o polígono
-  if (tipoForma !== 'ninguno') {
+    // Aplicar ruido si corresponde
     let tipoRuido = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
 
-    let minInput = float(inputMinDist.value());
-    let maxInput = float(inputMaxDist.value());
-
-    let circunferencia = TWO_PI * radio;
-    let distInicial = circunferencia / cantidad;
-
-    minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
-    maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
-
-    for (let i = 0; i < points.length; i++) {
-      let p = points[i];
+    for (let p of points) {
       let ruido = createVector(0, 0);
 
       if (tipoRuido === 'perlin') {
@@ -202,6 +181,16 @@ function iniciarCrecimiento() {
 
       p.add(ruido);
     }
+
+    iniciado = true;
+    running = true;
+    return; // Termina aquí si es círculo o polígono
+  }
+
+  // Si no hay puntos cargados (ej. SVG), alerta
+  if (points.length === 0) {
+    alert("Por favor selecciona una forma genérica o sube un SVG.");
+    return;
   }
 
   iniciado = true;
