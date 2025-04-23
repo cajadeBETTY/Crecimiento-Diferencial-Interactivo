@@ -27,15 +27,20 @@ let mostrarNodos = true;
 let historialFormas = [];
 
 let frameHistorial = 0;
-let frecuenciaHistorial = 10;
+let frecuenciaHistorial = 10;  // cada 2 frames
 
 let inputFrecuenciaHistorial;
 let inputMinDist, inputMaxDist;
+
 let inputMaxPoints;
 let btnExportPNG, btnExportSVG;
+let exportandoSVG = false;
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  // === INPUTS numéricos ===
   inputMinDist = select('#inputMinDist');
   inputMaxDist = select('#inputMaxDist');
   inputMaxPoints = select('#inputMaxPoints');
@@ -46,12 +51,14 @@ function setup() {
     frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
   });
 
+  // === RADIO ===
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
   sliderRadio.input(() => {
     radioValorSpan.html(sliderRadio.value());
   });
 
+  // === RUIDO ===
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
   sliderFrecuencia = select('#sliderFrecuencia');
@@ -65,12 +72,14 @@ function setup() {
     valorFrecuenciaSpan.html(sliderFrecuencia.value());
   });
 
+  // === REPULSIÓN ===
   sliderRepulsion = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
   sliderRepulsion.input(() => {
     valorRepulsionSpan.html(sliderRepulsion.value());
   });
 
+  // === VISUALIZACIÓN ===
   tipoVisualSelect = select('#tipoVisual');
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
@@ -91,11 +100,13 @@ function setup() {
     frameHistorial = 0;
   });
 
+  // === BOTONES FUNCIONALES ===
   playPauseBtn = select('#playPauseBtn');
   restartBtn = select('#restartBtn');
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
 
+  // === EXPORTAR ===
   btnExportPNG = select('#btnExportPNG');
   btnExportSVG = select('#btnExportSVG');
 
@@ -123,29 +134,36 @@ function togglePlayPause() {
 function iniciarCrecimiento() {
   let cantidad = int(inputPuntos.value());
   radio = float(sliderRadio.value());
+
   if (isNaN(cantidad) || cantidad < 3 || isNaN(radio) || radio <= 0) {
     alert("Por favor ingresa valores válidos.");
     return;
   }
+
+  // Parámetros de ruido
   let tipo = tipoRuidoSelect.value();
   let amp = float(sliderAmplitud.value());
   let freq = float(sliderFrecuencia.value());
 
+  // Distancia mínima y máxima definidas por el usuario
   let minInput = float(inputMinDist.value());
   let maxInput = float(inputMaxDist.value());
 
   let circunferencia = TWO_PI * radio;
   let distInicial = circunferencia / cantidad;
 
+  // Fallback si no hay valores válidos
   minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
   maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
 
   points = [];
+
   for (let i = 0; i < cantidad; i++) {
     let angle = TWO_PI * i / cantidad;
     let x = width / 2 + radio * cos(angle);
     let y = height / 2 + radio * sin(angle);
 
+    // === Aplicar ruido inicial a la curva base ===
     let ruido = createVector(0, 0);
     if (tipo === 'perlin') {
       let n = noise(x * freq, y * freq);
@@ -170,6 +188,8 @@ function iniciarCrecimiento() {
   iniciado = true;
   running = true;
 }
+
+
 function reiniciarCrecimiento() {
   points = [];
   running = false;
@@ -185,40 +205,56 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
   push();
+
+  // === Aplicar zoom y pan antes de todo ===
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
   maxPoints = int(inputMaxPoints.value());
+
+
   let tipoVisual = tipoVisualSelect.value();
 
+  // === Dibujar historial dentro del mismo espacio ===
   if (mostrarHistorial && historialFormas.length > 0) {
     stroke(180);
     strokeWeight(1 / zoom);
     noFill();
+
     for (let forma of historialFormas) {
       beginShape();
       for (let p of forma) {
-        tipoVisual === 'curva' ? curveVertex(p.x, p.y) : vertex(p.x, p.y);
+        if (tipoVisual === 'curva') {
+          curveVertex(p.x, p.y);
+        } else {
+          vertex(p.x, p.y);
+        }
       }
       if (tipoVisual === 'curva') {
         curveVertex(forma[0].x, forma[0].y);
-        curveVertex(forma[0].x, forma[0].y);
+        curveVertex(forma[1].x, forma[1].y);
       }
       endShape(CLOSE);
     }
   }
 
+  // === Dibujar curva activa ===
   if (points.length > 0) {
     stroke(0);
     strokeWeight(1 / zoom);
     noFill();
+
     beginShape();
     if (tipoVisual === 'curva') {
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[0].x, points[0].y);
-      for (let p of points) curveVertex(p.x, p.y);
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[0].x, points[0].y);
+      let len = points.length;
+curveVertex(points[0].x, points[0].y); // repetir primeros dos
+curveVertex(points[0].x, points[0].y);
+for (let i = 0; i < points.length; i++) {
+  curveVertex(points[i].x, points[i].y);
+}
+curveVertex(points[0].x, points[0].y);
+curveVertex(points[0].x, points[0].y);
+
     } else {
       for (let p of points) vertex(p.x, p.y);
     }
@@ -227,19 +263,57 @@ function draw() {
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      for (let p of points) circle(p.x, p.y, 4 / zoom);
+      for (let p of points) {
+        circle(p.x, p.y, 4 / zoom);
+      }
     }
   }
+
+  // === Previsualización antes de iniciar ===
+  if (!iniciado) {
+    let cantidad = int(inputPuntos.value());
+    let r = float(sliderRadio.value());
+
+    stroke(150);
+    strokeWeight(1 / zoom);
+    noFill();
+
+    beginShape();
+    for (let i = 0; i < cantidad; i++) {
+      let angle = TWO_PI * i / cantidad;
+      let x = width / 2 + r * cos(angle);
+      let y = height / 2 + r * sin(angle);
+      vertex(x, y);
+    }
+    endShape(CLOSE);
+
+    if (mostrarNodos) {
+      fill(0);
+      noStroke();
+      for (let i = 0; i < cantidad; i++) {
+        let angle = TWO_PI * i / cantidad;
+        let x = width / 2 + r * cos(angle);
+        let y = height / 2 + r * sin(angle);
+        circle(x, y, 4 / zoom);
+      }
+    }
+  }
+
   pop();
 
+  // === Fin de dibujado si no corre ===
   if (!running || points.length >= maxPoints) return;
 
+  // === Guardar historial cada X frames ===
   if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
-    historialFormas.push(points.map(p => createVector(p.x, p.y)));
+    let copia = points.map(p => createVector(p.x, p.y));
+    historialFormas.push(copia);
   }
   frameHistorial++;
 
+  // === Algoritmo de crecimiento ===
   let nuevosPuntos = [];
+
   for (let i = 0; i < points.length; i++) {
     let actual = points[i];
     let fuerza = createVector(0, 0);
@@ -251,14 +325,16 @@ function draw() {
         let d = dist(actual.x, actual.y, otro.x, otro.y);
         if (d < minDist) {
           let dir = p5.Vector.sub(actual, otro);
+          let repulsionFactor = float(sliderRepulsion.value());
           dir.normalize();
-          dir.mult(float(sliderRepulsion.value()) / d);
+          dir.mult(repulsionFactor / d);
           fuerza.add(dir);
           cercanos++;
         }
       }
     }
 
+    // === Agregar ruido ===
     let tipo = tipoRuidoSelect.value();
     let amp = float(sliderAmplitud.value());
     let freq = float(sliderFrecuencia.value());
@@ -266,7 +342,8 @@ function draw() {
 
     if (tipo === 'perlin') {
       let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
-      ruido = p5.Vector.fromAngle(n * TWO_PI).mult(amp);
+      let angle = n * TWO_PI;
+      ruido = p5.Vector.fromAngle(angle).mult(amp);
     } else if (tipo === 'perlinImproved') {
       let nx = noise(actual.x * freq, noiseOffset);
       let ny = noise(actual.y * freq, noiseOffset + 1000);
@@ -277,16 +354,136 @@ function draw() {
       ruido = p5.Vector.random2D().mult(amp);
     }
 
-    fuerza = cercanos > 0 ? fuerza.div(cercanos).add(ruido) : ruido.copy();
+    if (cercanos > 0) {
+      fuerza.div(cercanos);
+      fuerza.add(ruido);
+    } else {
+      fuerza = ruido.copy();
+    }
+
     actual.add(fuerza);
     nuevosPuntos.push(actual);
 
     let siguiente = points[(i + 1) % points.length];
-    if (p5.Vector.dist(actual, siguiente) > maxDist) {
-      nuevosPuntos.push(p5.Vector.add(actual, siguiente).div(2));
+    let dNext = p5.Vector.dist(actual, siguiente);
+    if (dNext > maxDist) {
+      let mid = p5.Vector.add(actual, siguiente).div(2);
+      nuevosPuntos.push(mid);
     }
   }
+
   points = nuevosPuntos;
   noiseOffset += 0.01;
 }
 
+function mouseWheel(event) {
+  let zoomSpeed = 0.001;
+  let factor = 1 - event.delta * zoomSpeed;
+  zoom *= factor;
+  return false;
+}
+
+function mousePressed() {
+  if (mouseButton === LEFT) {
+    isDragging = true;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+}
+
+function mouseDragged() {
+  if (isMouseOverUI()) return;
+
+  if (isDragging) {
+    let dx = mouseX - lastMouseX;
+    let dy = mouseY - lastMouseY;
+    offsetX += dx;
+    offsetY += dy;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function isMouseOverUI() {
+  const ui = document.getElementById("ui");
+  const bounds = ui.getBoundingClientRect();
+  return mouseX >= bounds.left && mouseX <= bounds.right &&
+         mouseY >= bounds.top && mouseY <= bounds.bottom;
+}
+
+function exportarSVG() {
+  let w = windowWidth;
+  let h = windowHeight;
+
+  let svgCanvas = createGraphics(w, h, SVG);
+  textFont('sans-serif'); // evita errores en algunos navegadores
+
+  svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
+  svgCanvas.scale(zoom);
+  svgCanvas.translate(-w / 2, -h / 2);
+
+  svgCanvas.strokeWeight(1 / zoom);
+  svgCanvas.noFill();
+
+  const tipoVisual = tipoVisualSelect.value();
+
+  // === Dibujar historial si está activo
+  if (mostrarHistorial && historialFormas.length > 0) {
+    svgCanvas.stroke(180);
+    for (let forma of historialFormas) {
+      svgCanvas.beginShape();
+      for (let p of forma) {
+        if (tipoVisual === 'curva') {
+          svgCanvas.curveVertex(p.x, p.y);
+        } else {
+          svgCanvas.vertex(p.x, p.y);
+        }
+      }
+      if (tipoVisual === 'curva') {
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+      }
+      svgCanvas.endShape(CLOSE);
+    }
+  }
+
+  // === Dibujar curva actual
+  if (points.length > 0) {
+    svgCanvas.stroke(0);
+    svgCanvas.beginShape();
+    if (tipoVisual === 'curva') {
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      for (let i = 0; i < points.length; i++) {
+        svgCanvas.curveVertex(points[i].x, points[i].y);
+      }
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+      svgCanvas.curveVertex(points[0].x, points[0].y);
+    } else {
+      for (let p of points) {
+        svgCanvas.vertex(p.x, p.y);
+      }
+    }
+    svgCanvas.endShape(CLOSE);
+
+    if (mostrarNodos) {
+      svgCanvas.noStroke();
+      svgCanvas.fill(0);
+      for (let p of points) {
+        svgCanvas.circle(p.x, p.y, 4 / zoom);
+      }
+    }
+  }
+
+  // ✅ Cambiar aquí: usar .save() directamente sobre svgCanvas
+  let timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+  svgCanvas.save(crecimiento_diferencial_${timestamp}.svg);
+}
