@@ -427,7 +427,6 @@ function exportarSVG() {
   let h = windowHeight;
   let svgCanvas = createGraphics(w, h, 'svg');
 
-
   const tipoVisual = tipoVisualSelect.value();
 
   if (mostrarHistorial && historialFormas.length > 0) {
@@ -501,6 +500,7 @@ function exportarSVG() {
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
+
 
 function ajustarCoordenadas(p, w, h) {
   let adjX = (p.x - width / 2) * zoom + w / 2;
