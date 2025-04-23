@@ -497,7 +497,7 @@ function exportarSVG() {
 
   // Exportar SVG
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  let rawSVG = svgCanvas.elt.outerHTML;
+  let rawSVG = svgCanvas._renderer.svg;
 
   rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
   rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
