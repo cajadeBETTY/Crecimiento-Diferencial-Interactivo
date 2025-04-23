@@ -427,7 +427,7 @@ function exportarSVG() {
   let w = windowWidth;
   let h = windowHeight;
 
-  let svgCanvas = createGraphics(w, h, SVG);
+  let svgCanvas = createGraphics(w, h, 'svg');  // ✅ Cambiado a 'svg' en minúsculas
   textFont('sans-serif'); // evita errores en algunos navegadores
 
   svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
