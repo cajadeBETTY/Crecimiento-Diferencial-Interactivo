@@ -38,49 +38,37 @@ let exportandoSVG = false;
 
 
 function setup() {
-createCanvas(windowWidth, windowHeight);  // solo raster, sin 'svg'
+  createCanvas(windowWidth, windowHeight);
 
-
-  // === INPUTS numéricos ===
   inputMinDist = select('#inputMinDist');
   inputMaxDist = select('#inputMaxDist');
   inputMaxPoints = select('#inputMaxPoints');
   inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
   inputPuntos = select('#inputPuntos');
 
-  inputFrecuenciaHistorial.input(() => {
-    frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
-  });
+  inputFrecuenciaHistorial.input(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
 
-  // === RADIO ===
+  fileInput = createFileInput(handleFile);
+fileInput.parent('ui');
+
+  
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
-  sliderRadio.input(() => {
-    radioValorSpan.html(sliderRadio.value());
-  });
+  sliderRadio.input(() => radioValorSpan.html(sliderRadio.value()));
 
-  // === RUIDO ===
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
   sliderFrecuencia = select('#sliderFrecuencia');
   valorAmplitudSpan = select('#valorAmplitud');
   valorFrecuenciaSpan = select('#valorFrecuencia');
 
-  sliderAmplitud.input(() => {
-    valorAmplitudSpan.html(sliderAmplitud.value());
-  });
-  sliderFrecuencia.input(() => {
-    valorFrecuenciaSpan.html(sliderFrecuencia.value());
-  });
+  sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
 
-  // === REPULSIÓN ===
   sliderRepulsion = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
-  sliderRepulsion.input(() => {
-    valorRepulsionSpan.html(sliderRepulsion.value());
-  });
+  sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
-  // === VISUALIZACIÓN ===
   tipoVisualSelect = select('#tipoVisual');
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
@@ -90,37 +78,69 @@ createCanvas(windowWidth, windowHeight);  // solo raster, sin 'svg'
     mostrarHistorial = !mostrarHistorial;
     toggleHistorialBtn.html(mostrarHistorial ? "🕘 Ocultar historial" : "🕘 Ver historial");
   });
-
   toggleNodosBtn.mousePressed(() => {
     mostrarNodos = !mostrarNodos;
     toggleNodosBtn.html(mostrarNodos ? "🔘 Ocultar nodos" : "🔘 Mostrar nodos");
   });
-
   clearHistorialBtn.mousePressed(() => {
     historialFormas = [];
     frameHistorial = 0;
   });
 
-  // === BOTONES FUNCIONALES ===
   playPauseBtn = select('#playPauseBtn');
   restartBtn = select('#restartBtn');
   playPauseBtn.mousePressed(togglePlayPause);
   restartBtn.mousePressed(reiniciarCrecimiento);
 
-  // === EXPORTAR ===
   btnExportPNG = select('#btnExportPNG');
   btnExportSVG = select('#btnExportSVG');
+  btnExportPNG.mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
+  btnExportSVG.mousePressed(() => exportarSVG());
 
-  btnExportPNG.mousePressed(() => {
-    saveCanvas('crecimiento_diferencial', 'png');
+  formaGenericaSelect = select('#formaGenerica');
+  inputLados = select('#inputLados');
+  fileInputSVG = select('#fileInputSVG');
+
+  formaGenericaSelect.changed(() => {
+    let tipo = formaGenericaSelect.value();
+    if (tipo === 'circulo') {
+      sliderRadio.removeAttribute('disabled');
+      inputLados.attribute('disabled', '');
+    } else if (tipo === 'poligono') {
+      sliderRadio.removeAttribute('disabled');
+      inputLados.removeAttribute('disabled');
+    } else {
+      sliderRadio.attribute('disabled', '');
+      inputLados.attribute('disabled', '');
+    }
   });
 
-  btnExportSVG.mousePressed(() => {
-    exportarSVG();
+  fileInputSVG.changed(() => {
+    let file = fileInputSVG.elt.files[0];
+    if (file) {
+      let reader = new FileReader();
+      reader.onload = e => {
+        let parser = new DOMParser();
+        let svgDoc = parser.parseFromString(e.target.result, 'image/svg+xml');
+        let path = svgDoc.querySelector('path');
+        if (path) {
+          let length = path.getTotalLength();
+          points = [];
+          for (let i = 0; i < length; i += length / int(inputPuntos.value())) {
+            let pt = path.getPointAtLength(i);
+            points.push(createVector(pt.x, pt.y));
+          }
+          iniciado = true;
+          running = true;
+        }
+      };
+      reader.readAsText(file);
+    }
   });
 
   noFill();
 }
+
 
 function togglePlayPause() {
   if (!iniciado) {
@@ -133,63 +153,99 @@ function togglePlayPause() {
 }
 
 function iniciarCrecimiento() {
-  console.log("Iniciando crecimiento...");  // <-- Depuración
+  console.log("Iniciando crecimiento...");
 
   let cantidad = int(inputPuntos.value());
+  let tipoForma = formaGenericaSelect.value();
   radio = float(sliderRadio.value());
-
-  if (isNaN(cantidad) || cantidad < 3 || isNaN(radio) || radio <= 0) {
-    alert("Por favor ingresa valores válidos.");
-    return;
-  }
-
-  // Parámetros de ruido
-  let tipo = tipoRuidoSelect.value();
-  let amp = float(sliderAmplitud.value());
-  let freq = float(sliderFrecuencia.value());
-
-  // Distancia mínima y máxima definidas por el usuario
-  let minInput = float(inputMinDist.value());
-  let maxInput = float(inputMaxDist.value());
-
-  let circunferencia = TWO_PI * radio;
-  let distInicial = circunferencia / cantidad;
-
-  // Fallback si no hay valores válidos
-  minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
-  maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
 
   points = [];
 
-  for (let i = 0; i < cantidad; i++) {
-    let angle = TWO_PI * i / cantidad;
-    let x = width / 2 + radio * cos(angle);
-    let y = height / 2 + radio * sin(angle);
-
-    // === Aplicar ruido inicial a la curva base ===
-    let ruido = createVector(0, 0);
-    if (tipo === 'perlin') {
-      let n = noise(x * freq, y * freq);
-      let angleOffset = n * TWO_PI;
-      ruido = p5.Vector.fromAngle(angleOffset).mult(amp);
-    } else if (tipo === 'perlinImproved') {
-      let nx = noise(x * freq);
-      let ny = noise(y * freq);
-      ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-    } else if (tipo === 'valor') {
-      ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-    } else if (tipo === 'simple') {
-      ruido = p5.Vector.random2D().mult(amp);
+  if (tipoForma === 'circulo') {
+    for (let i = 0; i < cantidad; i++) {
+      let angle = TWO_PI * i / cantidad;
+      let x = width / 2 + radio * cos(angle);
+      let y = height / 2 + radio * sin(angle);
+      points.push(createVector(x, y));
     }
+  } else if (tipoForma === 'poligono') {
+    let lados = int(inputLados.value());
+    for (let i = 0; i < lados; i++) {
+      let angle = TWO_PI * i / lados;
+      let x = width / 2 + radio * cos(angle);
+      let y = height / 2 + radio * sin(angle);
+      points.push(createVector(x, y));
+    }
+  } else if (points.length === 0) {
+    alert("Por favor selecciona una forma genérica o sube un SVG.");
+    return;
+  }
 
-    x += ruido.x;
-    y += ruido.y;
+  // Aplicar parámetros de ruido y distancias solo si es círculo o polígono
+  if (tipoForma !== 'ninguno') {
+    let tipoRuido = tipoRuidoSelect.value();
+    let amp = float(sliderAmplitud.value());
+    let freq = float(sliderFrecuencia.value());
 
-    points.push(createVector(x, y));
+    let minInput = float(inputMinDist.value());
+    let maxInput = float(inputMaxDist.value());
+
+    let circunferencia = TWO_PI * radio;
+    let distInicial = circunferencia / cantidad;
+
+    minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
+    maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
+
+    for (let i = 0; i < points.length; i++) {
+      let p = points[i];
+      let ruido = createVector(0, 0);
+
+      if (tipoRuido === 'perlin') {
+        let n = noise(p.x * freq, p.y * freq);
+        let angleOffset = n * TWO_PI;
+        ruido = p5.Vector.fromAngle(angleOffset).mult(amp);
+      } else if (tipoRuido === 'perlinImproved') {
+        let nx = noise(p.x * freq);
+        let ny = noise(p.y * freq);
+        ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+      } else if (tipoRuido === 'valor') {
+        ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+      } else if (tipoRuido === 'simple') {
+        ruido = p5.Vector.random2D().mult(amp);
+      }
+
+      p.add(ruido);
+    }
   }
 
   iniciado = true;
   running = true;
+}
+
+function handleFile(file) {
+  if (file.type === 'image' && file.subtype === 'svg') {
+    // Crear un DOM parser para leer el SVG
+    let parser = new DOMParser();
+    let svgDoc = parser.parseFromString(file.data, "image/svg+xml");
+
+    // Buscar todos los paths en el SVG
+    let paths = svgDoc.querySelectorAll('path');
+    points = [];  // Limpiar puntos existentes
+
+    paths.forEach(path => {
+      let pathLength = path.getTotalLength();
+      let numSamples = 100;  // Cantidad de puntos por path
+
+      for (let i = 0; i < numSamples; i++) {
+        let pt = path.getPointAtLength((i / numSamples) * pathLength);
+        points.push(createVector(pt.x, pt.y));
+      }
+    });
+
+    console.log("SVG cargado con " + points.length + " puntos.");
+  } else {
+    alert("Por favor sube un archivo SVG válido.");
+  }
 }
 
 
