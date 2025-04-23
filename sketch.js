@@ -498,7 +498,19 @@ function exportarSVG() {
   svgCanvas.rect(50, 50, 100, 100);
 
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
+  let rawSVG = svgCanvas._renderer.svg;
+  // Insertar atributos de stroke y stroke-width manualmente
+  rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
+  rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
+
+  // Descargar SVG corregido
+  let blob = new Blob([rawSVG], { type: 'image/svg+xml' });
+  let url = URL.createObjectURL(blob);
+  let link = createA(url, `crecimiento_diferencial_${timestamp}.svg`);
+  link.attribute('download', `crecimiento_diferencial_${timestamp}.svg`);
+  link.hide();
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 
