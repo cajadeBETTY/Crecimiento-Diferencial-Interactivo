@@ -498,8 +498,7 @@ function exportarSVG() {
   svgCanvas.rect(50, 50, 100, 100);
 
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-let rawSVG = svgCanvas.elt.outerHTML;
-
+  let rawSVG = svgCanvas._renderer.drawing.innerHTML;
   // Insertar atributos de stroke y stroke-width manualmente
   rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
   rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
@@ -513,6 +512,7 @@ let rawSVG = svgCanvas.elt.outerHTML;
   link.click();
   URL.revokeObjectURL(url);
 }
+
 
 
 function ajustarCoordenadas(p, w, h) {
