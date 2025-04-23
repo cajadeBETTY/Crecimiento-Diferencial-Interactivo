@@ -251,30 +251,44 @@ function reiniciarCrecimiento() {
 }
 
 
-
 function draw() {
-
-  if (!running && !exportandoSVG) return; // solo dibuja si está corriendo o exportando
-
   background(255);
   push();
-
-
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
-  
-  maxPoints = int(inputMaxPoints.value());
-
 
   let tipoVisual = tipoVisualSelect.value();
+
+  // === Previsualización antes de iniciar ===
+  if (!iniciado) {
+    if (points.length > 0) {  // 🔥 Mostrar SVG o forma cargada
+      stroke(150);
+      strokeWeight(1 / zoom);
+      noFill();
+      beginShape();
+      for (let p of points) {
+        vertex(p.x, p.y);
+      }
+      endShape(CLOSE);
+
+      if (mostrarNodos) {
+        fill(0);
+        noStroke();
+        for (let p of points) {
+          circle(p.x, p.y, 4 / zoom);
+        }
+      }
+    }
+    pop();
+    return;  // 🔥 Salir para evitar el resto de draw()
+  }
 
   // === Dibujar historial dentro del mismo espacio ===
   if (mostrarHistorial && historialFormas.length > 0) {
     stroke(180);
     strokeWeight(1 / zoom);
     noFill();
-
     for (let forma of historialFormas) {
       beginShape();
       for (let p of forma) {
@@ -292,144 +306,102 @@ function draw() {
     }
   }
 
-// === Dibujar curva activa ===
-if (points.length > 0) {
-  stroke(0);
-  strokeWeight(1 / zoom);
-  noFill();
-
-  beginShape();
-  if (tipoVisual === 'curva') {
-    let len = points.length;
-    // 🔥 Corrección aquí:
-    curveVertex(points[len - 1].x, points[len - 1].y);  // Repetir último punto al inicio
-    curveVertex(points[0].x, points[0].y);              // Repetir primero
-    for (let i = 0; i < len; i++) {
-      curveVertex(points[i].x, points[i].y);
-    }
-    curveVertex(points[0].x, points[0].y);              // Repetir primero
-    curveVertex(points[1].x, points[1].y);              // Repetir segundo para suavizar
-  } else {
-    for (let p of points) vertex(p.x, p.y);
-  }
-  endShape(CLOSE);
-
-  if (mostrarNodos) {
-    fill(0);
-    noStroke();
-    for (let p of points) {
-      circle(p.x, p.y, 4 / zoom);
-    }
-  }
-}
-
-
-  // === Previsualización antes de iniciar ===
-  if (!iniciado) {
-    let cantidad = int(inputPuntos.value());
-    let r = float(sliderRadio.value());
-
-    stroke(150);
+  // === Dibujar curva activa ===
+  if (points.length > 0) {
+    stroke(0);
     strokeWeight(1 / zoom);
     noFill();
-
     beginShape();
-    for (let i = 0; i < cantidad; i++) {
-      let angle = TWO_PI * i / cantidad;
-      let x = width / 2 + r * cos(angle);
-      let y = height / 2 + r * sin(angle);
-      vertex(x, y);
+    if (tipoVisual === 'curva') {
+      let len = points.length;
+      curveVertex(points[len - 1].x, points[len - 1].y);
+      curveVertex(points[0].x, points[0].y);
+      for (let i = 0; i < len; i++) {
+        curveVertex(points[i].x, points[i].y);
+      }
+      curveVertex(points[0].x, points[0].y);
+      curveVertex(points[1].x, points[1].y);
+    } else {
+      for (let p of points) vertex(p.x, p.y);
     }
     endShape(CLOSE);
 
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      for (let i = 0; i < cantidad; i++) {
-        let angle = TWO_PI * i / cantidad;
-        let x = width / 2 + r * cos(angle);
-        let y = height / 2 + r * sin(angle);
-        circle(x, y, 4 / zoom);
+      for (let p of points) {
+        circle(p.x, p.y, 4 / zoom);
       }
     }
   }
-
   pop();
 
-  // === Fin de dibujado si no corre ===
-  if (!running || points.length >= maxPoints) return;
-
-  // === Guardar historial cada X frames ===
-  if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
-    let copia = points.map(p => createVector(p.x, p.y));
-    historialFormas.push(copia);
-  }
-  frameHistorial++;
-
   // === Algoritmo de crecimiento ===
-  let nuevosPuntos = [];
+  if (iniciado && running && points.length < maxPoints) {
+    if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
+      let copia = points.map(p => createVector(p.x, p.y));
+      historialFormas.push(copia);
+    }
+    frameHistorial++;
 
-  for (let i = 0; i < points.length; i++) {
-    let actual = points[i];
-    let fuerza = createVector(0, 0);
-    let cercanos = 0;
+    let nuevosPuntos = [];
+    for (let i = 0; i < points.length; i++) {
+      let actual = points[i];
+      let fuerza = createVector(0, 0);
+      let cercanos = 0;
 
-    for (let j = 0; j < points.length; j++) {
-      if (i !== j) {
-        let otro = points[j];
-        let d = dist(actual.x, actual.y, otro.x, otro.y);
-        if (d < minDist) {
-          let dir = p5.Vector.sub(actual, otro);
-          let repulsionFactor = float(sliderRepulsion.value());
-          dir.normalize();
-          dir.mult(repulsionFactor / d);
-          fuerza.add(dir);
-          cercanos++;
+      for (let j = 0; j < points.length; j++) {
+        if (i !== j) {
+          let otro = points[j];
+          let d = dist(actual.x, actual.y, otro.x, otro.y);
+          if (d < minDist) {
+            let dir = p5.Vector.sub(actual, otro);
+            dir.normalize();
+            dir.mult(float(sliderRepulsion.value()) / d);
+            fuerza.add(dir);
+            cercanos++;
+          }
         }
+      }
+
+      let ruido = createVector(0, 0);
+      let tipo = tipoRuidoSelect.value();
+      let amp = float(sliderAmplitud.value());
+      let freq = float(sliderFrecuencia.value());
+
+      if (tipo === 'perlin') {
+        let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
+        ruido = p5.Vector.fromAngle(n * TWO_PI).mult(amp);
+      } else if (tipo === 'perlinImproved') {
+        let nx = noise(actual.x * freq, noiseOffset);
+        let ny = noise(actual.y * freq, noiseOffset + 1000);
+        ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+      } else if (tipo === 'valor') {
+        ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+      } else if (tipo === 'simple') {
+        ruido = p5.Vector.random2D().mult(amp);
+      }
+
+      if (cercanos > 0) {
+        fuerza.div(cercanos).add(ruido);
+      } else {
+        fuerza = ruido.copy();
+      }
+
+      actual.add(fuerza);
+      nuevosPuntos.push(actual);
+
+      let siguiente = points[(i + 1) % points.length];
+      if (dist(actual.x, actual.y, siguiente.x, siguiente.y) > maxDist) {
+        nuevosPuntos.push(p5.Vector.add(actual, siguiente).div(2));
       }
     }
 
-    // === Agregar ruido ===
-    let tipo = tipoRuidoSelect.value();
-    let amp = float(sliderAmplitud.value());
-    let freq = float(sliderFrecuencia.value());
-    let ruido = createVector(0, 0);
-
-    if (tipo === 'perlin') {
-      let n = noise(actual.x * freq, actual.y * freq + noiseOffset);
-      let angle = n * TWO_PI;
-      ruido = p5.Vector.fromAngle(angle).mult(amp);
-    } else if (tipo === 'perlinImproved') {
-      let nx = noise(actual.x * freq, noiseOffset);
-      let ny = noise(actual.y * freq, noiseOffset + 1000);
-      ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-    } else if (tipo === 'valor') {
-      ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-    } else if (tipo === 'simple') {
-      ruido = p5.Vector.random2D().mult(amp);
-    }
-
-    if (cercanos > 0) {
-      fuerza.div(cercanos);
-      fuerza.add(ruido);
-    } else {
-      fuerza = ruido.copy();
-    }
-
-    actual.add(fuerza);
-    nuevosPuntos.push(actual);
-
-    let siguiente = points[(i + 1) % points.length];
-    let dNext = p5.Vector.dist(actual, siguiente);
-    if (dNext > maxDist) {
-      let mid = p5.Vector.add(actual, siguiente).div(2);
-      nuevosPuntos.push(mid);
-    }
+    points = nuevosPuntos;
+    noiseOffset += 0.01;
   }
-
-  points = nuevosPuntos;
-  noiseOffset += 0.01;
 }
+
 
 function mouseWheel(event) {
   let zoomSpeed = 0.001;
