@@ -428,7 +428,6 @@ function exportarSVG() {
   let svgCanvas = createGraphics(w, h, 'svg');
 
 svgCanvas.stroke(255, 0, 0);
-svgCanvas._renderer.handle.style.strokeWidth = 2;
 svgCanvas.noFill();
 svgCanvas.rect(50, 50, 100, 100);
 
