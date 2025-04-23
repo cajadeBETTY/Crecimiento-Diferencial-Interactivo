@@ -425,7 +425,8 @@ function isMouseOverUI() {
 function exportarSVG() {
   let w = windowWidth;
   let h = windowHeight;
-  let svgCanvas = createGraphics(w, h, SVG);
+  let svgCanvas = createGraphics(w, h, 'svg');
+
 
   const tipoVisual = tipoVisualSelect.value();
 
