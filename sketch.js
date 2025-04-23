@@ -424,41 +424,16 @@ function isMouseOverUI() {
 }
 
 function exportarSVG() {
-
- // Check if svgCanvas and its renderer are available
-  if (svgCanvas && svgCanvas._renderer && svgCanvas._renderer.drawing) {
-    // Rectángulo de prueba (si quieres verificar visibilidad)
-    svgCanvas.stroke(255, 0, 0);
-    svgCanvas.noFill();
-    svgCanvas.rect(50, 50, 100, 100);
-
-    let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-    let rawSVG = svgCanvas._renderer.drawing.innerHTML;
-    // Insertar atributos de stroke y stroke-width manualmente
-    rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
-    rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
-
-    // Descargar SVG corregido
-    let blob = new Blob([rawSVG], { type: 'image/svg+xml' });
-    let url = URL.createObjectURL(blob);
-    let link = createA(url, `crecimiento_diferencial_${timestamp}.svg`);
-    link.attribute('download', `crecimiento_diferencial_${timestamp}.svg`);
-  } else {
-    console.error('svgCanvas or its renderer is not yet available.');
-  }
-}
   let w = windowWidth;
   let h = windowHeight;
   let svgCanvas = createGraphics(w, h, 'svg');
 
-
-  svgCanvas.stroke(0);
-  svgCanvas.strokeWeight ? svgCanvas.strokeWeight(1) : null; // fallback compatible
-  svgCanvas.noFill();
-
   const tipoVisual = tipoVisualSelect.value();
 
+  // Dibujar historial
   if (mostrarHistorial && historialFormas.length > 0) {
+    svgCanvas.stroke(0);
+    svgCanvas.noFill();
     for (let forma of historialFormas) {
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
@@ -484,7 +459,10 @@ function exportarSVG() {
     }
   }
 
+  // Dibujar puntos actuales
   if (points.length > 0) {
+    svgCanvas.stroke(0);
+    svgCanvas.noFill();
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
@@ -517,18 +495,12 @@ function exportarSVG() {
     }
   }
 
-  // Rectángulo de prueba (si quieres verificar visibilidad)
-  svgCanvas.stroke(255, 0, 0);
-  svgCanvas.noFill();
-  svgCanvas.rect(50, 50, 100, 100);
-
+  // Exportar SVG
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   let rawSVG = svgCanvas._renderer.drawing.innerHTML;
-  // Insertar atributos de stroke y stroke-width manualmente
   rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
   rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
 
-  // Descargar SVG corregido
   let blob = new Blob([rawSVG], { type: 'image/svg+xml' });
   let url = URL.createObjectURL(blob);
   let link = createA(url, `crecimiento_diferencial_${timestamp}.svg`);
@@ -537,8 +509,6 @@ function exportarSVG() {
   link.click();
   URL.revokeObjectURL(url);
 }
-
-
 
 function ajustarCoordenadas(p, w, h) {
   let adjX = (p.x - width / 2) * zoom + w / 2;
