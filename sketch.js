@@ -427,14 +427,10 @@ function exportarSVG() {
   let w = windowWidth;
   let h = windowHeight;
 
-  let svgCanvas = createGraphics(w, h, 'svg');  // ✅ Cambiado a 'svg' en minúsculas
-  textFont('sans-serif'); // evita errores en algunos navegadores
+  let svgCanvas = createGraphics(w, h, 'svg');  // ✅ Renderer SVG básico
+  textFont('sans-serif');  // Evita errores en navegadores
 
-  svgCanvas.translate(w / 2 + offsetX, h / 2 + offsetY);
-  svgCanvas.scale(zoom);
-  svgCanvas.translate(-w / 2, -h / 2);
-
-  svgCanvas.strokeWeight(1 / zoom);
+  svgCanvas.strokeWeight(1);
   svgCanvas.noFill();
 
   const tipoVisual = tipoVisualSelect.value();
@@ -446,16 +442,21 @@ function exportarSVG() {
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
         let len = forma.length;
-        svgCanvas.curveVertex(forma[len - 1].x, forma[len - 1].y);
-        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+        let p0 = ajustarCoordenadas(forma[len - 1], w, h);
+        svgCanvas.curveVertex(p0.x, p0.y);
+        let p1 = ajustarCoordenadas(forma[0], w, h);
+        svgCanvas.curveVertex(p1.x, p1.y);
         for (let p of forma) {
-          svgCanvas.curveVertex(p.x, p.y);
+          let adj = ajustarCoordenadas(p, w, h);
+          svgCanvas.curveVertex(adj.x, adj.y);
         }
-        svgCanvas.curveVertex(forma[0].x, forma[0].y);
-        svgCanvas.curveVertex(forma[1].x, forma[1].y);
+        svgCanvas.curveVertex(p1.x, p1.y);
+        let p2 = ajustarCoordenadas(forma[1], w, h);
+        svgCanvas.curveVertex(p2.x, p2.y);
       } else {
         for (let p of forma) {
-          svgCanvas.vertex(p.x, p.y);
+          let adj = ajustarCoordenadas(p, w, h);
+          svgCanvas.vertex(adj.x, adj.y);
         }
       }
       svgCanvas.endShape(CLOSE);
@@ -468,16 +469,21 @@ function exportarSVG() {
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
-      svgCanvas.curveVertex(points[len - 1].x, points[len - 1].y);  // Último punto al inicio
-      svgCanvas.curveVertex(points[0].x, points[0].y);              // Primero
+      let p0 = ajustarCoordenadas(points[len - 1], w, h);
+      svgCanvas.curveVertex(p0.x, p0.y);
+      let p1 = ajustarCoordenadas(points[0], w, h);
+      svgCanvas.curveVertex(p1.x, p1.y);
       for (let i = 0; i < len; i++) {
-        svgCanvas.curveVertex(points[i].x, points[i].y);
+        let adj = ajustarCoordenadas(points[i], w, h);
+        svgCanvas.curveVertex(adj.x, adj.y);
       }
-      svgCanvas.curveVertex(points[0].x, points[0].y);              // Primero otra vez
-      svgCanvas.curveVertex(points[1].x, points[1].y);              // Segundo punto
+      svgCanvas.curveVertex(p1.x, p1.y);
+      let p2 = ajustarCoordenadas(points[1], w, h);
+      svgCanvas.curveVertex(p2.x, p2.y);
     } else {
       for (let p of points) {
-        svgCanvas.vertex(p.x, p.y);
+        let adj = ajustarCoordenadas(p, w, h);
+        svgCanvas.vertex(adj.x, adj.y);
       }
     }
     svgCanvas.endShape(CLOSE);
@@ -486,7 +492,8 @@ function exportarSVG() {
       svgCanvas.noStroke();
       svgCanvas.fill(0);
       for (let p of points) {
-        svgCanvas.circle(p.x, p.y, 4 / zoom);
+        let adj = ajustarCoordenadas(p, w, h);
+        svgCanvas.circle(adj.x, adj.y, 4);
       }
     }
   }
@@ -494,4 +501,11 @@ function exportarSVG() {
   // ✅ Guardar SVG con nombre y timestamp
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
+}
+
+// 🔧 Función auxiliar para ajustar coordenadas con zoom y offset
+function ajustarCoordenadas(p, w, h) {
+  let adjX = (p.x + offsetX - width / 2) * zoom + w / 2;
+  let adjY = (p.y + offsetY - height / 2) * zoom + h / 2;
+  return createVector(adjX, adjY);
 }
