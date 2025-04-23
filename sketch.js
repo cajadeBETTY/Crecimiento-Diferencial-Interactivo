@@ -427,12 +427,14 @@ function exportarSVG() {
   let h = windowHeight;
   let svgCanvas = createGraphics(w, h, 'svg');
 
+  svgCanvas.stroke(0);
+  svgCanvas.strokeWeight ? svgCanvas.strokeWeight(1) : null; // fallback compatible
+  svgCanvas.noFill();
+
   const tipoVisual = tipoVisualSelect.value();
 
   if (mostrarHistorial && historialFormas.length > 0) {
     for (let forma of historialFormas) {
-      svgCanvas.stroke(180);
-      svgCanvas.noFill();
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
         let len = forma.length;
@@ -458,8 +460,6 @@ function exportarSVG() {
   }
 
   if (points.length > 0) {
-    svgCanvas.stroke(0);
-    svgCanvas.noFill();
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
@@ -492,7 +492,7 @@ function exportarSVG() {
     }
   }
 
-  // 🔴 Rectángulo de prueba
+  // Rectángulo de prueba (si quieres verificar visibilidad)
   svgCanvas.stroke(255, 0, 0);
   svgCanvas.noFill();
   svgCanvas.rect(50, 50, 100, 100);
