@@ -427,17 +427,12 @@ function exportarSVG() {
   let h = windowHeight;
   let svgCanvas = createGraphics(w, h, 'svg');
 
-svgCanvas.stroke(255, 0, 0);
-svgCanvas.noFill();
-svgCanvas.rect(50, 50, 100, 100);
-
-
   const tipoVisual = tipoVisualSelect.value();
 
   if (mostrarHistorial && historialFormas.length > 0) {
     for (let forma of historialFormas) {
       svgCanvas.stroke(180);
-      svgCanvas._renderer.handle.style.strokeWidth = 1;
+      svgCanvas.strokeWeight(1);
       svgCanvas.noFill();
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
@@ -465,7 +460,7 @@ svgCanvas.rect(50, 50, 100, 100);
 
   if (points.length > 0) {
     svgCanvas.stroke(0);
-    svgCanvas._renderer.handle.style.strokeWidth = 1;
+    svgCanvas.strokeWeight(1);
     svgCanvas.noFill();
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
@@ -493,21 +488,25 @@ svgCanvas.rect(50, 50, 100, 100);
       for (let p of points) {
         let adj = ajustarCoordenadas(p, w, h);
         svgCanvas.stroke(0);
-        svgCanvas._renderer.handle.style.strokeWidth = 1;
+        svgCanvas.strokeWeight(1);
         svgCanvas.fill(0);
         svgCanvas.circle(adj.x, adj.y, 4);
       }
     }
   }
 
+  // 🔴 Rectángulo de prueba
+  svgCanvas.stroke(255, 0, 0);
+  svgCanvas.strokeWeight(2);
+  svgCanvas.noFill();
+  svgCanvas.rect(50, 50, 100, 100);
+
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
 
 function ajustarCoordenadas(p, w, h) {
-  // Centrar al medio del SVG manualmente
   let adjX = (p.x - width / 2) * zoom + w / 2;
   let adjY = (p.y - height / 2) * zoom + h / 2;
   return createVector(adjX, adjY);
 }
-
