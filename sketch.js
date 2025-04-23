@@ -425,7 +425,7 @@ function isMouseOverUI() {
 
 function exportarSVG() {
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  beginRecordSVG(`crecimiento_diferencial_${timestamp}.svg`);
+  beginRecordSVG(this, `crecimiento_diferencial_${timestamp}.svg`);
 
   const tipoVisual = tipoVisualSelect.value();
 
