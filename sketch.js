@@ -116,21 +116,6 @@ formaGenericaSelect.elt.addEventListener('change', () => {
   redraw();
 });
 
-  if (formaGenericaSelect && inputLados) {
-    formaGenericaSelect.changed(() => {
-      if (formaGenericaSelect.value() === 'poligono') {
-        inputLados.removeAttribute('disabled');
-        sliderRadio.removeAttribute('disabled');
-      } else if (formaGenericaSelect.value() === 'circulo') {
-        inputLados.attribute('disabled', '');
-        sliderRadio.removeAttribute('disabled');
-      } else {
-        inputLados.attribute('disabled', '');
-        sliderRadio.attribute('disabled', '');
-      }
-    });
-  }
-
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
   fileInputSVG.hide();
@@ -217,25 +202,6 @@ function iniciarCrecimiento() {
     alert("Por favor selecciona una forma genérica o sube un SVG.");
   }
 }
-
-// Activar crecimiento automático al seleccionar forma
-document.getElementById('formaGenericaSelect').addEventListener('change', () => {
-  iniciarCrecimiento();
-  redraw(); // 🔧 Forzar el dibujo inicial sin movimiento
-});
-
-// Activar/desactivar campo de lados del polígono
-document.getElementById('formaGenericaSelect').addEventListener('change', () => {
-  let tipo = formaGenericaSelect.value();
-  if (tipo === 'circulo') {
-    inputLados.attribute('disabled', '');
-  } else if (tipo === 'poligono') {
-    inputLados.removeAttribute('disabled');
-  } else {
-    inputLados.attribute('disabled', '');
-  }
-});
-
 
 function reiniciarCrecimiento() {
   running = false;
