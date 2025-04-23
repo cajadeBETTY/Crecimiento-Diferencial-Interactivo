@@ -425,14 +425,13 @@ function isMouseOverUI() {
 function exportarSVG() {
   let w = windowWidth;
   let h = windowHeight;
-  let svgCanvas = createGraphics(w, h, 'svg');
+  let svgCanvas = createGraphics(w, h, SVG);
 
   const tipoVisual = tipoVisualSelect.value();
 
   if (mostrarHistorial && historialFormas.length > 0) {
     for (let forma of historialFormas) {
       svgCanvas.stroke(180);
-      svgCanvas.strokeWeight(1);
       svgCanvas.noFill();
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
@@ -460,7 +459,6 @@ function exportarSVG() {
 
   if (points.length > 0) {
     svgCanvas.stroke(0);
-    svgCanvas.strokeWeight(1);
     svgCanvas.noFill();
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
@@ -488,16 +486,14 @@ function exportarSVG() {
       for (let p of points) {
         let adj = ajustarCoordenadas(p, w, h);
         svgCanvas.stroke(0);
-        svgCanvas.strokeWeight(1);
         svgCanvas.fill(0);
-        svgCanvas.circle(adj.x, adj.y, 4);
+        svgCanvas.ellipse(adj.x, adj.y, 4, 4);
       }
     }
   }
 
   // 🔴 Rectángulo de prueba
   svgCanvas.stroke(255, 0, 0);
-  svgCanvas.strokeWeight(2);
   svgCanvas.noFill();
   svgCanvas.rect(50, 50, 100, 100);
 
