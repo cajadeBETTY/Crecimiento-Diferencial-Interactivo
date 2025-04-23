@@ -127,7 +127,6 @@ function setup() {
 
 
 
-
 function togglePlayPause() {
   if (!iniciado) {
     iniciarCrecimiento();
@@ -138,6 +137,8 @@ function togglePlayPause() {
   }
 }
 
+
+
 function iniciarCrecimiento() {
   console.log("Iniciando crecimiento...");
 
@@ -146,6 +147,8 @@ function iniciarCrecimiento() {
   let tipoForma = formaGenericaSelect.value();
   radio = float(sliderRadio.value());
   let cantidad = int(inputPuntos.value());
+
+  console.log("Tipo forma:", tipoForma, "Radio:", radio, "Cantidad:", cantidad);
 
   if (tipoForma === 'circulo' || tipoForma === 'poligono') {
     let lados = (tipoForma === 'poligono') ? int(inputLados.value()) : cantidad;
@@ -156,6 +159,8 @@ function iniciarCrecimiento() {
       let y = height / 2 + radio * sin(angle);
       points.push(createVector(x, y));
     }
+
+    console.log("Puntos generados:", points.length);
 
     // Aplicar ruido si corresponde
     let tipoRuido = tipoRuidoSelect.value();
@@ -196,6 +201,7 @@ function iniciarCrecimiento() {
   iniciado = true;
   running = true;
 }
+
 
 function handleFile(file) {
   if (file.type === 'image' && file.subtype === 'svg') {
