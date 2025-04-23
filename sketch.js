@@ -40,6 +40,7 @@ let exportandoSVG = false;
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // === INPUTS numéricos ===
   inputMinDist = select('#inputMinDist');
   inputMaxDist = select('#inputMaxDist');
   inputMaxPoints = select('#inputMaxPoints');
@@ -48,10 +49,6 @@ function setup() {
 
   inputFrecuenciaHistorial.input(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
 
-  fileInput = createFileInput(handleFile);
-fileInput.parent('ui');
-
-  
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
   sliderRadio.input(() => radioValorSpan.html(sliderRadio.value()));
@@ -78,10 +75,12 @@ fileInput.parent('ui');
     mostrarHistorial = !mostrarHistorial;
     toggleHistorialBtn.html(mostrarHistorial ? "🕘 Ocultar historial" : "🕘 Ver historial");
   });
+
   toggleNodosBtn.mousePressed(() => {
     mostrarNodos = !mostrarNodos;
     toggleNodosBtn.html(mostrarNodos ? "🔘 Ocultar nodos" : "🔘 Mostrar nodos");
   });
+
   clearHistorialBtn.mousePressed(() => {
     historialFormas = [];
     frameHistorial = 0;
@@ -94,49 +93,32 @@ fileInput.parent('ui');
 
   btnExportPNG = select('#btnExportPNG');
   btnExportSVG = select('#btnExportSVG');
+
   btnExportPNG.mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   btnExportSVG.mousePressed(() => exportarSVG());
 
-  formaGenericaSelect = select('#formaGenerica');
-  inputLados = select('#inputLados');
-  fileInputSVG = select('#fileInputSVG');
+  // NUEVOS ELEMENTOS
+  formaGenericaSelect = select('#selectFormaGenerica');
+  inputLados = select('#inputLadosPoligono');
 
   formaGenericaSelect.changed(() => {
-    let tipo = formaGenericaSelect.value();
-    if (tipo === 'circulo') {
-      sliderRadio.removeAttribute('disabled');
-      inputLados.attribute('disabled', '');
-    } else if (tipo === 'poligono') {
-      sliderRadio.removeAttribute('disabled');
+    if (formaGenericaSelect.value() === 'poligono') {
       inputLados.removeAttribute('disabled');
-    } else {
-      sliderRadio.attribute('disabled', '');
+      sliderRadio.removeAttribute('disabled');
+    } else if (formaGenericaSelect.value() === 'circulo') {
       inputLados.attribute('disabled', '');
+      sliderRadio.removeAttribute('disabled');
+    } else {
+      inputLados.attribute('disabled', '');
+      sliderRadio.attribute('disabled', '');
     }
   });
 
-  fileInputSVG.changed(() => {
-    let file = fileInputSVG.elt.files[0];
-    if (file) {
-      let reader = new FileReader();
-      reader.onload = e => {
-        let parser = new DOMParser();
-        let svgDoc = parser.parseFromString(e.target.result, 'image/svg+xml');
-        let path = svgDoc.querySelector('path');
-        if (path) {
-          let length = path.getTotalLength();
-          points = [];
-          for (let i = 0; i < length; i += length / int(inputPuntos.value())) {
-            let pt = path.getPointAtLength(i);
-            points.push(createVector(pt.x, pt.y));
-          }
-          iniciado = true;
-          running = true;
-        }
-      };
-      reader.readAsText(file);
-    }
-  });
+  fileInputSVG = createFileInput(handleFile);
+  fileInputSVG.parent('ui');
+  fileInputSVG.hide();
+
+  select('#btnSubirSVG').mousePressed(() => fileInputSVG.elt.click());
 
   noFill();
 }
