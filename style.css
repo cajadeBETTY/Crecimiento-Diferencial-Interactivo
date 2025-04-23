@@ -13,17 +13,24 @@ canvas {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  padding: 10px 15px;
+  max-height: 95vh;
+  overflow-y: auto;
+  max-width: 300px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  font-size: 12px;
 }
 
 #ui input,
+#ui select,
 #ui button {
+  width: 100%;
   margin-top: 5px;
   margin-bottom: 5px;
-  font-size: 14px;
+  font-size: 12px;
+  box-sizing: border-box;
 }
 
 .titulo-seccion {
@@ -34,4 +41,3 @@ canvas {
   margin: -8px -12px 8px -12px;
   border-radius: 4px;
 }
-
