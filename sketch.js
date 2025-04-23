@@ -1,6 +1,6 @@
 let points = [];
 let running = false;
-let maxPoints = 1000;
+let maxPoints = 2000;
 let inputPuntos, sliderRadio, radioValorSpan;
 let playPauseBtn, restartBtn;
 let radio = 96;
@@ -208,11 +208,10 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
   push();
-
-  // === Aplicar zoom y pan antes de todo ===
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
+  
   maxPoints = int(inputMaxPoints.value());
 
 
@@ -426,19 +425,15 @@ function isMouseOverUI() {
 function exportarSVG() {
   let w = windowWidth;
   let h = windowHeight;
-
-  let svgCanvas = createGraphics(w, h, 'svg');  // ✅ Renderer SVG básico
-  textFont('sans-serif');  // Evita errores en navegadores
-
-  svgCanvas.strokeWeight(1);
-  svgCanvas.noFill();
+  let svgCanvas = createGraphics(w, h, 'svg');
 
   const tipoVisual = tipoVisualSelect.value();
 
-  // === Dibujar historial si está activo
   if (mostrarHistorial && historialFormas.length > 0) {
-    svgCanvas.stroke(180);
     for (let forma of historialFormas) {
+      svgCanvas.stroke(180);
+      svgCanvas._renderer.handle.style.strokeWidth = 1;
+      svgCanvas.noFill();
       svgCanvas.beginShape();
       if (tipoVisual === 'curva') {
         let len = forma.length;
@@ -463,9 +458,10 @@ function exportarSVG() {
     }
   }
 
-  // === Dibujar curva actual
   if (points.length > 0) {
     svgCanvas.stroke(0);
+    svgCanvas._renderer.handle.style.strokeWidth = 1;
+    svgCanvas.noFill();
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
@@ -489,21 +485,20 @@ function exportarSVG() {
     svgCanvas.endShape(CLOSE);
 
     if (mostrarNodos) {
-      svgCanvas.noStroke();
-      svgCanvas.fill(0);
       for (let p of points) {
         let adj = ajustarCoordenadas(p, w, h);
+        svgCanvas.stroke(0);
+        svgCanvas._renderer.handle.style.strokeWidth = 1;
+        svgCanvas.fill(0);
         svgCanvas.circle(adj.x, adj.y, 4);
       }
     }
   }
 
-  // ✅ Guardar SVG con nombre y timestamp
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
 
-// 🔧 Función auxiliar para ajustar coordenadas con zoom y offset
 function ajustarCoordenadas(p, w, h) {
   let adjX = (p.x + offsetX - width / 2) * zoom + w / 2;
   let adjY = (p.y + offsetY - height / 2) * zoom + h / 2;
