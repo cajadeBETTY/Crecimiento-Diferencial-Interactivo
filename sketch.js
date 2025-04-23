@@ -241,36 +241,37 @@ function draw() {
     }
   }
 
-  // === Dibujar curva activa ===
-  if (points.length > 0) {
-    stroke(0);
-    strokeWeight(1 / zoom);
-    noFill();
+// === Dibujar curva activa ===
+if (points.length > 0) {
+  stroke(0);
+  strokeWeight(1 / zoom);
+  noFill();
 
-    beginShape();
-    if (tipoVisual === 'curva') {
-      let len = points.length;
-curveVertex(points[0].x, points[0].y); // repetir primeros dos
-curveVertex(points[0].x, points[0].y);
-for (let i = 0; i < points.length; i++) {
-  curveVertex(points[i].x, points[i].y);
-}
-curveVertex(points[0].x, points[0].y);
-curveVertex(points[0].x, points[0].y);
-
-    } else {
-      for (let p of points) vertex(p.x, p.y);
+  beginShape();
+  if (tipoVisual === 'curva') {
+    let len = points.length;
+    // 🔥 Corrección aquí:
+    curveVertex(points[len - 1].x, points[len - 1].y);  // Repetir último punto al inicio
+    curveVertex(points[0].x, points[0].y);              // Repetir primero
+    for (let i = 0; i < len; i++) {
+      curveVertex(points[i].x, points[i].y);
     }
-    endShape(CLOSE);
+    curveVertex(points[0].x, points[0].y);              // Repetir primero
+    curveVertex(points[1].x, points[1].y);              // Repetir segundo para suavizar
+  } else {
+    for (let p of points) vertex(p.x, p.y);
+  }
+  endShape(CLOSE);
 
-    if (mostrarNodos) {
-      fill(0);
-      noStroke();
-      for (let p of points) {
-        circle(p.x, p.y, 4 / zoom);
-      }
+  if (mostrarNodos) {
+    fill(0);
+    noStroke();
+    for (let p of points) {
+      circle(p.x, p.y, 4 / zoom);
     }
   }
+}
+
 
   // === Previsualización antes de iniciar ===
   if (!iniciado) {
@@ -443,16 +444,19 @@ function exportarSVG() {
     svgCanvas.stroke(180);
     for (let forma of historialFormas) {
       svgCanvas.beginShape();
-      for (let p of forma) {
-        if (tipoVisual === 'curva') {
+      if (tipoVisual === 'curva') {
+        let len = forma.length;
+        svgCanvas.curveVertex(forma[len - 1].x, forma[len - 1].y);
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+        for (let p of forma) {
           svgCanvas.curveVertex(p.x, p.y);
-        } else {
+        }
+        svgCanvas.curveVertex(forma[0].x, forma[0].y);
+        svgCanvas.curveVertex(forma[1].x, forma[1].y);
+      } else {
+        for (let p of forma) {
           svgCanvas.vertex(p.x, p.y);
         }
-      }
-      if (tipoVisual === 'curva') {
-        svgCanvas.curveVertex(forma[0].x, forma[0].y);
-        svgCanvas.curveVertex(forma[0].x, forma[0].y);
       }
       svgCanvas.endShape(CLOSE);
     }
@@ -463,13 +467,14 @@ function exportarSVG() {
     svgCanvas.stroke(0);
     svgCanvas.beginShape();
     if (tipoVisual === 'curva') {
-      svgCanvas.curveVertex(points[0].x, points[0].y);
-      svgCanvas.curveVertex(points[0].x, points[0].y);
-      for (let i = 0; i < points.length; i++) {
+      let len = points.length;
+      svgCanvas.curveVertex(points[len - 1].x, points[len - 1].y);  // Último punto al inicio
+      svgCanvas.curveVertex(points[0].x, points[0].y);              // Primero
+      for (let i = 0; i < len; i++) {
         svgCanvas.curveVertex(points[i].x, points[i].y);
       }
-      svgCanvas.curveVertex(points[0].x, points[0].y);
-      svgCanvas.curveVertex(points[0].x, points[0].y);
+      svgCanvas.curveVertex(points[0].x, points[0].y);              // Primero otra vez
+      svgCanvas.curveVertex(points[1].x, points[1].y);              // Segundo punto
     } else {
       for (let p of points) {
         svgCanvas.vertex(p.x, p.y);
@@ -486,7 +491,7 @@ function exportarSVG() {
     }
   }
 
-  // ✅ CORREGIDO: uso de backticks para la template string
+  // ✅ Guardar SVG con nombre y timestamp
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
