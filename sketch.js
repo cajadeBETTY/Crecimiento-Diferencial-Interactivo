@@ -101,21 +101,21 @@ function setup() {
   formaGenericaSelect = select('#formaGenericaSelect');
   inputLados = select('#inputLadosPoligono');
 
+  // 🔥 Listener único para activar campos y crear curva
+  formaGenericaSelect.elt.addEventListener('change', () => {
+    let tipo = formaGenericaSelect.value();
+    if (tipo === 'circulo') {
+      inputLados.attribute('disabled', '');
+    } else if (tipo === 'poligono') {
+      inputLados.removeAttribute('disabled');
+    } else {
+      inputLados.attribute('disabled', '');
+    }
+    iniciarCrecimiento();
+    redraw();
+  });
 
-// 🔥 Aquí insertas el listener
-formaGenericaSelect.elt.addEventListener('change', () => {
-  let tipo = formaGenericaSelect.value();
-  if (tipo === 'circulo') {
-    inputLados.attribute('disabled', '');
-  } else if (tipo === 'poligono') {
-    inputLados.removeAttribute('disabled');
-  } else {
-    inputLados.attribute('disabled', '');
-  }
-  iniciarCrecimiento();
-  redraw();
-});
-
+  // Input de archivo SVG
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
   fileInputSVG.hide();
@@ -124,7 +124,6 @@ formaGenericaSelect.elt.addEventListener('change', () => {
 
   noFill();
 }
-
 
 
 function togglePlayPause() {
