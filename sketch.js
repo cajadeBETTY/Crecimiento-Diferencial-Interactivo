@@ -186,21 +186,29 @@ function iniciarCrecimiento() {
 
       p.add(ruido);
     }
+  }
 
+  // Recalcular minDist y maxDist cada vez
+  let circunferencia = TWO_PI * radio;
+  let distInicial = circunferencia / cantidad;
+  let minInput = float(inputMinDist.value());
+  let maxInput = float(inputMaxDist.value());
+  minDist = (!isNaN(minInput) && minInput > 0) ? minInput : distInicial * 1.2;
+  maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
+
+  if (points.length > 0) {
     iniciado = true;
     running = true;
-    return; // Termina aquí si es círculo o polígono
-  }
-
-  // Si no hay puntos cargados (ej. SVG), alerta
-  if (points.length === 0) {
+  } else {
     alert("Por favor selecciona una forma genérica o sube un SVG.");
-    return;
   }
-
-  iniciado = true;
-  running = true;
 }
+
+// Activar crecimiento automático al seleccionar forma
+formaGenericaSelect.changed(() => {
+  iniciarCrecimiento();
+});
+
 
 
 function handleFile(file) {
