@@ -59,6 +59,24 @@
 <body>
   <div id="ui">
     <fieldset>
+  <div class="titulo-seccion">ENTRADA DE CURVA</div>
+
+  <button id="btnSubirSVG">📂 Subir Curva (SVG)</button>
+
+  <label for="selectFormaGenerica">Forma Genérica:</label>
+  <select id="selectFormaGenerica">
+    <option value="none">Seleccionar...</option>
+    <option value="circulo">Círculo</option>
+    <option value="poligono">Polígono</option>
+  </select>
+
+  <label for="inputLadosPoligono">Número de lados (polígono):</label>
+  <input type="number" id="inputLadosPoligono" value="6" min="3" disabled />
+</fieldset>
+
+
+    
+    <fieldset>
       <div class="titulo-seccion">GENERAL</div>
 
       <label for="sliderRadio">Radio del círculo (mm):</label>
