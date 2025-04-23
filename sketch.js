@@ -500,7 +500,8 @@ function exportarSVG() {
 }
 
 function ajustarCoordenadas(p, w, h) {
-  let adjX = (p.x + offsetX - width / 2) * zoom + w / 2;
-  let adjY = (p.y + offsetY - height / 2) * zoom + h / 2;
+  let adjX = (p.x + offsetX) * zoom;
+  let adjY = (p.y + offsetY) * zoom;
   return createVector(adjX, adjY);
 }
+
