@@ -281,6 +281,8 @@ function draw() {
       }
     }
     pop();
+if (points.length === 0) return;  // 🔥 Evita salir si hay curva cargada
+
     return;  // 🔥 Salir para evitar el resto de draw()
   }
 
