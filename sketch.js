@@ -198,7 +198,7 @@ function iniciarCrecimiento() {
 
   if (points.length > 0) {
     iniciado = true;
-    running = true;
+    running = false; // 🔧 No iniciar el crecimiento automático
   } else {
     alert("Por favor selecciona una forma genérica o sube un SVG.");
   }
@@ -207,8 +207,8 @@ function iniciarCrecimiento() {
 // Activar crecimiento automático al seleccionar forma
 formaGenericaSelect.changed(() => {
   iniciarCrecimiento();
+  redraw(); // 🔧 Forzar el dibujo inicial sin movimiento
 });
-
 
 
 function handleFile(file) {
@@ -265,16 +265,19 @@ function getBoundingBox(pts) {
 
 
 function reiniciarCrecimiento() {
-  points = [];
   running = false;
   iniciado = false;
-  playPauseBtn.html('▶ Iniciar');
   offsetX = 0;
   offsetY = 0;
   zoom = 1.0;
   noiseOffset = 0;
   historialFormas = [];
+  playPauseBtn.html('▶ Iniciar');
+  
+  iniciarCrecimiento();  // 🔥 Vuelve a generar la curva base
+  redraw();              // 🔥 Dibuja inmediatamente sin movimiento
 }
+
 
 function draw() {
 
