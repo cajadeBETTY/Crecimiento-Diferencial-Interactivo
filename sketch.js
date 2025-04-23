@@ -126,6 +126,33 @@ function setup() {
   noFill();
 }
 
+function handleFile(file) {
+  if (file.type === 'image' && file.subtype === 'svg') {
+    let parser = new DOMParser();
+    let svgDoc = parser.parseFromString(file.data, "image/svg+xml");
+
+    let paths = svgDoc.querySelectorAll('path');
+    points = [];  // Limpiar puntos existentes
+
+    paths.forEach(path => {
+      let pathLength = path.getTotalLength();
+      let numSamples = int(inputPuntos.value());  // cantidad de muestras
+
+      for (let i = 0; i < numSamples; i++) {
+        let pt = path.getPointAtLength((i / numSamples) * pathLength);
+        points.push(createVector(pt.x, pt.y));
+      }
+    });
+
+    console.log("SVG cargado con " + points.length + " puntos.");
+    iniciado = true;
+    running = false;  // No inicia crecimiento automático
+    redraw();         // 🔥 Forzar dibujo inicial del SVG
+  } else {
+    alert("Por favor sube un archivo SVG válido.");
+  }
+}
+
 
 function togglePlayPause() {
   if (!iniciado) {
