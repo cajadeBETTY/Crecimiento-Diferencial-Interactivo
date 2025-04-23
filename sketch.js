@@ -132,6 +132,8 @@ function togglePlayPause() {
 }
 
 function iniciarCrecimiento() {
+  console.log("Iniciando crecimiento...");  // <-- Depuración
+
   let cantidad = int(inputPuntos.value());
   radio = float(sliderRadio.value());
 
@@ -188,6 +190,7 @@ function iniciarCrecimiento() {
   iniciado = true;
   running = true;
 }
+
 
 
 function reiniciarCrecimiento() {
@@ -483,7 +486,7 @@ function exportarSVG() {
     }
   }
 
-  // ✅ Cambiar aquí: usar .save() directamente sobre svgCanvas
-  let timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
-  svgCanvas.save(crecimiento_diferencial_${timestamp}.svg);
+  // ✅ CORREGIDO: uso de backticks para la template string
+  let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  svgCanvas.save(`crecimiento_diferencial_${timestamp}.svg`);
 }
