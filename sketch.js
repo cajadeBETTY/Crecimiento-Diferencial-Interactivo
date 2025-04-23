@@ -207,8 +207,13 @@ function reiniciarCrecimiento() {
 }
 
 function draw() {
+
+  if (!running && !exportandoSVG) return; // solo dibuja si está corriendo o exportando
+
   background(255);
   push();
+
+
   translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
   translate(-width / 2, -height / 2);
@@ -425,7 +430,10 @@ function isMouseOverUI() {
 
 function exportarSVG() {
   let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  exportandoSVG = true;
   beginRecordSVG(this, `crecimiento_diferencial_${timestamp}.svg`);
+  redraw(); // 🔥 Forzar redibujo en el SVG context
+
 
   const tipoVisual = tipoVisualSelect.value();
 
@@ -493,6 +501,7 @@ function exportarSVG() {
       }
     }
   }
+exportandoSVG = false;
 
   endRecordSVG();
 }
