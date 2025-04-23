@@ -37,44 +37,6 @@ let btnExportPNG, btnExportSVG;
 let exportandoSVG = false;
 
 
-let points = [];
-let running = false;
-let maxPoints = 2000;
-let inputPuntos, sliderRadio, radioValorSpan;
-let playPauseBtn, restartBtn;
-let radio = 96;
-let minDist, maxDist;
-let iniciado = false;
-
-let zoom = 1.0;
-let offsetX = 0;
-let offsetY = 0;
-let isDragging = false;
-let lastMouseX, lastMouseY;
-
-let tipoRuidoSelect;
-let sliderAmplitud, sliderFrecuencia;
-let valorAmplitudSpan, valorFrecuenciaSpan;
-let noiseOffset = 0;
-
-let sliderRepulsion, valorRepulsionSpan;
-let tipoVisualSelect;
-
-let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
-let mostrarHistorial = false;
-let mostrarNodos = true;
-let historialFormas = [];
-
-let frameHistorial = 0;
-let frecuenciaHistorial = 10;  // cada 2 frames
-
-let inputFrecuenciaHistorial;
-let inputMinDist, inputMaxDist;
-
-let inputMaxPoints;
-let btnExportPNG, btnExportSVG;
-let exportandoSVG = false;
-
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
