@@ -100,7 +100,7 @@ function setup() {
 
   // NUEVOS ELEMENTOS
   formaGenericaSelect = select('#formaGenericaSelect');
-  inputLados = select('#inputLadosPoligono');
+  inputLados = select('#inputLados'); // 🔥 corregido según HTML
 
   // 🔥 Listener único para activar campos y crear curva
   formaGenericaSelect.elt.addEventListener('change', () => {
@@ -125,6 +125,7 @@ function setup() {
 
   noFill();
 }
+
 
 function handleFile(file) {
   if (file.type === 'image' && file.subtype === 'svg') {
@@ -230,6 +231,7 @@ function iniciarCrecimiento() {
   }
 }
 
+
 function reiniciarCrecimiento() {
   running = false;
   iniciado = false;
@@ -239,10 +241,15 @@ function reiniciarCrecimiento() {
   noiseOffset = 0;
   historialFormas = [];
   playPauseBtn.html('▶ Iniciar');
-  
-  iniciarCrecimiento();  // 🔥 Vuelve a generar la curva base
-  redraw();              // 🔥 Dibuja inmediatamente sin movimiento
+
+  // 🔥 Solo reiniciar si no es un SVG cargado
+  if (formaGenericaSelect.value() !== 'none') {
+    iniciarCrecimiento();  // Vuelve a generar la curva base
+  }
+
+  if (points.length > 0) redraw();  // 🔥 Dibuja inmediatamente si hay puntos
 }
+
 
 
 function draw() {
