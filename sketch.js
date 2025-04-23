@@ -38,8 +38,8 @@ let exportandoSVG = false;
 
 
 function setup() {
-   createCanvas(windowWidth, windowHeight, SVG);
-  svgCanvas = createGraphics(windowWidth, windowHeight, SVG);
+createCanvas(windowWidth, windowHeight);  // solo raster, sin 'svg'
+
 
   // === INPUTS numéricos ===
   inputMinDist = select('#inputMinDist');
