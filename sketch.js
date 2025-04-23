@@ -424,93 +424,79 @@ function isMouseOverUI() {
 }
 
 function exportarSVG() {
-  let w = windowWidth;
-  let h = windowHeight;
-  let svgCanvas = createGraphics(w, h, 'svg');
+  let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  beginRecordSVG(`crecimiento_diferencial_${timestamp}.svg`);
 
   const tipoVisual = tipoVisualSelect.value();
 
   // Dibujar historial
   if (mostrarHistorial && historialFormas.length > 0) {
-    svgCanvas.stroke(0);
-    svgCanvas.noFill();
+    stroke(0);
+    noFill();
     for (let forma of historialFormas) {
-      svgCanvas.beginShape();
+      beginShape();
       if (tipoVisual === 'curva') {
         let len = forma.length;
-        let p0 = ajustarCoordenadas(forma[len - 1], w, h);
-        svgCanvas.curveVertex(p0.x, p0.y);
-        let p1 = ajustarCoordenadas(forma[0], w, h);
-        svgCanvas.curveVertex(p1.x, p1.y);
+        let p0 = ajustarCoordenadas(forma[len - 1], width, height);
+        curveVertex(p0.x, p0.y);
+        let p1 = ajustarCoordenadas(forma[0], width, height);
+        curveVertex(p1.x, p1.y);
         for (let p of forma) {
-          let adj = ajustarCoordenadas(p, w, h);
-          svgCanvas.curveVertex(adj.x, adj.y);
+          let adj = ajustarCoordenadas(p, width, height);
+          curveVertex(adj.x, adj.y);
         }
-        svgCanvas.curveVertex(p1.x, p1.y);
-        let p2 = ajustarCoordenadas(forma[1], w, h);
-        svgCanvas.curveVertex(p2.x, p2.y);
+        curveVertex(p1.x, p1.y);
+        let p2 = ajustarCoordenadas(forma[1], width, height);
+        curveVertex(p2.x, p2.y);
       } else {
         for (let p of forma) {
-          let adj = ajustarCoordenadas(p, w, h);
-          svgCanvas.vertex(adj.x, adj.y);
+          let adj = ajustarCoordenadas(p, width, height);
+          vertex(adj.x, adj.y);
         }
       }
-      svgCanvas.endShape(CLOSE);
+      endShape(CLOSE);
     }
   }
 
   // Dibujar puntos actuales
   if (points.length > 0) {
-    svgCanvas.stroke(0);
-    svgCanvas.noFill();
-    svgCanvas.beginShape();
+    stroke(0);
+    noFill();
+    beginShape();
     if (tipoVisual === 'curva') {
       let len = points.length;
-      let p0 = ajustarCoordenadas(points[len - 1], w, h);
-      svgCanvas.curveVertex(p0.x, p0.y);
-      let p1 = ajustarCoordenadas(points[0], w, h);
-      svgCanvas.curveVertex(p1.x, p1.y);
+      let p0 = ajustarCoordenadas(points[len - 1], width, height);
+      curveVertex(p0.x, p0.y);
+      let p1 = ajustarCoordenadas(points[0], width, height);
+      curveVertex(p1.x, p1.y);
       for (let i = 0; i < len; i++) {
-        let adj = ajustarCoordenadas(points[i], w, h);
-        svgCanvas.curveVertex(adj.x, adj.y);
+        let adj = ajustarCoordenadas(points[i], width, height);
+        curveVertex(adj.x, adj.y);
       }
-      svgCanvas.curveVertex(p1.x, p1.y);
-      let p2 = ajustarCoordenadas(points[1], w, h);
-      svgCanvas.curveVertex(p2.x, p2.y);
+      curveVertex(p1.x, p1.y);
+      let p2 = ajustarCoordenadas(points[1], width, height);
+      curveVertex(p2.x, p2.y);
     } else {
       for (let p of points) {
-        let adj = ajustarCoordenadas(p, w, h);
-        svgCanvas.vertex(adj.x, adj.y);
+        let adj = ajustarCoordenadas(p, width, height);
+        vertex(adj.x, adj.y);
       }
     }
-    svgCanvas.endShape(CLOSE);
+    endShape(CLOSE);
 
     if (mostrarNodos) {
       for (let p of points) {
-        let adj = ajustarCoordenadas(p, w, h);
-        svgCanvas.stroke(0);
-        svgCanvas.fill(0);
-        svgCanvas.ellipse(adj.x, adj.y, 4, 4);
+        let adj = ajustarCoordenadas(p, width, height);
+        stroke(0);
+        fill(0);
+        ellipse(adj.x, adj.y, 4, 4);
       }
     }
   }
 
-  // Exportar SVG
-  let timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  let rawSVG = svgCanvas.elt.outerHTML;
-
-
-  rawSVG = rawSVG.replace(/<path /g, '<path stroke="black" stroke-width="1" ');
-  rawSVG = rawSVG.replace(/<ellipse /g, '<ellipse stroke="black" fill="black" stroke-width="1" ');
-
-  let blob = new Blob([rawSVG], { type: 'image/svg+xml' });
-  let url = URL.createObjectURL(blob);
-  let link = createA(url, `crecimiento_diferencial_${timestamp}.svg`);
-  link.attribute('download', `crecimiento_diferencial_${timestamp}.svg`);
-  link.hide();
-  link.click();
-  URL.revokeObjectURL(url);
+  endRecordSVG();
 }
+
 
 function ajustarCoordenadas(p, w, h) {
   let adjX = (p.x - width / 2) * zoom + w / 2;
