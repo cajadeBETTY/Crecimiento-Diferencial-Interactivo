@@ -199,8 +199,7 @@ function iniciarCrecimiento() {
 
       if (tipoRuido === 'perlin') {
         let n = noise(p.x * freq, p.y * freq);
-        let angleOffset = n * TWO_PI;
-        ruido = p5.Vector.fromAngle(angleOffset).mult(amp);
+        ruido = p5.Vector.fromAngle(n * TWO_PI).mult(amp);
       } else if (tipoRuido === 'perlinImproved') {
         let nx = noise(p.x * freq);
         let ny = noise(p.y * freq);
@@ -224,8 +223,9 @@ function iniciarCrecimiento() {
   maxDist = (!isNaN(maxInput) && maxInput > 0) ? maxInput : distInicial * 1.2;
 
   if (points.length > 0) {
-    iniciado = true;
-    running = false; // 🔧 No iniciar el crecimiento automático
+    iniciado = false; // 🔥 Mostrar la curva pero no iniciar aún
+    running = false;
+    redraw(); // 🔥 Dibujarla sin crecimiento
   } else {
     alert("Por favor selecciona una forma genérica o sube un SVG.");
   }
@@ -242,13 +242,11 @@ function reiniciarCrecimiento() {
   historialFormas = [];
   playPauseBtn.html('▶ Iniciar');
 
-  // 🔥 Si es un SVG cargado, no se debe reiniciar la curva
   if (formaGenericaSelect.value() !== 'none') {
-    iniciarCrecimiento();  // 🔧 Regenera la curva base (círculo o polígono)
-  }
-  redraw(); // 🔧 Siempre forzar redibujo para mostrar la curva actual (SVG o generada)
+    iniciarCrecimiento();  // 🔥 Si es forma generada, regenera
+  } 
+  redraw();  // 🔥 Siempre redibuja (aunque sea SVG)
 }
-
 
 
 function draw() {
