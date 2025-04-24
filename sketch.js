@@ -242,13 +242,13 @@ function reiniciarCrecimiento() {
   historialFormas = [];
   playPauseBtn.html('▶ Iniciar');
 
-  // 🔥 Solo reiniciar si no es un SVG cargado
+  // 🔥 Si es un SVG cargado, no se debe reiniciar la curva
   if (formaGenericaSelect.value() !== 'none') {
-    iniciarCrecimiento();  // Vuelve a generar la curva base
+    iniciarCrecimiento();  // 🔧 Regenera la curva base (círculo o polígono)
   }
-
-  if (points.length > 0) redraw();  // 🔥 Dibuja inmediatamente si hay puntos
+  redraw(); // 🔧 Siempre forzar redibujo para mostrar la curva actual (SVG o generada)
 }
+
 
 
 function draw() {
