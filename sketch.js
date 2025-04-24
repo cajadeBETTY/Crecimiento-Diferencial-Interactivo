@@ -234,7 +234,6 @@ function iniciarCrecimiento() {
 
 function reiniciarCrecimiento() {
   running = false;
-  iniciado = false;
   offsetX = 0;
   offsetY = 0;
   zoom = 1.0;
@@ -244,9 +243,11 @@ function reiniciarCrecimiento() {
 
   if (formaGenericaSelect.value() !== 'none') {
     iniciarCrecimiento();  // 🔥 Si es forma generada, regenera
-  } 
-  redraw();  // 🔥 Siempre redibuja (aunque sea SVG)
+  }
+  // 🔥 Eliminar iniciado = false aquí para que permanezca visualizando la curva cargada
+  redraw();
 }
+
 
 
 function draw() {
@@ -257,6 +258,12 @@ function draw() {
   translate(-width / 2, -height / 2);
 
   let tipoVisual = tipoVisualSelect.value();
+
+  // === Nueva condición para permitir previsualización ===
+  if (!running && !exportandoSVG && iniciado) {
+    pop();  // 🔥 Asegúrate de cerrar el push() antes de salir
+    return;
+  }
 
   // === Dibujar curva siempre que haya puntos ===
   if (points.length > 0) {
@@ -281,6 +288,7 @@ function draw() {
         endShape(CLOSE);
       }
     }
+
 
     // === Curva activa ===
     stroke(0);
@@ -376,6 +384,7 @@ function draw() {
     noiseOffset += 0.01;
   }
 }
+
 
 
 function mouseWheel(event) {
