@@ -258,56 +258,31 @@ function draw() {
 
   let tipoVisual = tipoVisualSelect.value();
 
-  // === Previsualización antes de iniciar ===
-  if (!iniciado) {
-    if (points.length > 0) {  // 🔥 Mostrar SVG o forma cargada
-      stroke(150);
+  // === Dibujar curva siempre que haya puntos ===
+  if (points.length > 0) {
+    // === Historial antes de iniciar ===
+    if (mostrarHistorial && historialFormas.length > 0) {
+      stroke(180);
       strokeWeight(1 / zoom);
       noFill();
-      beginShape();
-      for (let p of points) {
-        vertex(p.x, p.y);
-      }
-      endShape(CLOSE);
-
-      if (mostrarNodos) {
-        fill(0);
-        noStroke();
-        for (let p of points) {
-          circle(p.x, p.y, 4 / zoom);
+      for (let forma of historialFormas) {
+        beginShape();
+        for (let p of forma) {
+          if (tipoVisual === 'curva') {
+            curveVertex(p.x, p.y);
+          } else {
+            vertex(p.x, p.y);
+          }
         }
+        if (tipoVisual === 'curva' && forma.length > 1) {
+          curveVertex(forma[0].x, forma[0].y);
+          curveVertex(forma[1].x, forma[1].y);
+        }
+        endShape(CLOSE);
       }
     }
-    pop();
-if (points.length === 0) return;  // 🔥 Evita salir si hay curva cargada
 
-    return;  // 🔥 Salir para evitar el resto de draw()
-  }
-
-  // === Dibujar historial dentro del mismo espacio ===
-  if (mostrarHistorial && historialFormas.length > 0) {
-    stroke(180);
-    strokeWeight(1 / zoom);
-    noFill();
-    for (let forma of historialFormas) {
-      beginShape();
-      for (let p of forma) {
-        if (tipoVisual === 'curva') {
-          curveVertex(p.x, p.y);
-        } else {
-          vertex(p.x, p.y);
-        }
-      }
-      if (tipoVisual === 'curva') {
-        curveVertex(forma[0].x, forma[0].y);
-        curveVertex(forma[1].x, forma[1].y);
-      }
-      endShape(CLOSE);
-    }
-  }
-
-  // === Dibujar curva activa ===
-  if (points.length > 0) {
+    // === Curva activa ===
     stroke(0);
     strokeWeight(1 / zoom);
     noFill();
