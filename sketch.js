@@ -70,7 +70,7 @@ function setup() {
   });
   radioValorSpan.html(sliderRadio.value());
 
-  // Noise
+  // Noise controls
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
   sliderFrecuencia = select('#sliderFrecuencia');
@@ -84,10 +84,10 @@ function setup() {
   valorRepulsionSpan = select('#valorRepulsion');
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
-  // Visualization
+  // Visualization type
   tipoVisualSelect = select('#tipoVisual');
 
-  // Toggles
+  // History & nodes toggles
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
   clearHistorialBtn = select('#clearHistorialBtn');
@@ -156,14 +156,14 @@ function handleFile(file) {
   }
 }
 
+// Load SVG: robust sampling of curves and shapes
 function generarCurvaFromSVG() {
   console.log('generarCurvaFromSVG: svgText length=', svgText.length);
-  // parse SVG
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   const n = int(inputPuntos.value());
   let pts = [];
-  // Sample paths
+  // Sample paths (<path> supports Bézier curves)
   const paths = doc.getElementsByTagName('path');
   if (paths.length === 0) console.warn('⚠️ No <path> elements found in SVG');
   for (let path of paths) {
@@ -178,15 +178,12 @@ function generarCurvaFromSVG() {
     }
   }
   // Sample polygons/polylines
-  const lines = [
-    ...doc.getElementsByTagName('polygon'),
-    ...doc.getElementsByTagName('polyline')
-  ];
-  for (let el of lines) {
+  const polyEls = [...doc.getElementsByTagName('polygon'), ...doc.getElementsByTagName('polyline')];
+  for (let el of polyEls) {
     const ptsStr = el.getAttribute('points').trim().split(/\s+/);
     for (let str of ptsStr) {
-      const [x,y] = str.split(',').map(Number);
-      pts.push(createVector(x,y));
+      const [x, y] = str.split(',').map(Number);
+      pts.push(createVector(x, y));
     }
   }
   // Sample circles
@@ -205,23 +202,26 @@ function generarCurvaFromSVG() {
     return;
   }
   // Compute bounding box
-  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (let p of pts) {
-    minX = min(minX,p.x); maxX = max(maxX,p.x);
-    minY = min(minY,p.y); maxY = max(maxY,p.y);
+    minX = min(minX, p.x);
+    maxX = max(maxX, p.x);
+    minY = min(minY, p.y);
+    maxY = max(maxY, p.y);
   }
   const w = maxX - minX;
   const h = maxY - minY;
   const radius = float(sliderRadio.value());
-  const factor = (radius*2) / max(w,h);
-  // Map points to canvas
+  const scaleFactor = (radius * 2) / max(w, h);
+  // Map points to canvas coordinates
   points = pts.map(p => createVector(
-    (p.x - (minX + w/2)) * factor + width/2,
-    (p.y - (minY + h/2)) * factor + height/2
+    (p.x - (minX + w/2)) * scaleFactor + width/2,
+    (p.y - (minY + h/2)) * scaleFactor + height/2
   ));
   console.log('Mapped points count:', points.length, 'first coords:', points.slice(0,5));
   originalPoints = points.map(p => p.copy());
-  iniciado = false; running = false;
+  iniciado = false;
+  running = false;
   redraw();
 }
 
@@ -235,7 +235,7 @@ function generarCurvaBase() {
   if (tipo === 'circulo' || tipo === 'poligono') {
     for (let i = 0; i < lados; i++) {
       const a = TWO_PI * i / lados;
-      points.push(createVector(width / 2 + r * cos(a), height / 2 + r * sin(a)));
+      points.push(createVector(width/2 + r*cos(a), height/2 + r*sin(a)));
     }
     originalPoints = points.map(p => p.copy());
     iniciado = false;
@@ -247,11 +247,11 @@ function iniciarCrecimiento() {
   if (!points.length) return;
   const n = int(inputPuntos.value());
   const circ = TWO_PI * float(sliderRadio.value());
-  const di = circ / max(n, 1);
+  const di = circ / max(n,1);
   const minIn = float(inputMinDist.value());
   const maxIn = float(inputMaxDist.value());
-  minDist = (!isNaN(minIn) && minIn > 0) ? minIn : di * 1.2;
-  maxDist = (!isNaN(maxIn) && maxIn > 0) ? maxIn : di * 1.2;
+  minDist = (!isNaN(minIn)&&minIn>0)?minIn:di*1.2;
+  maxDist = (!isNaN(maxIn)&&maxIn>0)?maxIn:di*1.2;
   iniciado = true;
   running = true;
 }
@@ -262,7 +262,7 @@ function togglePlayPause() {
     select('#playPauseBtn').html('⏸ Pausar');
   } else {
     running = !running;
-    select('#playPauseBtn').html(running ? '⏸ Pausar' : '▶ Reanudar');
+    select('#playPauseBtn').html(running?'⏸ Pausar':'▶ Reanudar');
   }
 }
 
@@ -282,134 +282,105 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
   push();
-  translate(width / 2 + offsetX, height / 2 + offsetY);
+  translate(width/2+offsetX, height/2+offsetY);
   scale(zoom);
-  translate(-width / 2, -height / 2);
+  translate(-width/2, -height/2);
 
   if (mostrarHistorial && historialFormas.length) {
     stroke(180);
-    strokeWeight(1 / zoom);
+    strokeWeight(1/zoom);
     noFill();
     historialFormas.forEach(f => {
       beginShape();
-      f.forEach(p => (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x, p.y) : vertex(p.x, p.y));
-      (tipoVisualSelect.value() === 'curva') ? endShape() : endShape(CLOSE);
+      f.forEach(p => (tipoVisualSelect.value()==='curva')?curveVertex(p.x,p.y):vertex(p.x,p.y));
+      (tipoVisualSelect.value()==='curva')?endShape():endShape(CLOSE);
     });
   }
 
   if (points.length) {
     stroke(0);
-    strokeWeight(1 / zoom);
+    strokeWeight(1/zoom);
     noFill();
     beginShape();
-    if (tipoVisualSelect.value() === 'curva') {
+    if (tipoVisualSelect.value()==='curva') {
       const L = points.length;
-      curveVertex(points[L - 2].x, points[L - 2].y);
-      curveVertex(points[L - 1].x, points[L - 1].y);
-      points.forEach(p => curveVertex(p.x, p.y));
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[1].x, points[1].y);
+      curveVertex(points[L-2].x,points[L-2].y);
+      curveVertex(points[L-1].x,points[L-1].y);
+      points.forEach(p => curveVertex(p.x,p.y));
+      curveVertex(points[0].x,points[0].y);
+      curveVertex(points[1].x,points[1].y);
       endShape();
     } else {
-      points.forEach(p => vertex(p.x, p.y));
+      points.forEach(p => vertex(p.x,p.y));
       endShape(CLOSE);
     }
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      points.forEach(p => circle(p.x, p.y, 4 / zoom));
+      points.forEach(p => circle(p.x,p.y,4/zoom));
     }
   }
   pop();
 
-  if (!iniciado || !running || points.length >= maxPoints) return;
-  if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
-    historialFormas.push(points.map(p => p.copy()));
-  }
+  if (!iniciado||!running||points.length>=maxPoints) return;
+  if (mostrarHistorial&&frameHistorial%frecuenciaHistorial===0) historialFormas.push(points.map(p=>p.copy()));
   frameHistorial++;
-  let nuevos = [];
-  points.forEach((act, i) => {
-    let fuerza = createVector(0, 0);
-    let cerc = 0;
-    points.forEach((otr, j) => {
-      if (i !== j) {
-        const d = dist(act.x, act.y, otr.x, otr.y);
-        if (d < minDist) {
-          const dir = p5.Vector.sub(act, otr).normalize().mult(float(sliderRepulsion.value()) / d);
-          fuerza.add(dir);
-          cerc++;
-        }
+  let nuevos=[];
+  points.forEach((act,i)=>{
+    let fuerza=createVector(0,0),c=0;
+    points.forEach((otr,j)=>{
+      if(i!==j){
+        const d=dist(act.x,act.y,otr.x,otr.y);
+        if(d<minDist){ fuerza.add(p5.Vector.sub(act,otr).normalize().mult(float(sliderRepulsion.value())/d)); c++; }
       }
     });
-    let ruido = createVector(0, 0);
-    const amp = float(sliderAmplitud.value());
-    const frq = float(sliderFrecuencia.value());
-    const tr = tipoRuidoSelect.value();
-    if (tr === 'perlin') {
-      const n = noise(act.x * frq, act.y * frq + noiseOffset);
-      ruido = p5.Vector.fromAngle(n * TWO_PI).mult(amp);
-    } else if (tr === 'perlinImproved') {
-      const nx = noise(act.x * frq, noiseOffset);
-      const ny = noise(act.y * frq, noiseOffset + 1000);
-      ruido = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-    } else if (tr === 'valor') {
-      ruido = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-    } else if (tr === 'simple') {
-      ruido = p5.Vector.random2D().mult(amp);
-    }
-    if (cerc > 0) fuerza.div(cerc).add(ruido);
-    else fuerza = ruido.copy();
-    act.add(fuerza);
-    nuevos.push(act);
-    const nxt = points[(i + 1) % points.length];
-    if (p5.Vector.dist(act, nxt) > maxDist) nuevos.push(p5.Vector.add(act, nxt).div(2));
+    let ruido=createVector(0,0);
+    const amp=float(sliderAmplitud.value()), fr=float(sliderFrecuencia.value()), t=tipoRuidoSelect.value();
+    if(t==='perlin'){ const n=noise(act.x*fr,act.y*fr+noiseOffset); ruido=p5.Vector.fromAngle(n*TWO_PI).mult(amp); }
+    else if(t==='perlinImproved'){ const nx=noise(act.x*fr,noiseOffset), ny=noise(act.y*fr,noiseOffset+1000); ruido=createVector((nx-0.5)*amp*2,(ny-0.5)*amp*2); }
+    else if(t==='valor') ruido=createVector(random(-1,1)*amp,random(-1,1)*amp);
+    else if(t==='simple') ruido=p5.Vector.random2D().mult(amp);
+    if(c>0) fuerza.div(c).add(ruido); else fuerza=ruido.copy();
+    act.add(fuerza); nuevos.push(act);
+    const nxp=points[(i+1)%points.length]; if(p5.Vector.dist(act,nxp)>maxDist) nuevos.push(p5.Vector.add(act,nxp).div(2));
   });
-  points = nuevos;
-  noiseOffset += 0.01;
+  points=nuevos;
+  noiseOffset+=0.01;
 }
 
-function mouseWheel() { return false; }
-function mousePressed() { if (mouseButton === LEFT) { isDragging = true; lastMouseX = mouseX; lastMouseY = mouseY; } }
-function mouseReleased() { isDragging = false; suppressDrag = false; }
-function mouseDragged() { if (isDragging && !suppressDrag && !isMouseOverUI()) { offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; } }
-function windowResized() { resizeCanvas(windowWidth, windowHeight); }
-function isMouseOverUI() { const b = document.getElementById('ui').getBoundingClientRect(); return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom; }
+function mouseWheel(){ return false; }
+function mousePressed(){ if(mouseButton===LEFT){ isDragging=true; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function mouseReleased(){ isDragging=false; suppressDrag=false; }
+function mouseDragged(){ if(isDragging&&!suppressDrag&&!isMouseOverUI()){ offsetX+=mouseX-lastMouseX; offsetY+=mouseY-lastMouseY; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function windowResized(){ resizeCanvas(windowWidth,windowHeight); }
+function isMouseOverUI(){ const b=document.getElementById('ui').getBoundingClientRect(); return mouseX>=b.left&&mouseX<=b.right&&mouseY>=b.top&&mouseY<=b.bottom; }
 
-// Export current shape to SVG via p5.plotSvg.js
-// Export current shape to standalone SVG via p5.svg
 function exportarSVG() {
-  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  // create an SVG graphics context
-  const g = createGraphics(width, height, 'svg');
-  // g.pixelDensity(1);
+  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const g=createGraphics(width,height,'svg');
+  noLoop();
   g.noFill();
-  // draw current shape onto SVG context
   g.push();
-  g.translate(width/2 + offsetX, height/2 + offsetY);
+  g.translate(width/2+offsetX,height/2+offsetY);
   g.scale(zoom);
-  g.translate(-width/2, -height/2);
+  g.translate(-width/2,-height/2);
   g.stroke(0);
   g.strokeWeight(1/zoom);
-  // draw shape
   g.beginShape();
-  if (tipoVisualSelect.value() === 'curva') {
-    const L = points.length;
-    g.curveVertex(points[L-2].x, points[L-2].y);
-    g.curveVertex(points[L-1].x, points[L-1].y);
-    for (let p of points) g.curveVertex(p.x, p.y);
-    g.curveVertex(points[0].x, points[0].y);
-    g.curveVertex(points[1].x, points[1].y);
+  if(tipoVisualSelect.value()==='curva'){
+    const L=points.length;
+    g.curveVertex(points[L-2].x,points[L-2].y);
+    g.curveVertex(points[L-1].x,points[L-1].y);
+    points.forEach(p=>g.curveVertex(p.x,p.y));
+    g.curveVertex(points[0].x,points[0].y);
+    g.curveVertex(points[1].x,points[1].y);
     g.endShape();
   } else {
-    for (let p of points) g.vertex(p.x, p.y);
+    points.forEach(p=>g.vertex(p.x,p.y));
     g.endShape(CLOSE);
   }
-  if (mostrarNodos) {
-    g.fill(0);
-    g.noStroke();
-    for (let p of points) g.circle(p.x, p.y, 4/zoom);
-  }
+  if(mostrarNodos){ g.fill(0); g.noStroke(); points.forEach(p=>g.circle(p.x,p.y,4/zoom)); }
   g.pop();
-  // save SVG file
-  save(g, `crecimiento_diferencial_${ts}.svg`);
+  save(g,`crecimiento_diferencial_${ts}.svg`);
+  loop();
 }
