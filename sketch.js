@@ -162,12 +162,39 @@ function generarCurvaFromSVG() {
   const paths = svgDoc.querySelectorAll('path');
   points = [];
   const n = int(inputPuntos.value());
+  // Sample points along SVG paths
   paths.forEach(path => {
     const len = path.getTotalLength();
     for (let i = 0; i < n; i++) {
       const pt = path.getPointAtLength((i / n) * len);
       points.push(createVector(pt.x, pt.y));
     }
+  });
+  if (points.length === 0) return;
+  // Compute bounding box
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const bboxW = maxX - minX;
+  const bboxH = maxY - minY;
+  // Scale to radius
+  const radius = float(sliderRadio.value());
+  const desiredSize = radius * 2;
+  const scale = desiredSize / max(bboxW, bboxH);
+  // Center and scale
+  for (let p of points) {
+    p.x = (p.x - (minX + bboxW / 2)) * scale + width / 2;
+    p.y = (p.y - (minY + bboxH / 2)) * scale + height / 2;
+  }
+  originalPoints = points.map(p => p.copy());
+  iniciado = false;
+  running = false;
+  redraw();
+}
   });
   originalPoints = points.map(p => p.copy());
   iniciado = false;
