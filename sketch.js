@@ -191,8 +191,8 @@ function generarCurvaFromSVG() {
   const h = maxY - minY;
   const r = float(sliderRadio.value());
   const s = (r * 2) / max(w, h);
-  points = pts.map(p => createVector((p.x - (minX + w / 2)) * s + width / 2,
-                                     (p.y - (minY + h / 2)) * s + height / 2));
+  $&
+  console.log('Mapped points count:', points.length, 'first coords:', points.slice(0,5));
   originalPoints = points.map(p => p.copy());
   iniciado = false;
   running = false;
@@ -201,7 +201,6 @@ function generarCurvaFromSVG() {
 
 function generarCurvaBase() {
   console.log('generarCurvaBase: tipo=', formaGenericaSelect.value(), 'puntos=', inputPuntos.value(), 'radio=', sliderRadio.value());
-  points = [];
   points = [];
   const tipo = formaGenericaSelect.value();
   const n = int(inputPuntos.value());
@@ -356,7 +355,7 @@ function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   // create an SVG graphics context
   const g = createGraphics(width, height, 'svg');
-  g.pixelDensity(1);
+  // g.pixelDensity(1);
   g.noFill();
   // draw current shape onto SVG context
   g.push();
