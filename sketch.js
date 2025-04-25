@@ -114,6 +114,19 @@ function setup() {
   fileInputSVG.parent('ui'); fileInputSVG.hide();
   select('#btnSubirSVG').mousePressed(()=>{ suppressDrag=true; fileInputSVG.elt.click(); });
 
+// handleFile moved here to ensure definition before use
+function handleFile(file) {
+  const isSvg = (file.subtype && file.subtype.toLowerCase().includes('svg'))
+              || (file.name && file.name.toLowerCase().endsWith('.svg'));
+  if (file.type === 'image' && isSvg) {
+    svgText = file.data;
+    fileLoaded = true;
+    generarCurvaFromSVG();
+  } else {
+    alert('Por favor sube un archivo SVG válido.');
+  }
+} });
+
   // Initial preview
   generarCurvaBase();
 }
