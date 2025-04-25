@@ -8,12 +8,12 @@
 </head>
 <body>
   <div id="ui">
+    <!-- ENTRADA DE CURVA -->
     <fieldset>
       <div class="titulo-seccion">ENTRADA DE CURVA</div>
-
       <button id="btnSubirSVG">📂 Subir Curva (SVG)</button>
-      <input type="file" id="fileInput" accept=".svg" style="display:none;" />
-
+      <!-- El input file es generado por p5.createFileInput, no es necesario aquí -->
+      
       <label for="formaGenericaSelect">Forma Genérica:</label>
       <select id="formaGenericaSelect">
         <option value="none">Seleccionar...</option>
@@ -25,9 +25,9 @@
       <input type="number" id="inputLados" value="6" min="3" disabled />
     </fieldset>
 
+    <!-- GENERAL -->
     <fieldset>
       <div class="titulo-seccion">GENERAL</div>
-
       <label for="sliderRadio">Radio del círculo (mm):</label>
       <input type="range" id="sliderRadio" min="10" max="300" value="96" step="1" />
       <span id="radioValor">96</span> mm
@@ -52,9 +52,9 @@
       <button id="restartBtn">🔄 Reiniciar</button>
     </fieldset>
 
+    <!-- VISUALIZACIÓN -->
     <fieldset>
       <div class="titulo-seccion">VISUALIZACIÓN</div>
-
       <button id="toggleNodosBtn">🔘 Ocultar nodos</button>
 
       <label for="tipoVisual">Modo de visualización:</label>
@@ -70,9 +70,9 @@
       <input type="number" id="inputFrecuenciaHistorial" value="50" min="1" max="999" />
     </fieldset>
 
+    <!-- EXPERIMENTAL -->
     <fieldset>
       <div class="titulo-seccion">EXPERIMENTAL</div>
-
       <label for="tipoRuido">Tipo de ruido:</label>
       <select id="tipoRuido">
         <option value="ninguno">Sin ruido</option>
@@ -91,6 +91,7 @@
       <span id="valorFrecuencia">0.1</span>
     </fieldset>
 
+    <!-- EXPORTAR -->
     <fieldset>
       <div class="titulo-seccion">EXPORTAR</div>
       <button id="btnExportPNG">📸 Exportar como PNG</button>
@@ -98,8 +99,9 @@
     </fieldset>
   </div>
 
-  <!-- Librerías p5.js -->
+  <!-- Librerías p5.js y extensiones SVG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="p5.svg.min.js"></script>
   <script src="p5.plotSvg.js"></script>
   <script src="sketch.js"></script>
 </body>
