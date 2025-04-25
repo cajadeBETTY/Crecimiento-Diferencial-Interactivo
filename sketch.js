@@ -1,5 +1,8 @@
 let points = [];
 let originalPoints = [];
+let fileLoaded = false;
+let svgText = '';
+
 let running = false;
 let iniciado = false;
 let maxPoints = 2000;
@@ -8,7 +11,7 @@ let zoom = 1.0;
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
-let suppressDrag = false; // new flag to prevent drag during file dialog
+let suppressDrag = false;
 let lastMouseX, lastMouseY;
 
 // UI elements
@@ -20,9 +23,11 @@ let sliderRepulsion, valorRepulsionSpan;
 let tipoVisualSelect;
 let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
 
-// File & generic shape
-let fileInputSVG;
+// Generic vs file shapes
 let formaGenericaSelect, inputLados;
+
+// File upload
+let fileInputSVG;
 
 // History
 let mostrarHistorial = false;
@@ -44,12 +49,12 @@ function setup() {
   inputMaxDist = select('#inputMaxDist');
   inputMaxPoints = select('#inputMaxPoints');
   inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
+
   inputPuntos = select('#inputPuntos');
   inputPuntos.input(() => {
-    if (formaGenericaSelect.value() !== 'none') {
-      generarCurvaBase();
-      redraw();
-    }
+    if (fileLoaded) generarCurvaFromSVG();
+    else if (formaGenericaSelect.value() !== 'none') generarCurvaBase();
+    redraw();
   });
   inputFrecuenciaHistorial.input(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
 
@@ -58,7 +63,7 @@ function setup() {
   radioValorSpan = select('#radioValor');
   sliderRadio.input(() => {
     radioValorSpan.html(sliderRadio.value());
-    if (formaGenericaSelect.value() !== 'none') {
+    if (!fileLoaded && formaGenericaSelect.value() !== 'none') {
       generarCurvaBase();
       redraw();
     }
@@ -72,17 +77,17 @@ function setup() {
   valorAmplitudSpan = select('#valorAmplitud');
   valorFrecuenciaSpan = select('#valorFrecuencia');
   sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(valorFrecuenciaSpan.value()));
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
 
   // Repulsion
   sliderRepulsion = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
-  // Visualization type
+  // Visualization
   tipoVisualSelect = select('#tipoVisual');
 
-  // History & nodes toggles
+  // Toggles
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
   clearHistorialBtn = select('#clearHistorialBtn');
@@ -107,11 +112,12 @@ function setup() {
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // Generic shape & file input
+  // Generic shape selector
   formaGenericaSelect = select('#formaGenericaSelect');
   inputLados = select('#inputLados');
   inputLados.attribute('disabled', '');
   formaGenericaSelect.changed(() => {
+    if (fileLoaded) fileLoaded = false;
     const tipo = formaGenericaSelect.value();
     if (tipo === 'poligono') inputLados.removeAttribute('disabled');
     else inputLados.attribute('disabled', '');
@@ -125,11 +131,12 @@ function setup() {
     }
   });
 
+  // File input
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
   fileInputSVG.hide();
   select('#btnSubirSVG').mousePressed(() => {
-    suppressDrag = true; // prevent canvas drag
+    suppressDrag = true;
     fileInputSVG.elt.click();
   });
 
@@ -138,30 +145,34 @@ function setup() {
 }
 
 function handleFile(file) {
-  // Accept SVG by subtype or file extension
   const isSvg = (file.subtype && file.subtype.toLowerCase().includes('svg'))
               || (file.name && file.name.toLowerCase().endsWith('.svg'));
   if (file.type === 'image' && isSvg) {
-    const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(file.data, 'image/svg+xml');
-    const paths = svgDoc.querySelectorAll('path');
-    points = [];
-    const n = int(inputPuntos.value());
-    paths.forEach(path => {
-      const len = path.getTotalLength();
-      for (let i = 0; i < n; i++) {
-        const pt = path.getPointAtLength((i / n) * len);
-        points.push(createVector(pt.x, pt.y));
-      }
-    });
-    originalPoints = points.map(p => p.copy());
-    iniciado = false;
-    running = false;
-    redraw();
+    svgText = file.data;
+    fileLoaded = true;
+    generarCurvaFromSVG();
   } else {
-    // only alert once per attempt
     alert('Por favor sube un archivo SVG válido.');
   }
+}
+
+function generarCurvaFromSVG() {
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+  const paths = svgDoc.querySelectorAll('path');
+  points = [];
+  const n = int(inputPuntos.value());
+  paths.forEach(path => {
+    const len = path.getTotalLength();
+    for (let i = 0; i < n; i++) {
+      const pt = path.getPointAtLength((i / n) * len);
+      points.push(createVector(pt.x, pt.y));
+    }
+  });
+  originalPoints = points.map(p => p.copy());
+  iniciado = false;
+  running = false;
+  redraw();
 }
 
 function generarCurvaBase() {
@@ -170,7 +181,6 @@ function generarCurvaBase() {
   const cantidad = int(inputPuntos.value());
   const r = float(sliderRadio.value());
   const lados = tipo === 'poligono' ? int(inputLados.value()) : cantidad;
-
   if (tipo === 'circulo' || tipo === 'poligono') {
     for (let i = 0; i < lados; i++) {
       const ang = TWO_PI * i / lados;
@@ -180,6 +190,19 @@ function generarCurvaBase() {
     iniciado = false;
     running = false;
   }
+}
+
+function iniciarCrecimiento() {
+  if (points.length === 0) return;
+  const cantidad = int(inputPuntos.value());
+  const circ = TWO_PI * float(sliderRadio.value());
+  const distIni = circ / max(cantidad, 1);
+  const minIn = float(inputMinDist.value());
+  const maxIn = float(inputMaxDist.value());
+  minDist = (!isNaN(minIn) && minIn > 0) ? minIn : distIni * 1.2;
+  maxDist = (!isNaN(maxIn) && maxIn > 0) ? maxIn : distIni * 1.2;
+  iniciado = true;
+  running = true;
 }
 
 function togglePlayPause() {
@@ -217,14 +240,14 @@ function draw() {
     stroke(180);
     strokeWeight(1 / zoom);
     noFill();
-    historialFormas.forEach(forma => {
+    for (let forma of historialFormas) {
       beginShape();
-      forma.forEach(p => (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x, p.y) : vertex(p.x, p.y));
+      for (let p of forma) (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x,p.y) : vertex(p.x,p.y);
       (tipoVisualSelect.value() === 'curva') ? endShape() : endShape(CLOSE);
-    });
+    }
   }
 
-  // Draw current shape or preview
+  // Draw current
   if (points.length) {
     stroke(0);
     strokeWeight(1 / zoom);
@@ -232,86 +255,72 @@ function draw() {
     beginShape();
     if (tipoVisualSelect.value() === 'curva') {
       const L = points.length;
-      curveVertex(points[L - 2].x, points[L - 2].y);
-      curveVertex(points[L - 1].x, points[L - 1].y);
-      points.forEach(p => curveVertex(p.x, p.y));
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[1].x, points[1].y);
+      curveVertex(points[L-2].x,points[L-2].y);
+      curveVertex(points[L-1].x,points[L-1].y);
+      points.forEach(p => curveVertex(p.x,p.y));
+      curveVertex(points[0].x,points[0].y);
+      curveVertex(points[1].x,points[1].y);
       endShape();
     } else {
-      points.forEach(p => vertex(p.x, p.y));
+      points.forEach(p => vertex(p.x,p.y));
       endShape(CLOSE);
     }
-
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      points.forEach(p => circle(p.x, p.y, 4 / zoom));
+      points.forEach(p => circle(p.x,p.y,4/zoom));
     }
   }
   pop();
 
-  // Growth algorithm
+  // Growth
   if (!iniciado || !running || points.length >= maxPoints) return;
 
   if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
-    historialFormas.push(points.map(p => p.copy()));
+    historialFormas.push(points.map(p=>p.copy()));
   }
   frameHistorial++;
 
   const nuevos = [];
-  points.forEach((act, i) => {
-    let fuerza = createVector(0, 0);
-    let cerc = 0;
-    points.forEach((otr, j) => {
-      if (i !== j) {
-        const d = dist(act.x, act.y, otr.x, otr.y);
-        if (d < minDist) {
-          const dir = p5.Vector.sub(act, otr).normalize().mult(float(sliderRepulsion.value()) / d);
-          fuerza.add(dir);
-          cerc++;
+  points.forEach((act,i) => {
+    let fuerza = createVector(0,0), cerc=0;
+    points.forEach((otr,j) => {
+      if(i!==j){
+        const d=dist(act.x,act.y,otr.x,otr.y);
+        if(d<minDist){
+          const dir=p5.Vector.sub(act,otr).normalize().mult(float(sliderRepulsion.value())/d);
+          fuerza.add(dir); cerc++;
         }
       }
     });
-    let rnoise = createVector(0, 0);
-    const amp = float(sliderAmplitud.value());
-    const freq = float(sliderFrecuencia.value());
-    const tr = tipoRuidoSelect.value();
-    if (tr === 'perlin') {
-      const n = noise(act.x * freq, act.y * freq + noiseOffset);
-      rnoise = p5.Vector.fromAngle(n * TWO_PI).mult(amp);
-    } else if (tr === 'perlinImproved') {
-      const nx = noise(act.x * freq, noiseOffset);
-      const ny = noise(act.y * freq, noiseOffset + 1000);
-      rnoise = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-    } else if (tr === 'valor') {
-      rnoise = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-    } else if (tr === 'simple') {
-      rnoise = p5.Vector.random2D().mult(amp);
-    }
-    if (cerc > 0) fuerza.div(cerc).add(rnoise);
-    else fuerza = rnoise.copy();
+    let rnoise=createVector(0,0);
+    const amp=float(sliderAmplitud.value()), freq=float(sliderFrecuencia.value());
+    const tr=tipoRuidoSelect.value();
+    if(tr==='perlin'){ const n=noise(act.x*freq,act.y*freq+noiseOffset); rnoise=p5.Vector.fromAngle(n*TWO_PI).mult(amp);} 
+    else if(tr==='perlinImproved'){ const nx=noise(act.x*freq,noiseOffset), ny=noise(act.y*freq,noiseOffset+1000); rnoise=createVector((nx-0.5)*amp*2,(ny-0.5)*amp*2);} 
+    else if(tr==='valor') rnoise=createVector(random(-1,1)*amp,random(-1,1)*amp);
+    else if(tr==='simple') rnoise=p5.Vector.random2D().mult(amp);
+    if(cerc>0) fuerza.div(cerc).add(rnoise); else fuerza=rnoise.copy();
     act.add(fuerza);
     nuevos.push(act);
-    const nxt = points[(i + 1) % points.length];
-    if (p5.Vector.dist(act, nxt) > maxDist) nuevos.push(p5.Vector.add(act, nxt).div(2));
+    const nxt=points[(i+1)%points.length]; if(p5.Vector.dist(act,nxt)>maxDist) nuevos.push(p5.Vector.add(act,nxt).div(2));
   });
-  points = nuevos;
-  noiseOffset += 0.01;
+  points=nuevos;
+  noiseOffset+=0.01;
 }
 
-function mouseWheel(e) { return false; }
-function mousePressed() { if (mouseButton === LEFT) { isDragging = true; lastMouseX = mouseX; lastMouseY = mouseY; } }
-function mouseReleased() { isDragging = false; suppressDrag = false; }
-function mouseDragged() { if (isDragging && !suppressDrag && !isMouseOverUI()) { offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; } }
-function windowResized() { resizeCanvas(windowWidth, windowHeight); }
-function isMouseOverUI() { const b = document.getElementById('ui').getBoundingClientRect(); return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom; }
+function mouseWheel(e){ return false; }
+function mousePressed(){ if(mouseButton===LEFT){ isDragging=true; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function mouseReleased(){ isDragging=false; suppressDrag=false; }
+function mouseDragged(){ if(isDragging && !suppressDrag && !isMouseOverUI()){ offsetX+=mouseX-lastMouseX; offsetY+=mouseY-lastMouseY; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function windowResized(){ resizeCanvas(windowWidth,windowHeight);}  
+function isMouseOverUI(){ const b=document.getElementById('ui').getBoundingClientRect(); return mouseX>=b.left && mouseX<=b.right && mouseY>=b.top && mouseY<=b.bottom; }
 
-function exportarSVG() {
-  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  exportandoSVG = true;
-  beginRecordSVG(this, `crecimiento_diferencial_${ts}.svg`);
+function exportarSVG(){
+  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  exportandoSVG=true;
+  beginRecordSVG(this,`crecimiento_diferencial_${ts}.svg`);
   redraw();
   endRecordSVG();
-  exportandoSVG = false;
+  exportandoSVG=false;
 }
