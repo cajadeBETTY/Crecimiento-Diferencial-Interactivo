@@ -159,7 +159,7 @@ function handleFile(file) {
 // Load SVG: supports <path>, <polygon>, <polyline>, <circle>
 function generarCurvaFromSVG() {
   console.log('generarCurvaFromSVG: svgText length=', svgText.length);
-  let pts = []; // points sampled from SVG
+  // points sampled from SVG
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   let pts = [];
