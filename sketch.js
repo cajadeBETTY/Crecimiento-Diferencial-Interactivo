@@ -259,12 +259,6 @@ function draw() {
 
   let tipoVisual = tipoVisualSelect.value();
 
-  // === Nueva condición para permitir previsualización ===
-  if (!running && !exportandoSVG && iniciado) {
-    pop();  // 🔥 Asegúrate de cerrar el push() antes de salir
-    return;
-  }
-
   // === Dibujar curva siempre que haya puntos ===
   if (points.length > 0) {
     // === Historial antes de iniciar ===
@@ -288,7 +282,6 @@ function draw() {
         endShape(CLOSE);
       }
     }
-
 
     // === Curva activa ===
     stroke(0);
@@ -384,7 +377,6 @@ function draw() {
     noiseOffset += 0.01;
   }
 }
-
 
 
 function mouseWheel(event) {
