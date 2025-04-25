@@ -218,47 +218,49 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
   push();
-  translate(width / 2 + offsetX, height / 2 + offsetY);
+  translate(width/2 + offsetX, height/2 + offsetY);
   scale(zoom);
-  translate(-width / 2, -height / 2);
+  translate(-width/2, -height/2);
 
   // Draw history
-  if (mostrarHistorial && historialFormas.length > 0) {
+  if (mostrarHistorial && historialFormas.length) {
     stroke(180);
-    strokeWeight(1 / zoom);
+    strokeWeight(1/zoom);
     noFill();
-    historialFormas.forEach(forma => {
+    for (let forma of historialFormas) {
       beginShape();
-      forma.forEach(p => {
-        if (tipoVisualSelect.value() === 'curva') curveVertex(p.x, p.y);
-        else vertex(p.x, p.y);
-      });
-      endShape(CLOSE);
-    });
+      for (let p of forma) {
+        (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x,p.y) : vertex(p.x,p.y);
+      }
+      if (tipoVisualSelect.value() !== 'curva') endShape(CLOSE);
+      else endShape();
+    }
   }
 
-  // Draw current shape
-  if (points.length > 0) {
+  // Draw current shape or preview
+  if (points.length) {
     stroke(0);
-    strokeWeight(1 / zoom);
+    strokeWeight(1/zoom);
     noFill();
     beginShape();
     if (tipoVisualSelect.value() === 'curva') {
       const L = points.length;
-      curveVertex(points[L - 2].x, points[L - 2].y);
-      curveVertex(points[L - 1].x, points[L - 1].y);
-      points.forEach(p => curveVertex(p.x, p.y));
+      // Duplicate to create smooth loop
+      curveVertex(points[L-2].x, points[L-2].y);
+      curveVertex(points[L-1].x, points[L-1].y);
+      for (let p of points) curveVertex(p.x,p.y);
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
+      endShape(); // no CLOSE
     } else {
-      points.forEach(p => vertex(p.x, p.y));
+      for (let p of points) vertex(p.x,p.y);
+      endShape(CLOSE);
     }
-    endShape(CLOSE);
 
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      points.forEach(p => circle(p.x, p.y, 4 / zoom));
+      for (let p of points) circle(p.x,p.y,4/zoom);
     }
   }
   pop();
