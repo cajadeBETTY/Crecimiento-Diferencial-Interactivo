@@ -366,36 +366,45 @@ function isMouseOverUI() {
 }
 
 // Export to SVG
+// Export to SVG usando p5.svg
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  // Usamos el renderer SVG nativo de p5.svg:
-  const g = createGraphics(width, height, 'svg');
-  g.noFill();
-  g.push();
-  g.translate(width/2 + offsetX, height/2 + offsetY);
-  g.scale(zoom);
-  g.translate(-width/2, -height/2);
-  g.stroke(0);
-  g.strokeWeight(1/zoom);
-  g.beginShape();
-  if (tipoVisualSelect.value()==='curva') {
-    const L = points.length;
-    g.curveVertex(points[L-2].x, points[L-2].y);
-    g.curveVertex(points[L-1].x, points[L-1].y);
-    points.forEach(p => g.curveVertex(p.x, p.y));
-    g.curveVertex(points[0].x, points[0].y);
-    g.curveVertex(points[1].x, points[1].y);
-    g.endShape();
-  } else {
-    points.forEach(p => g.vertex(p.x, p.y));
-    g.endShape(CLOSE);
-  }
-  if (mostrarNodos) {
-    g.fill(0);
-    g.noStroke();
-    points.forEach(p => g.circle(p.x, p.y, 4/zoom));
-  }
-  g.pop();
-  save(g, `crecimiento_diferencial_${ts}.svg`);
-  loop();
+  // Inicia la grabación SVG
+  beginRecord('svg', `crecimiento_diferencial_${ts}.svg`);
+
+  // Dibujo solamente la curva (sin UI)
+  background(255);
+  push();
+    translate(width/2 + offsetX, height/2 + offsetY);
+    scale(zoom);
+    translate(-width/2, -height/2);
+
+    stroke(0);
+    noFill();
+    strokeWeight(1/zoom);
+
+    beginShape();
+    if (tipoVisualSelect.value() === 'curva') {
+      const L = points.length;
+      curveVertex(points[L-2].x, points[L-2].y);
+      curveVertex(points[L-1].x, points[L-1].y);
+      points.forEach(p => curveVertex(p.x, p.y));
+      curveVertex(points[0].x, points[0].y);
+      curveVertex(points[1].x, points[1].y);
+      endShape();
+    } else {
+      points.forEach(p => vertex(p.x, p.y));
+      endShape(CLOSE);
+    }
+
+    if (mostrarNodos) {
+      fill(0);
+      noStroke();
+      points.forEach(p => circle(p.x, p.y, 4/zoom));
+    }
+  pop();
+
+  // Termina la grabación y descarga el SVG
+  endRecord();
 }
+
