@@ -366,45 +366,44 @@ function isMouseOverUI() {
 }
 
 // Export to SVG
-// Export to SVG usando p5.svg
+// Exportar SVG sin usar push()/pop()
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  // Inicia la grabación SVG
-  beginRecord('svg', `crecimiento_diferencial_${ts}.svg`);
+  // 1) Creo un p5.Graphics con renderer SVG
+  const svg = createGraphics(width, height, 'svg');
+  svg.noFill();
 
-  // Dibujo solamente la curva (sin UI)
-  background(255);
-  push();
-    translate(width/2 + offsetX, height/2 + offsetY);
-    scale(zoom);
-    translate(-width/2, -height/2);
+  // 2) Aplico las mismas transformaciones de posición y zoom
+  svg.translate(width/2 + offsetX, height/2 + offsetY);
+  svg.scale(zoom);
+  svg.translate(-width/2, -height/2);
 
-    stroke(0);
-    noFill();
-    strokeWeight(1/zoom);
-
-    beginShape();
+  // 3) Dibujo la curva
+  svg.stroke(0);
+  svg.strokeWeight(1/zoom);
+  svg.beginShape();
     if (tipoVisualSelect.value() === 'curva') {
       const L = points.length;
-      curveVertex(points[L-2].x, points[L-2].y);
-      curveVertex(points[L-1].x, points[L-1].y);
-      points.forEach(p => curveVertex(p.x, p.y));
-      curveVertex(points[0].x, points[0].y);
-      curveVertex(points[1].x, points[1].y);
-      endShape();
+      svg.curveVertex(points[L-2].x, points[L-2].y);
+      svg.curveVertex(points[L-1].x, points[L-1].y);
+      points.forEach(p => svg.curveVertex(p.x, p.y));
+      svg.curveVertex(points[0].x, points[0].y);
+      svg.curveVertex(points[1].x, points[1].y);
+      svg.endShape();
     } else {
-      points.forEach(p => vertex(p.x, p.y));
-      endShape(CLOSE);
+      points.forEach(p => svg.vertex(p.x, p.y));
+      svg.endShape(CLOSE);
     }
+  
+  // 4) Dibujo los nodos si están activos
+  if (mostrarNodos) {
+    svg.fill(0);
+    svg.noStroke();
+    points.forEach(p => svg.circle(p.x, p.y, 4/zoom));
+  }
 
-    if (mostrarNodos) {
-      fill(0);
-      noStroke();
-      points.forEach(p => circle(p.x, p.y, 4/zoom));
-    }
-  pop();
-
-  // Termina la grabación y descarga el SVG
-  endRecord();
+  // 5) Lanzo la descarga
+  save(svg, `crecimiento_diferencial_${ts}.svg`);
 }
+
 
