@@ -160,44 +160,30 @@ function generarCurvaFromSVG() {
   if (!points.length) return;
   // Compute bounding box
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (let p of points) {
+  points.forEach(p => {
     minX = min(minX, p.x);
     maxX = max(maxX, p.x);
     minY = min(minY, p.y);
     maxY = max(maxY, p.y);
-  }
+  });
   const bboxW = maxX - minX;
   const bboxH = maxY - minY;
   // Scale to radius
   const radius = float(sliderRadio.value());
   const desiredSize = radius * 2;
   const s = desiredSize / max(bboxW, bboxH);
-  // Normalize points around origin (no direct centering here)
-  for (let p of points) {
+  // Normalize points around origin
+  points.forEach(p => {
     p.x = (p.x - (minX + bboxW / 2)) * s;
     p.y = (p.y - (minY + bboxH / 2)) * s;
-  }
+  });
   originalPoints = points.map(p => p.copy());
   iniciado = false;
   running = false;
   redraw();
 }
-  });
-  if (!points.length) return;
-  // bounding box
-  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
-  points.forEach(p=>{if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y;});
-  const w=maxX-minX, h=maxY-minY;
-  const radius=float(sliderRadio.value());
-  const s=(radius*2)/max(w,h);
-  points.forEach(p=>{p.x=(p.x-(minX+w/2))*s+width/2; p.y=(p.y-(minY+h/2))*s+height/2;});
-  originalPoints=points.map(p=>p.copy());
-  iniciado=false;
-  running=false;
-  redraw();
-}
 
-function generarCurvaBase() {
+function generarCurvaBase()() {
   points=[];
   const tipo=formaGenericaSelect.value();
   const n=int(inputPuntos.value());
