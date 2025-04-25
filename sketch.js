@@ -111,24 +111,77 @@ function handleFile(file) {
 }
 
 function generarCurvaFromSVG() {
-  console.log('SVG len=',svgText.length);
-  const parser=new DOMParser();
-  const doc=parser.parseFromString(svgText,'image/svg+xml');
-  const n=int(inputPuntos.value());
-  let pts=[];
-  Array.from(doc.getElementsByTagName('path')).forEach(path=>{
-    const len=path.getTotalLength();
-    for(let i=0;i<n;i++){ const p=path.getPointAtLength((i/n)*len); pts.push(createVector(p.x,p.y)); }
+  // 1) Obtengo el string bruto
+  let raw = svgText;
+  // Si viene como DataURL base64, lo decodifico
+  if (raw.startsWith('data:image/svg+xml;base64,')) {
+    raw = atob(raw.split(',')[1]);
+  }
+  // 2) Parseo
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(raw, 'image/svg+xml');
+
+  // 3) Selecciono path, polyline y polygon
+  const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
+  console.log('Elementos SVG encontrados:', elems.map(e=>e.tagName));
+
+  if (elems.length === 0) {
+    console.warn('No se encontró ningún <path>, <polyline> ni <polygon>.');
+    return;
+  }
+
+  // 4) Sampleo cada forma en N puntos
+  const n = int(inputPuntos.value());
+  let pts = [];
+  elems.forEach(el => {
+    const tag = el.tagName.toLowerCase();
+
+    if (tag === 'path') {
+      const L = el.getTotalLength();
+      for (let i = 0; i < n; i++) {
+        const p = el.getPointAtLength((i / n) * L);
+        pts.push(createVector(p.x, p.y));
+      }
+    } else {
+      // polyline o polygon → uso su lista de vértices
+      const list = el.points;
+      const coords = [];
+      for (let i = 0; i < list.numberOfItems; i++) {
+        const pt = list.getItem(i);
+        coords.push({ x: pt.x, y: pt.y });
+      }
+      // Si hay más vértices que n, muestreo equiespaciado; si hay menos, repito
+      for (let i = 0; i < n; i++) {
+        const idx = floor((i / n) * coords.length);
+        const c = coords[idx];
+        pts.push(createVector(c.x, c.y));
+      }
+    }
   });
-  if(!pts.length){ console.warn('No paths'); return; }
+
+  // 5) Calculo bounding-box para centrar y escalar
   let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
-  pts.forEach(p=>{minX=min(minX,p.x);maxX=max(maxX,p.x);minY=min(minY,p.y);maxY=max(maxY,p.y);});
-  const w=maxX-minX,h=maxY-minY;
-  const r=float(sliderRadio.value()), scale=(r*2)/max(w,h);
-  points=pts.map(p=>createVector((p.x-(minX+w/2))*scale+width/2,(p.y-(minY+h/2))*scale+height/2));
-  console.log('pts mapped',points.length);
-  originalPoints=points.map(p=>p.copy()); iniciado=running=false;
+  pts.forEach(p => {
+    minX = min(minX, p.x); maxX = max(maxX, p.x);
+    minY = min(minY, p.y); maxY = max(maxY, p.y);
+  });
+  const w = maxX - minX, h = maxY - minY;
+  const r = float(sliderRadio.value());
+  const s = (r*2) / max(w, h);
+
+  // 6) Mapeo a tu sistema de coordenadas, centrado
+  points = pts.map(p => 
+    createVector(
+      (p.x - (minX + w/2)) * s + width/2,
+      (p.y - (minY + h/2)) * s + height/2
+    )
+  );
+  console.log('Puntos mapeados:', points.length);
+
+  originalPoints = points.map(p => p.copy());
+  iniciado = running = false;
 }
+
 
 function generarCurvaBase() {
   console.log('gen base');
