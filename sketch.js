@@ -351,39 +351,40 @@ function windowResized() { resizeCanvas(windowWidth, windowHeight); }
 function isMouseOverUI() { const b = document.getElementById('ui').getBoundingClientRect(); return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom; }
 
 // Export current shape to SVG via p5.plotSvg.js
+// Export current shape to standalone SVG via p5.svg
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  // start recording to SVG
-  beginRecordSVG();
-  // redraw only the shape on main canvas
-  background(255);
-  push();
-  translate(width/2 + offsetX, height/2 + offsetY);
-  scale(zoom);
-  translate(-width/2, -height/2);
-
-  stroke(0);
-  strokeWeight(1/zoom);
-  noFill();
-  beginShape();
+  // create an SVG graphics context
+  const g = createGraphics(width, height, 'svg');
+  g.pixelDensity(1);
+  g.noFill();
+  // draw current shape onto SVG context
+  g.push();
+  g.translate(width/2 + offsetX, height/2 + offsetY);
+  g.scale(zoom);
+  g.translate(-width/2, -height/2);
+  g.stroke(0);
+  g.strokeWeight(1/zoom);
+  // draw shape
+  g.beginShape();
   if (tipoVisualSelect.value() === 'curva') {
     const L = points.length;
-    curveVertex(points[L-2].x, points[L-2].y);
-    curveVertex(points[L-1].x, points[L-1].y);
-    points.forEach(p => curveVertex(p.x, p.y));
-    curveVertex(points[0].x, points[0].y);
-    curveVertex(points[1].x, points[1].y);
+    g.curveVertex(points[L-2].x, points[L-2].y);
+    g.curveVertex(points[L-1].x, points[L-1].y);
+    for (let p of points) g.curveVertex(p.x, p.y);
+    g.curveVertex(points[0].x, points[0].y);
+    g.curveVertex(points[1].x, points[1].y);
+    g.endShape();
   } else {
-    points.forEach(p => vertex(p.x, p.y));
+    for (let p of points) g.vertex(p.x, p.y);
+    g.endShape(CLOSE);
   }
-  endShape(CLOSE);
-
   if (mostrarNodos) {
-    fill(0);
-    noStroke();
-    points.forEach(p => circle(p.x, p.y, 4/zoom));
+    g.fill(0);
+    g.noStroke();
+    for (let p of points) g.circle(p.x, p.y, 4/zoom);
   }
-  pop();
-  // finish and save SVG
-  endRecordSVG(`crecimiento_diferencial_${ts}.svg`);
+  g.pop();
+  // save SVG file
+  save(g, `crecimiento_diferencial_${ts}.svg`);
 }
