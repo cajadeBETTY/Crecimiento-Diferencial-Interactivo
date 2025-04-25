@@ -366,44 +366,42 @@ function isMouseOverUI() {
 }
 
 // Export to SVG
-// Exportar SVG sin usar push()/pop()
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  // 1) Creo un p5.Graphics con renderer SVG
-  const svg = createGraphics(width, height, 'svg');
-  svg.noFill();
+  const w = width, h = height;
+  // 1) Transformo cada punto con tu pan/zoom
+  const pts = points.map(p => {
+    const x = (p.x - w/2) * zoom + w/2 + offsetX;
+    const y = (p.y - h/2) * zoom + h/2 + offsetY;
+    return `${x},${y}`;
+  }).join(' ');
+  const strokeW = (1/zoom).toFixed(3);
+  const r = mostrarNodos ? (2/zoom).toFixed(3) : 0;
 
-  // 2) Aplico las mismas transformaciones de posición y zoom
-  svg.translate(width/2 + offsetX, height/2 + offsetY);
-  svg.scale(zoom);
-  svg.translate(-width/2, -height/2);
+  // 2) Construyo el SVG
+  let svg = ''
+    + `<?xml version="1.0" encoding="UTF-8"?>`
+    + `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
+    + `<polyline fill="none" stroke="black" stroke-width="${strokeW}" points="${pts}" />`;
 
-  // 3) Dibujo la curva
-  svg.stroke(0);
-  svg.strokeWeight(1/zoom);
-  svg.beginShape();
-    if (tipoVisualSelect.value() === 'curva') {
-      const L = points.length;
-      svg.curveVertex(points[L-2].x, points[L-2].y);
-      svg.curveVertex(points[L-1].x, points[L-1].y);
-      points.forEach(p => svg.curveVertex(p.x, p.y));
-      svg.curveVertex(points[0].x, points[0].y);
-      svg.curveVertex(points[1].x, points[1].y);
-      svg.endShape();
-    } else {
-      points.forEach(p => svg.vertex(p.x, p.y));
-      svg.endShape(CLOSE);
-    }
-  
-  // 4) Dibujo los nodos si están activos
+  // 3) Si se muestran nodos, agrego círculos
   if (mostrarNodos) {
-    svg.fill(0);
-    svg.noStroke();
-    points.forEach(p => svg.circle(p.x, p.y, 4/zoom));
+    points.forEach(p => {
+      const cx = ((p.x - w/2) * zoom + w/2 + offsetX).toFixed(3);
+      const cy = ((p.y - h/2) * zoom + h/2 + offsetY).toFixed(3);
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="black" />`;
+    });
   }
+  svg += `</svg>`;
 
-  // 5) Lanzo la descarga
-  save(svg, `crecimiento_diferencial_${ts}.svg`);
+  // 4) Descarga forzada
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `crecimiento_diferencial_${ts}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
-
-
