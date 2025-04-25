@@ -69,28 +69,48 @@ function setup() {
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
   tipoVisualSelect = select('#tipoVisual');
-  
+
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
   clearHistorialBtn = select('#clearHistorialBtn');
-  toggleHistorialBtn.mousePressed(() => { mostrarHistorial = !mostrarHistorial; toggleHistorialBtn.html(mostrarHistorial ? '🕘 Ocultar historial' : '🕘 Ver historial'); });
-  toggleNodosBtn.mousePressed(() => { mostrarNodos = !mostrarNodos; toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos'); });
+  toggleHistorialBtn.mousePressed(() => {
+    mostrarHistorial = !mostrarHistorial;
+    toggleHistorialBtn.html(mostrarHistorial ? '🕘 Ocultar historial' : '🕘 Ver historial');
+  });
+  toggleNodosBtn.mousePressed(() => {
+    mostrarNodos = !mostrarNodos;
+    toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
+  });
   clearHistorialBtn.mousePressed(() => { historialFormas = []; frameHistorial = 0; });
 
   select('#playPauseBtn').mousePressed(togglePlayPause);
   select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
-  select('#btnExportSVG').mousePressed(exportarSVG);
+  select('#btnSubirSVG').mousePressed(exportarSVG);
 
+  // Forma genérica y lados
   formaGenericaSelect = select('#formaGenericaSelect');
   inputLados = select('#inputLados');
-  inputLados.attribute('disabled','');
-  formaGenericaSelect.changed(previewShape);
+  inputLados.attribute('disabled', '');
+  formaGenericaSelect.changed(() => {
+    // <<-- Aquí: descartar SVG cargado al seleccionar forma genérica
+    fileLoaded = false; // Reinicia estado de SVG para permitir base genérica
+
+    const tipo = formaGenericaSelect.value();
+    if (tipo === 'poligono') {
+      inputLados.removeAttribute('disabled');
+    } else {
+      inputLados.attribute('disabled', '');
+    }
+    previewShape();
+  });
   inputLados.input(previewShape);
 
+  // File input SVG
   fileInputSVG = createFileInput(handleFile);
-  fileInputSVG.parent('ui'); fileInputSVG.hide();
+  fileInputSVG.parent('ui');
+  fileInputSVG.hide();
   select('#btnSubirSVG').mousePressed(() => { suppressDrag = true; fileInputSVG.elt.click(); });
 
   previewShape();
@@ -100,6 +120,7 @@ function previewShape() {
   fileLoaded ? generarCurvaFromSVG() : generarCurvaBase();
   redraw();
 }
+
 
 function handleFile(file) {
   console.log('handleFile:',file);
