@@ -143,14 +143,12 @@ function generarCurvaFromSVG() {
         pts.push(createVector(p.x, p.y));
       }
     } else {
-      // polyline o polygon → uso su lista de vértices
       const list = el.points;
       const coords = [];
       for (let i = 0; i < list.numberOfItems; i++) {
         const pt = list.getItem(i);
         coords.push({ x: pt.x, y: pt.y });
       }
-      // Si hay más vértices que n, muestreo equiespaciado; si hay menos, repito
       for (let i = 0; i < n; i++) {
         const idx = floor((i / n) * coords.length);
         const c = coords[idx];
@@ -170,38 +168,228 @@ function generarCurvaFromSVG() {
   const s = (r*2) / max(w, h);
 
   // 6) Mapeo a tu sistema de coordenadas, centrado
-  points = pts.map(p => 
-    createVector(
-      (p.x - (minX + w/2)) * s + width/2,
-      (p.y - (minY + h/2)) * s + height/2
-    )
-  );
+  points = pts.map(p => createVector((p.x - (minX + w/2)) * s + width/2, (p.y - (minY + h/2)) * s + height/2));
   console.log('Puntos mapeados:', points.length);
 
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
 
-
 function generarCurvaBase() {
   console.log('gen base');
-  points=[];
-  const tipo=formaGenericaSelect.value(),n=int(inputPuntos.value()),r=float(sliderRadio.value());
-  const lados= tipo==='poligono'?int(inputLados.value()):n;
-  if(tipo!=='none'){
-    for(let i=0;i<lados;i++){const a=TWO_PI*i/lados;p= createVector(width/2+r*cos(a),height/2+r*sin(a));points.push(p);}    
-    originalPoints=points.map(p=>p.copy());iniciado=running=false;
+  points = [];
+  const tipo = formaGenericaSelect.value(), n = int(inputPuntos.value()), r = float(sliderRadio.value());
+  const lados = tipo === 'poligono' ? int(inputLados.value()) : n;
+  if (tipo !== 'none') {
+    for (let i = 0; i < lados; i++) {
+      const a = TWO_PI * i / lados;
+      let p = createVector(width/2 + r * cos(a), height/2 + r * sin(a));
+      points.push(p);
+    }
+    originalPoints = points.map(p => p.copy());
+    iniciado = running = false;
   }
 }
 
-function iniciarCrecimiento(){ if(!points.length)return; const n=int(inputPuntos.value()),c=TWO_PI*float(sliderRadio.value()),d=c/max(n,1);minDist=float(inputMinDist.value())>0?float(inputMinDist.value()):d*1.2;maxDist=float(inputMaxDist.value())>0?float(inputMaxDist.value()):d*1.2;iniciado=running=true; }
-function togglePlayPause(){ if(!iniciado){iniciarCrecimiento();select('#playPauseBtn').html('⏸ Pausar');}else{running=!running;select('#playPauseBtn').html(running?'⏸ Pausar':'▶ Reanudar');}}
-function reiniciarCrecimiento(){running=false;iniciado=false;offsetX=offsetY=0;zoom=1;noiseOffset=0;historialFormas=[];frameHistorial=0;points=originalPoints.map(p=>p.copy());select('#playPauseBtn').html('▶ Iniciar');redraw();}
+function iniciarCrecimiento() {
+  if (!points.length) return;
+  const n = int(inputPuntos.value()),
+        c = TWO_PI * float(sliderRadio.value()),
+        d = c / max(n, 1);
+  minDist = float(inputMinDist.value()) > 0 ? float(inputMinDist.value()) : d * 1.2;
+  maxDist = float(inputMaxDist.value()) > 0 ? float(inputMaxDist.value()) : d * 1.2;
+  iniciado = running = true;
+}
 
-function draw(){background(255);push();translate(width/2+offsetX,height/2+offsetY);scale(zoom);translate(-width/2,-height/2);
-  if(mostrarHistorial)stroke(180),noFill(),historialFormas.forEach(f=>{beginShape();f.forEach(p=>tipoVisualSelect.value()==='curva'?curveVertex(p.x,p.y):vertex(p.x,p.y));tipoVisualSelect.value()==='curva'?endShape():endShape(CLOSE);});
-  if(points.length){stroke(0);noFill();strokeWeight(1/zoom);beginShape(); if(tipoVisualSelect.value()==='curva'){const L=points.length;curveVertex(points[L-2].x,points[L-2].y);curveVertex(points[L-1].x,points[L-1].y);points.forEach(p=>curveVertex(p.x,p.y));curveVertex(points[0].x,points[0].y);curveVertex(points[1].x,points[1].y);endShape();}else{points.forEach(p=>vertex(p.x,p.y));endShape(CLOSE);} if(mostrarNodos)fill(0),noStroke(),points.forEach(p=>circle(p.x,p.y,4/zoom));}
-  pop(); if(!iniciado||!running||points.length>=maxPoints)return; if(mostrarHistorial&&frameHistorial%frecuenciaHistorial===0)historialFormas.push(points.map(p=>p.copy()));frameHistorial++;
-  let nuevos=[];points.forEach((act,i)=>{let f=createVector(0,0),c=0;points.forEach((o,j)=>{if(i!==j){const d=dist(act.x,act.y,o.x,o.y);if(d<minDist){f.add(p5.Vector.sub(act,o).normalize().mult(float(sliderRepulsion.value())/d));c++;}}});let rn=createVector(0,0),amp=float(sliderAmplitud.value()),fr=float(sliderFrecuencia.value()),tt=tipoRuidoSelect.value();if(tt==='perlin'){const n2=noise(act.x*fr,act.y*fr+noiseOffset);rn=p5.Vector.fromAngle(n2*TWO_PI).mult(amp);}else if(tt==='perlinImproved'){const nx=noise(act.x*fr,noiseOffset),ny=noise(act.y*fr,noiseOffset+1000);rn=createVector((nx-0.5)*amp*2,(ny-0.5)*amp*2);}else if(tt==='valor')rn=createVector(random(-1,1)*amp,random(-1,1)*amp);else if(tt==='simple')rn=p5.Vector.random2D().mult(amp);if(c>0)f.div(c).add(rn);else f=rn.copy();act.add(f);nuevos.push(act);const np=points[(i+1)%points.length];if(p5.Vector.dist(act,np)>maxDist)nuevos.push(p5.Vector.add(act,np).div(2));});points=nuevos;noiseOffset+=0.01;}
-function mouseWheel(){return false;}function mousePressed(){if(mouseButton===LEFT){isDragging=true;lastMouseX=mouseX;lastMouseY=mouseY;}}function mouseReleased(){isDragging=false;suppressDrag=false;}function mouseDragged(){if(isDragging&&!suppressDrag&&!isMouseOverUI()){offsetX+=mouseX-lastMouseX;offsetY+=mouseY-lastMouseY;lastMouseX=mouseX;lastMouseY=mouseY;}}function windowResized(){resizeCanvas(windowWidth,windowHeight);}function isMouseOverUI(){const b=document.getElementById('ui').getBoundingClientRect();return mouseX>=b.left&&mouseX<=b.right&&mouseY>=b.top&&mouseY<=b.bottom;}
-function exportarSVG(){const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');const g=createGraphics(width,height,'svg');g.noFill();g.push();g.translate(width/2+offsetX,height/2+offsetY);g.scale(zoom);g.translate(-width/2,-height/2);g.stroke(0);g.strokeWeight(1/zoom);g.beginShape();if(tipoVisualSelect.value()==='curva'){const L=points.length;g.curveVertex(points[L-2].x,points[L-2].y);g.curveVertex(points[L-1].x,points[L-1].y);points.forEach(p=>g.curveVertex(p.x,p.y));g.curveVertex(points[0].x,points[0].y);g.curveVertex(points[1].x,points[1].y);g.endShape();}else{points.forEach(p=>g.vertex(p.x,p.y));g.endShape(CLOSE);}if(mostrarNodos){g.fill(0);g.noStroke();points.forEach(p=>g.circle(p.x,p.y,4/zoom));}g.pop();save(g,`crecimiento_diferencial_${ts}.svg`);loop();}
+function togglePlayPause() {
+  if (!iniciado) {
+    iniciarCrecimiento();
+    select('#playPauseBtn').html('⏸ Pausar');
+  } else {
+    running = !running;
+    select('#playPauseBtn').html(running ? '⏸ Pausar' : '▶ Reanudar');
+  }
+}
+
+function reiniciarCrecimiento() {
+  running = false;
+  iniciado = false;
+  offsetX = offsetY = 0;
+  zoom = 1;
+  noiseOffset = 0;
+  historialFormas = [];
+  frameHistorial = 0;
+  points = originalPoints.map(p => p.copy());
+  select('#playPauseBtn').html('▶ Iniciar');
+  redraw();
+}
+
+function draw() {
+  background(255);
+  push();
+  translate(width/2 + offsetX, height/2 + offsetY);
+  scale(zoom);
+  translate(-width/2, -height/2);
+
+  if (mostrarHistorial) {
+    stroke(180);
+    noFill();
+    historialFormas.forEach(f => {
+      beginShape();
+      f.forEach(p => tipoVisualSelect.value() === 'curva' ? curveVertex(p.x, p.y) : vertex(p.x, p.y));
+      tipoVisualSelect.value() === 'curva' ? endShape() : endShape(CLOSE);
+    });
+  }
+
+  if (points.length) {
+    stroke(0);
+    noFill();
+    strokeWeight(1 / zoom);
+    beginShape();
+    if (tipoVisualSelect.value() === 'curva') {
+      const L = points.length;
+      curveVertex(points[L-2].x, points[L-2].y);
+      curveVertex(points[L-1].x, points[L-1].y);
+      points.forEach(p => curveVertex(p.x, p.y));
+      curveVertex(points[0].x, points[0].y);
+      curveVertex(points[1].x, points[1].y);
+      endShape();
+    } else {
+      points.forEach(p => vertex(p.x, p.y));
+      endShape(CLOSE);
+    }
+    if (mostrarNodos) {
+      fill(0);
+      noStroke();
+      points.forEach(p => circle(p.x, p.y, 4 / zoom));
+    }
+  }
+
+  pop();
+
+  if (!iniciado || !running || points.length >= maxPoints) return;
+
+  if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
+    historialFormas.push(points.map(p => p.copy()));
+  }
+  frameHistorial++;
+
+  let nuevos = [];
+  points.forEach((act, i) => {
+    let f = createVector(0, 0), c = 0;
+    points.forEach((o, j) => {
+      if (i !== j) {
+        const d = dist(act.x, act.y, o.x, o.y);
+        if (d < minDist) {
+          f.add(p5.Vector.sub(act, o).normalize().mult(float(sliderRepulsion.value()) / d));
+          c++;
+        }
+      }
+    });
+    let rn = createVector(0, 0);
+    const amp = float(sliderAmplitud.value());
+    const fr = float(sliderFrecuencia.value());
+    const tt = tipoRuidoSelect.value();
+    if (tt === 'perlin') {
+      const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+      rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+    } else if (tt === 'perlinImproved') {
+      const nx = noise(act.x * fr, noiseOffset);
+      const ny = noise(act.y * fr, noiseOffset + 1000);
+      rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+    } else if (tt === 'valor') {
+      rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+    } else if (tt === 'simple') {
+      rn = p5.Vector.random2D().mult(amp);
+    }
+    if (c > 0) {
+      f.div(c).add(rn);
+    } else {
+      f = rn.copy();
+    }
+    act.add(f);
+    nuevos.push(act);
+    const np = points[(i + 1) % points.length];
+    if (p5.Vector.dist(act, np) > maxDist) {
+      nuevos.push(p5.Vector.add(act, np).div(2));
+    }
+  });
+  points = nuevos;
+  noiseOffset += 0.01;
+}
+
+// Pan with mouse drag
+function mousePressed() {
+  if (mouseButton === LEFT) {
+    isDragging = true;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+  suppressDrag = false;
+}
+
+function mouseDragged() {
+  if (isDragging && !suppressDrag && !isMouseOverUI()) {
+    offsetX += mouseX - lastMouseX;
+    offsetY += mouseY - lastMouseY;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+// Zoom with mouse wheel
+function mouseWheel(event) {
+  const factor = 1.05;
+  if (event.deltaY < 0) {
+    zoom *= factor;
+  } else {
+    zoom /= factor;
+  }
+  return false; // prevenir scroll de página
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function isMouseOverUI() {
+  const b = document.getElementById('ui').getBoundingClientRect();
+  return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom;
+}
+
+function exportarSVG() {
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const g = createGraphics(width, height, 'svg');
+  g.noFill();
+  g.push();
+  g.translate(width/2 + offsetX, height/2 + offsetY);
+  g.scale(zoom);
+  g.translate(-width/2, -height/2);
+  g.stroke(0);
+  g.strokeWeight(1/zoom);
+  g.beginShape();
+  if (tipoVisualSelect.value() === 'curva') {
+    const L = points.length;
+    g.curveVertex(points[L-2].x, points[L-2].y);
+    g.curveVertex(points[L-1].x, points[L-1].y);
+    points.forEach(p => g.curveVertex(p.x, p.y));
+    g.curveVertex(points[0].x, points[0].y);
+    g.curveVertex(points[1].x, points[1].y);
+    g.endShape();
+  } else {
+    points.forEach(p => g.vertex(p.x, p.y));
+    g.endShape(CLOSE);
+  }
+  if (mostrarNodos) {
+    g.fill(0);
+    g.noStroke();
+    points.forEach(p => g.circle(p.x, p.y, 4/zoom));
+  }
+  g.pop();
+  save(g, `crecimiento_diferencial_${ts}.svg`);
+  loop();
+}
