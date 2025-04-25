@@ -156,54 +156,72 @@ function handleFile(file) {
   }
 }
 
-// Load SVG: supports <path>, <polygon>, <polyline>, <circle>
 function generarCurvaFromSVG() {
   console.log('generarCurvaFromSVG: svgText length=', svgText.length);
-  // points sampled from SVG
+  // parse SVG
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
-  let pts = [];
   const n = int(inputPuntos.value());
-  doc.querySelectorAll('path').forEach(path => {
-    const len = path.getTotalLength();
-    for (let i = 0; i < n; i++) {
-      const p = path.getPointAtLength((i / n) * len);
-      pts.push(createVector(p.x, p.y));
+  let pts = [];
+  // Sample paths
+  const paths = doc.getElementsByTagName('path');
+  if (paths.length === 0) console.warn('⚠️ No <path> elements found in SVG');
+  for (let path of paths) {
+    try {
+      const len = path.getTotalLength();
+      for (let i = 0; i < n; i++) {
+        const pt = path.getPointAtLength((i / n) * len);
+        pts.push(createVector(pt.x, pt.y));
+      }
+    } catch (e) {
+      console.warn('Error sampling <path>:', e);
     }
-  });
-  doc.querySelectorAll('polygon,polyline').forEach(el => {
-    const list = el.getAttribute('points').trim().split(/\s+/).map(pt => pt.split(',').map(Number));
-    list.forEach(([x, y]) => pts.push(createVector(x, y)));
-  });
-  doc.querySelectorAll('circle').forEach(c => {
+  }
+  // Sample polygons/polylines
+  const lines = [
+    ...doc.getElementsByTagName('polygon'),
+    ...doc.getElementsByTagName('polyline')
+  ];
+  for (let el of lines) {
+    const ptsStr = el.getAttribute('points').trim().split(/\s+/);
+    for (let str of ptsStr) {
+      const [x,y] = str.split(',').map(Number);
+      pts.push(createVector(x,y));
+    }
+  }
+  // Sample circles
+  for (let c of doc.getElementsByTagName('circle')) {
     const cx = float(c.getAttribute('cx'));
     const cy = float(c.getAttribute('cy'));
     const r = float(c.getAttribute('r'));
     for (let i = 0; i < n; i++) {
       const a = TWO_PI * i / n;
-      pts.push(createVector(cx + r * cos(a), cy + r * sin(a)));  
+      pts.push(createVector(cx + r*cos(a), cy + r*sin(a)));
     }
-  });
+  }
   console.log('pts length before mapping:', pts.length);
-  if (!pts.length) {
-    console.warn('No points extracted from SVG; check SVG element tags in the file');
+  if (pts.length === 0) {
+    console.warn('🚨 No points extracted from SVG');
     return;
   }
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  pts.forEach(p => { minX = min(minX, p.x); maxX = max(maxX, p.x); minY = min(minY, p.y); maxY = max(maxY, p.y); });
+  // Compute bounding box
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  for (let p of pts) {
+    minX = min(minX,p.x); maxX = max(maxX,p.x);
+    minY = min(minY,p.y); maxY = max(maxY,p.y);
+  }
   const w = maxX - minX;
   const h = maxY - minY;
-  const r = float(sliderRadio.value());
-  const s = (r * 2) / max(w, h);
-  // Map sampled points into canvas coordinates
+  const radius = float(sliderRadio.value());
+  const factor = (radius*2) / max(w,h);
+  // Map points to canvas
   points = pts.map(p => createVector(
-    (p.x - (minX + w/2)) * s + width/2,
-    (p.y - (minY + h/2)) * s + height/2
+    (p.x - (minX + w/2)) * factor + width/2,
+    (p.y - (minY + h/2)) * factor + height/2
   ));
   console.log('Mapped points count:', points.length, 'first coords:', points.slice(0,5));
   originalPoints = points.map(p => p.copy());
-  iniciado = false;
-  running = false;
+  iniciado = false; running = false;
   redraw();
 }
 
