@@ -184,7 +184,11 @@ function generarCurvaFromSVG() {
       pts.push(createVector(cx + r * cos(a), cy + r * sin(a)));  
     }
   });
-  if (!pts.length) return;
+  console.log('pts length before mapping:', pts.length);
+  if (!pts.length) {
+    console.warn('No points extracted from SVG; check SVG element tags in the file');
+    return;
+  }
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   pts.forEach(p => { minX = min(minX, p.x); maxX = max(maxX, p.x); minY = min(minY, p.y); maxY = max(maxY, p.y); });
   const w = maxX - minX;
