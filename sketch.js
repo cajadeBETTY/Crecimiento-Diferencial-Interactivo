@@ -191,7 +191,11 @@ function generarCurvaFromSVG() {
   const h = maxY - minY;
   const r = float(sliderRadio.value());
   const s = (r * 2) / max(w, h);
-  $&
+  // Map sampled points into canvas coordinates
+  points = pts.map(p => createVector(
+    (p.x - (minX + w/2)) * s + width/2,
+    (p.y - (minY + h/2)) * s + height/2
+  ));
   console.log('Mapped points count:', points.length, 'first coords:', points.slice(0,5));
   originalPoints = points.map(p => p.copy());
   iniciado = false;
