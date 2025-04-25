@@ -144,6 +144,7 @@ function setup() {
 }
 
 function handleFile(file) {
+  console.log('handleFile called, file:', file);
   const isSvg = (file.subtype && file.subtype.toLowerCase().includes('svg'))
               || (file.name && file.name.toLowerCase().endsWith('.svg'));
   if (file.type === 'image' && isSvg) {
@@ -157,6 +158,8 @@ function handleFile(file) {
 
 // Load SVG: supports <path>, <polygon>, <polyline>, <circle>
 function generarCurvaFromSVG() {
+  console.log('generarCurvaFromSVG: svgText length=', svgText.length);
+  let pts = []; // points sampled from SVG
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   let pts = [];
@@ -197,6 +200,8 @@ function generarCurvaFromSVG() {
 }
 
 function generarCurvaBase() {
+  console.log('generarCurvaBase: tipo=', formaGenericaSelect.value(), 'puntos=', inputPuntos.value(), 'radio=', sliderRadio.value());
+  points = [];
   points = [];
   const tipo = formaGenericaSelect.value();
   const n = int(inputPuntos.value());
@@ -349,7 +354,7 @@ function isMouseOverUI() { const b = document.getElementById('ui').getBoundingCl
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   // create SVG graphics
-  const g = createGraphics(width, height, SVG);
+  const g = createGraphics(width, height, 'svg');
   g.pixelDensity(1);
   g.noFill();
   // Draw shape centered exactly as on screen
