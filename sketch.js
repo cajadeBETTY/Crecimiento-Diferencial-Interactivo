@@ -8,6 +8,7 @@ let zoom = 1.0;
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
+let suppressDrag = false; // new flag to prevent drag during file dialog
 let lastMouseX, lastMouseY;
 
 // UI elements
@@ -50,9 +51,7 @@ function setup() {
       redraw();
     }
   });
-  inputFrecuenciaHistorial.input(() => {
-    frecuenciaHistorial = int(inputFrecuenciaHistorial.value());
-  });
+  inputFrecuenciaHistorial.input(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
 
   // Radius slider
   sliderRadio = select('#sliderRadio');
@@ -73,7 +72,7 @@ function setup() {
   valorAmplitudSpan = select('#valorAmplitud');
   valorFrecuenciaSpan = select('#valorFrecuencia');
   sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(valorFrecuenciaSpan.value()));
 
   // Repulsion
   sliderRepulsion = select('#sliderRepulsion');
@@ -111,9 +110,7 @@ function setup() {
   // Generic shape & file input
   formaGenericaSelect = select('#formaGenericaSelect');
   inputLados = select('#inputLados');
-  // Disable sides input by default unless polygon
   inputLados.attribute('disabled', '');
-  // On shape type change
   formaGenericaSelect.changed(() => {
     const tipo = formaGenericaSelect.value();
     if (tipo === 'poligono') inputLados.removeAttribute('disabled');
@@ -121,7 +118,6 @@ function setup() {
     generarCurvaBase();
     redraw();
   });
-  // On sides change
   inputLados.input(() => {
     if (formaGenericaSelect.value() === 'poligono') {
       generarCurvaBase();
@@ -132,14 +128,20 @@ function setup() {
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
   fileInputSVG.hide();
-  select('#btnSubirSVG').mousePressed(() => fileInputSVG.elt.click());
+  select('#btnSubirSVG').mousePressed(() => {
+    suppressDrag = true; // prevent canvas drag
+    fileInputSVG.elt.click();
+  });
 
   // Initial preview
   generarCurvaBase();
 }
 
 function handleFile(file) {
-  if (file.type === 'image' && file.subtype === 'svg') {
+  // Accept SVG by subtype or file extension
+  const isSvg = (file.subtype && file.subtype.toLowerCase().includes('svg'))
+              || (file.name && file.name.toLowerCase().endsWith('.svg'));
+  if (file.type === 'image' && isSvg) {
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(file.data, 'image/svg+xml');
     const paths = svgDoc.querySelectorAll('path');
@@ -157,6 +159,7 @@ function handleFile(file) {
     running = false;
     redraw();
   } else {
+    // only alert once per attempt
     alert('Por favor sube un archivo SVG válido.');
   }
 }
@@ -189,19 +192,6 @@ function togglePlayPause() {
   }
 }
 
-function iniciarCrecimiento() {
-  if (points.length === 0) return;
-  // Recompute distances
-  const circ = TWO_PI * float(sliderRadio.value());
-  const distIni = circ / int(inputPuntos.value());
-  const minIn = float(inputMinDist.value());
-  const maxIn = float(inputMaxDist.value());
-  minDist = (!isNaN(minIn) && minIn > 0) ? minIn : distIni * 1.2;
-  maxDist = (!isNaN(maxIn) && maxIn > 0) ? maxIn : distIni * 1.2;
-  iniciado = true;
-  running = true;
-}
-
 function reiniciarCrecimiento() {
   running = false;
   iniciado = false;
@@ -218,49 +208,45 @@ function reiniciarCrecimiento() {
 function draw() {
   background(255);
   push();
-  translate(width/2 + offsetX, height/2 + offsetY);
+  translate(width / 2 + offsetX, height / 2 + offsetY);
   scale(zoom);
-  translate(-width/2, -height/2);
+  translate(-width / 2, -height / 2);
 
   // Draw history
   if (mostrarHistorial && historialFormas.length) {
     stroke(180);
-    strokeWeight(1/zoom);
+    strokeWeight(1 / zoom);
     noFill();
-    for (let forma of historialFormas) {
+    historialFormas.forEach(forma => {
       beginShape();
-      for (let p of forma) {
-        (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x,p.y) : vertex(p.x,p.y);
-      }
-      if (tipoVisualSelect.value() !== 'curva') endShape(CLOSE);
-      else endShape();
-    }
+      forma.forEach(p => (tipoVisualSelect.value() === 'curva') ? curveVertex(p.x, p.y) : vertex(p.x, p.y));
+      (tipoVisualSelect.value() === 'curva') ? endShape() : endShape(CLOSE);
+    });
   }
 
   // Draw current shape or preview
   if (points.length) {
     stroke(0);
-    strokeWeight(1/zoom);
+    strokeWeight(1 / zoom);
     noFill();
     beginShape();
     if (tipoVisualSelect.value() === 'curva') {
       const L = points.length;
-      // Duplicate to create smooth loop
-      curveVertex(points[L-2].x, points[L-2].y);
-      curveVertex(points[L-1].x, points[L-1].y);
-      for (let p of points) curveVertex(p.x,p.y);
+      curveVertex(points[L - 2].x, points[L - 2].y);
+      curveVertex(points[L - 1].x, points[L - 1].y);
+      points.forEach(p => curveVertex(p.x, p.y));
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
-      endShape(); // no CLOSE
+      endShape();
     } else {
-      for (let p of points) vertex(p.x,p.y);
+      points.forEach(p => vertex(p.x, p.y));
       endShape(CLOSE);
     }
 
     if (mostrarNodos) {
       fill(0);
       noStroke();
-      for (let p of points) circle(p.x,p.y,4/zoom);
+      points.forEach(p => circle(p.x, p.y, 4 / zoom));
     }
   }
   pop();
@@ -287,10 +273,9 @@ function draw() {
         }
       }
     });
-    // Noise
+    let rnoise = createVector(0, 0);
     const amp = float(sliderAmplitud.value());
     const freq = float(sliderFrecuencia.value());
-    let rnoise = createVector(0, 0);
     const tr = tipoRuidoSelect.value();
     if (tr === 'perlin') {
       const n = noise(act.x * freq, act.y * freq + noiseOffset);
@@ -315,10 +300,10 @@ function draw() {
   noiseOffset += 0.01;
 }
 
-function mouseWheel(e) { zoom *= 1 - e.delta * 0.001; return false; }
+function mouseWheel(e) { return false; }
 function mousePressed() { if (mouseButton === LEFT) { isDragging = true; lastMouseX = mouseX; lastMouseY = mouseY; } }
-function mouseReleased() { isDragging = false; }
-function mouseDragged() { if (isMouseOverUI()) return; if (isDragging) { offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; } }
+function mouseReleased() { isDragging = false; suppressDrag = false; }
+function mouseDragged() { if (isDragging && !suppressDrag && !isMouseOverUI()) { offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; } }
 function windowResized() { resizeCanvas(windowWidth, windowHeight); }
 function isMouseOverUI() { const b = document.getElementById('ui').getBoundingClientRect(); return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom; }
 
