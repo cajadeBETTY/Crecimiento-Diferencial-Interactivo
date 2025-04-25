@@ -239,15 +239,18 @@ function draw() {
     beginShape();
     if (tipoVisualSelect.value() === 'curva') {
       let L = points.length;
-      curveVertex(points[L - 1].x, points[L - 1].y);
-      curveVertex(points[0].x, points[0].y);
-      for (let p of points) curveVertex(p.x, p.y);
+      // Preparar vértices de control para curva cerrada suave
+      // Duplicar penúltimo y último punto al inicio
+      curveVertex(points[L-2].x, points[L-2].y);
+      curveVertex(points[L-1].x, points[L-1].y);
+      // Vértices principales
+      for (let i = 0; i < L; i++) {
+        curveVertex(points[i].x, points[i].y);
+      }
+      // Duplicar primer y segundo punto al final para cierre suave
       curveVertex(points[0].x, points[0].y);
       curveVertex(points[1].x, points[1].y);
-    } else {
-      for (let p of points) vertex(p.x, p.y);
-    }
-    endShape(CLOSE);
+      endShape();
 
     if (mostrarNodos) {
       fill(0);
