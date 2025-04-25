@@ -183,7 +183,7 @@ function generarCurvaFromSVG() {
   redraw();
 }
 
-function generarCurvaBase()() {
+function generarCurvaBase() {
   points=[];
   const tipo=formaGenericaSelect.value();
   const n=int(inputPuntos.value());
