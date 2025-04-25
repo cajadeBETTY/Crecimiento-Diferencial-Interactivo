@@ -345,9 +345,40 @@ function mouseDragged() { if (isDragging && !suppressDrag && !isMouseOverUI()) {
 function windowResized() { resizeCanvas(windowWidth, windowHeight); }
 function isMouseOverUI() { const b = document.getElementById('ui').getBoundingClientRect(); return mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom; }
 
+// Export current shape to standalone SVG via p5.svg createGraphics
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  beginRecordSVG(this, `crecimiento_diferencial_${ts}.svg`);
-  redraw();
-  endRecordSVG(this);
+  // create SVG graphics
+  const g = createGraphics(width, height, SVG);
+  g.pixelDensity(1);
+  g.noFill();
+  // Draw shape centered exactly as on screen
+  g.push();
+  g.translate(width/2 + offsetX, height/2 + offsetY);
+  g.scale(zoom);
+  g.translate(-width/2, -height/2);
+  g.stroke(0);
+  g.strokeWeight(1/zoom);
+  // draw active curve
+  g.beginShape();
+  if (tipoVisualSelect.value() === 'curva') {
+    const L = points.length;
+    g.curveVertex(points[L-2].x, points[L-2].y);
+    g.curveVertex(points[L-1].x, points[L-1].y);
+    for (let p of points) g.curveVertex(p.x, p.y);
+    g.curveVertex(points[0].x, points[0].y);
+    g.curveVertex(points[1].x, points[1].y);
+    g.endShape();
+  } else {
+    for (let p of points) g.vertex(p.x, p.y);
+    g.endShape(CLOSE);
+  }
+  if (mostrarNodos) {
+    g.fill(0);
+    g.noStroke();
+    for (let p of points) g.circle(p.x, p.y, 4/zoom);
+  }
+  g.pop();
+  // save graphic as SVG file
+  save(g, `crecimiento_diferencial_${ts}.svg`);
 }
