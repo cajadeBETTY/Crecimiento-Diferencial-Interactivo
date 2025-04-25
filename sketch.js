@@ -163,6 +163,22 @@ function generarCurvaFromSVG() {
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   const n = int(inputPuntos.value());
   let pts = [];
+  // Sample <path> using namespace-aware method
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const paths = doc.getElementsByTagNameNS(svgNS, 'path');
+  if (paths.length === 0) console.warn('⚠️ No <path> elements found in SVG namespace');
+  for (let path of paths) {
+    try {
+      const len = path.getTotalLength();
+      for (let i = 0; i < n; i++) {
+        const pt = path.getPointAtLength((i / n) * len);
+        pts.push(createVector(pt.x, pt.y));
+      }
+    } catch (e) {
+      console.warn('Error sampling <path>:', e);
+    }
+  }
+  let pts = [];
   // Sample paths (<path> supports Bézier curves)
   const paths = doc.getElementsByTagName('path');
   if (paths.length === 0) console.warn('⚠️ No <path> elements found in SVG');
