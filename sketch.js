@@ -290,27 +290,28 @@ function draw() {
         }
       }
     });
-    let rn = createVector(0,0);
-    const amp = float(sliderAmplitud.value());
-    const fr  = float(sliderFrecuencia.value());  // <-- uso correcto
-    const tt  = tipoRuidoSelect.value();
-    if (tt==='perlin') {
-      const n2 = noise(act.x*fr, act.y*fr + noiseOffset);
-      rn = p5.Vector.fromAngle(n2*TWO_PI).mult(amp);
-    } else if (tt==='perlinImproved') {
-      const nx = noise(act.x*fr, noiseOffset);
-      const ny = noise(act.y*fr, noiseOffset+1000);
-      rn = createVector((nx-0.5)*amp*2, (ny-0.5)*amp*2);
-    } else if (tt==='valor') {
-      rn = createVector(random(-1,1)*amp, random(-1,1)*amp);
-    } else { // 'simple'
-      rn = p5.Vector.random2D().mult(amp);
-    }
-    if (c>0) {
-      f.div(c).add(rn);
-    } else {
-      f = rn.copy();
-    }
+  const tt  = tipoRuidoSelect.value();
+let rn = createVector(0,0);
+const amp = float(sliderAmplitud.value());
+const fr  = float(sliderFrecuencia.value());
+
+if (tt === 'perlin') {
+  const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+  rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+}
+else if (tt === 'perlinImproved') {
+  const nx = noise(act.x * fr, noiseOffset);
+  const ny = noise(act.y * fr, noiseOffset + 1000);
+  rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+}
+else if (tt === 'valor') {
+  rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+}
+else if (tt === 'simple') {
+  rn = p5.Vector.random2D().mult(amp);
+}
+// else if tt === 'ninguno', rn queda en (0,0) y por tanto no añade ruido
+
     act.add(f);
     nuevos.push(act);
     const np = points[(i+1)%points.length];
