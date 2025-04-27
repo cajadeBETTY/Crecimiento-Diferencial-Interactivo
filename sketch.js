@@ -205,7 +205,7 @@ function draw() {
             f.forEach(p => curveVertex(p.x, p.y));
             curveVertex(f[0].x,   f[0].y);
             curveVertex(f[1].x,   f[1].y);
-          endShape(CLOSE);
+          endShape();
         } else {
           // Modo poligonal o historial
           beginShape();
@@ -234,7 +234,7 @@ if (tipoVisualSelect.value() === 'curva') {
         // Poligonal
         beginShape();
           points.forEach(p => vertex(p.x, p.y));
-        endShape();
+        endShape(CLOSE);
       }
 
       if (mostrarNodos) {
