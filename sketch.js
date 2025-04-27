@@ -199,54 +199,87 @@ function reiniciarCrecimiento() {
 
 function draw() {
   background(255);
-  push(); translate(width/2+offsetX, height/2+offsetY); scale(zoom);
-  translate(-width/2,-height/2);
+  push();
+    translate(width/2 + offsetX, height/2 + offsetY);
+    scale(zoom);
+    translate(-width/2, -height/2);
 
-  // Dibujar historial siempre cerrado
-  if (mostrarHistorial) {
-    stroke(180); noFill(); strokeWeight(1/zoom);
-    historialFormas.forEach(f => {
-      beginShape();
-      if (tipoVisualSelect.value()==='curva') {
-        // Añadir puntos extra para cerrar
-        const L=f.length;
-        curveVertex(f[L-2].x,f[L-2].y);
-        curveVertex(f[L-1].x,f[L-1].y);
-        f.forEach(p=>curveVertex(p.x,p.y));
-        curveVertex(f[0].x,f[0].y);
-        curveVertex(f[1].x,f[1].y);
+    // Historial
+    if (mostrarHistorial) {
+      stroke(180);
+      noFill();
+      strokeWeight(1/zoom);
+      historialFormas.forEach(f => {
+        if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
+          // Smooth closed path (Catmull-Rom → Bezier)
+          let L = f.length;
+          let d = '';
+          for (let i = 0; i < L; i++) {
+            const p0 = f[(i - 1 + L) % L],
+                  p1 = f[i],
+                  p2 = f[(i + 1) % L],
+                  p3 = f[(i + 2) % L];
+            const cp1 = createVector(
+                    p1.x + (p2.x - p0.x) / 6,
+                    p1.y + (p2.y - p0.y) / 6
+                  );
+            const cp2 = createVector(
+                    p2.x - (p3.x - p1.x) / 6,
+                    p2.y - (p3.y - p1.y) / 6
+                  );
+            if (i === 0) {
+              d += `M${p1.x},${p1.y} C${cp1.x},${cp1.y} ${cp2.x},${cp2.y} ${p2.x},${p2.y}`;
+            } else {
+              d += ` C${cp1.x},${cp1.y} ${cp2.x},${cp2.y} ${p2.x},${p2.y}`;
+            }
+          }
+          d += ' Z';
+          svgPath(d, 'rgb(180,180,180)');
+        } else {
+          // Poligonal o sin historial
+          beginShape();
+            f.forEach(p => vertex(p.x, p.y));
+          endShape(CLOSE);
+        }
+      });
+    }
+
+    // Curva principal
+    if (points.length > 1) {
+      stroke(0);
+      noFill();
+      strokeWeight(1/zoom);
+
+      if (tipoVisualSelect.value() === 'curva') {
+        // Smooth closed path
+        let L = points.length;
+        beginShape();
+          curveVertex(points[L-2].x, points[L-2].y);
+          curveVertex(points[L-1].x, points[L-1].y);
+          points.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(points[0].x, points[0].y);
+          curveVertex(points[1].x, points[1].y);
         endShape(CLOSE);
       } else {
-        f.forEach(p=>vertex(p.x,p.y));
+        // Poligonal
+        beginShape();
+          points.forEach(p => vertex(p.x, p.y));
         endShape(CLOSE);
       }
-    });
-  }
 
-  // Dibujo principal
-  if (points.length) {
-    stroke(0); noFill(); strokeWeight(1/zoom);
-    beginShape();
-    if (tipoVisualSelect.value()==='curva') {
-      const L=points.length;
-      curveVertex(points[L-2].x,points[L-2].y);
-      curveVertex(points[L-1].x,points[L-1].y);
-      points.forEach(p=>curveVertex(p.x,p.y));
-      curveVertex(points[0].x,points[0].y);
-      curveVertex(points[1].x,points[1].y);
-      endShape(CLOSE);
-    } else {
-      points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
+      if (mostrarNodos) {
+        fill(0);
+        noStroke();
+        points.forEach(p => circle(p.x, p.y, 4/zoom));
+      }
     }
-    if (mostrarNodos) {
-      fill(0);noStroke();points.forEach(p=>circle(p.x,p.y,4/zoom));
-    }
-  }
   pop();
 
-  // Grabación historial
-  if (iniciado && running && points.length<maxPoints) {
-    if (frameHistorial%frecuenciaHistorial===0) historialFormas.push(points.map(p=>p.copy()));
+  // Crecimiento + grabación de historial
+  if (iniciado && running && points.length < maxPoints) {
+    if (frameHistorial % frecuenciaHistorial === 0) {
+      historialFormas.push(points.map(p => p.copy()));
+    }
     frameHistorial++;
 
     // Lógica de crecimiento
@@ -282,34 +315,110 @@ function mouseWheel(event){zoom*= (event.deltaY<0?1.05:1/1.05); return false;}
 function windowResized(){resizeCanvas(windowWidth,windowHeight);}  
 function isMouseOverUI(){const b=document.getElementById('ui').getBoundingClientRect();return mouseX>=b.left&&mouseX<=b.right&&mouseY>=b.top&&mouseY<=b.bottom;}
 
-// Export to SVG
-function exportarSVG(){
-  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  const w=width,h=height;
-  let svg='<?xml version="1.0" encoding="UTF-8"?>';
-  svg+=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-  // Historial export
-  if(mostrarHistorial){
-    historialFormas.forEach(f=>{
-      const pts=f.map(p=>`${(p.x -w/2)*zoom +w/2+offsetX},${(p.y-h/2)*zoom+h/2+offsetY}`).join(' ');
-      svg+=`<polyline fill="none" stroke="rgb(180,180,180)" stroke-width="${(1/zoom).toFixed(3)}" points="${pts}" />`;
+function exportarSVG() {
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const w = width, h = height;
+  let svg = '<?xml version="1.0" encoding="UTF-8"?>'
+          + `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+
+  // Exportar historial (si está activo)
+  if (mostrarHistorial) {
+    historialFormas.forEach(f => {
+      if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
+        // Path suave
+        let L = f.length, d = '';
+        for (let i = 0; i < L; i++) {
+          const p0 = f[(i - 1 + L) % L],
+                p1 = f[i],
+                p2 = f[(i + 1) % L],
+                p3 = f[(i + 2) % L];
+          const cp1x = p1.x + (p2.x - p0.x) / 6,
+                cp1y = p1.y + (p2.y - p0.y) / 6;
+          const cp2x = p2.x - (p3.x - p1.x) / 6,
+                cp2y = p2.y - (p3.y - p1.y) / 6;
+          if (i === 0) {
+            d += `M${transformX(p1.x)},${transformY(p1.y)} `
+               + `C${transformX(cp1x)},${transformY(cp1y)} `
+               + `${transformX(cp2x)},${transformY(cp2y)} `
+               + `${transformX(p2.x)},${transformY(p2.y)}`;
+          } else {
+            d += ` C${transformX(cp1x)},${transformY(cp1y)} `
+               + `${transformX(cp2x)},${transformY(cp2y)} `
+               + `${transformX(p2.x)},${transformY(p2.y)}`;
+          }
+        }
+        d += ' Z';
+        svg += `<path d="${d}" fill="none" stroke="rgb(180,180,180)" `
+             + `stroke-width="${(1/zoom).toFixed(3)}"/>`;
+      } else {
+        // Polyline para modo poligonal
+        const pts = f.map(p => `${transformX(p.x)},${transformY(p.y)}`).join(' ');
+        svg += `<polyline fill="none" stroke="rgb(180,180,180)" `
+             + `stroke-width="${(1/zoom).toFixed(3)}" points="${pts}"/>`;
+      }
     });
   }
-  // Principal
-  const ptsMain=points.map(p=>`${(p.x -w/2)*zoom +w/2+offsetX},${(p.y-h/2)*zoom+h/2+offsetY}`).join(' ');
-  svg+=`<polyline fill="none" stroke="black" stroke-width="${(1/zoom).toFixed(3)}" points="${ptsMain}" />`;
-  if(mostrarNodos){
-    const r=(2/zoom).toFixed(3);
-    points.forEach(p=>{
-      const cx=((p.x -w/2)*zoom +w/2+offsetX).toFixed(3);
-      const cy=((p.y -h/2)*zoom +h/2+offsetY).toFixed(3);
-      svg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="black" />`;
+
+  // Exportar curva principal
+  if (points.length > 1 && tipoVisualSelect.value() === 'curva') {
+    // Path suave
+    let L = points.length, d = '';
+    for (let i = 0; i < L; i++) {
+      const p0 = points[(i - 1 + L) % L],
+            p1 = points[i],
+            p2 = points[(i + 1) % L],
+            p3 = points[(i + 2) % L];
+      const cp1x = p1.x + (p2.x - p0.x) / 6,
+            cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6,
+            cp2y = p2.y - (p3.y - p1.y) / 6;
+      if (i === 0) {
+        d += `M${transformX(p1.x)},${transformY(p1.y)} `
+           + `C${transformX(cp1x)},${transformY(cp1y)} `
+           + `${transformX(cp2x)},${transformY(cp2y)} `
+           + `${transformX(p2.x)},${transformY(p2.y)}`;
+      } else {
+        d += ` C${transformX(cp1x)},${transformY(cp1y)} `
+           + `${transformX(cp2x)},${transformY(cp2y)} `
+           + `${transformX(p2.x)},${transformY(p2.y)}`;
+      }
+    }
+    d += ' Z';
+    svg += `<path d="${d}" fill="none" stroke="black" `
+         + `stroke-width="${(1/zoom).toFixed(3)}"/>`;
+  } else {
+    // Polyline para modo poligonal
+    const pts = points.map(p => `${transformX(p.x)},${transformY(p.y)}`).join(' ');
+    svg += `<polyline fill="none" stroke="black" `
+         + `stroke-width="${(1/zoom).toFixed(3)}" points="${pts}"/>`;
+  }
+
+  // Nodos
+  if (mostrarNodos) {
+    const r = (2/zoom).toFixed(3);
+    points.forEach(p => {
+      svg += `<circle cx="${transformX(p.x)}" cy="${transformY(p.y)}" `
+           + `r="${r}" fill="black"/>`;
     });
   }
-  svg+='</svg>';
-  const blob=new Blob([svg],{type:'image/svg+xml'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`crecimiento_diferencial_${ts}.svg`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+  svg += '</svg>';
+  const blob = new Blob([svg], {type:'image/svg+xml'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `crecimiento_diferencial_${ts}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// Helpers for export coordinates:
+function transformX(x) {
+  return ((x - width/2)*zoom + width/2 + offsetX).toFixed(3);
+}
+function transformY(y) {
+  return ((y - height/2)*zoom + height/2 + offsetY).toFixed(3);
+}
+
