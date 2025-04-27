@@ -12,17 +12,12 @@
     <fieldset>
       <div class="titulo-seccion">ENTRADA DE CURVA</div>
       <button id="btnSubirSVG">📂 Subir Curva (SVG)</button>
-      <!-- El input file es generado por p5.createFileInput, no es necesario aquí -->
       
       <label for="formaGenericaSelect">Forma Genérica:</label>
       <select id="formaGenericaSelect">
         <option value="none">Seleccionar...</option>
         <option value="circulo">Círculo</option>
-        <option value="poligono">Polígono</option>
       </select>
-
-      <label for="inputLados">Número de lados (polígono):</label>
-      <input type="number" id="inputLados" value="6" min="3" disabled />
     </fieldset>
 
     <!-- GENERAL -->
@@ -67,30 +62,40 @@
       <button id="clearHistorialBtn">🧹 Limpiar historial</button>
 
       <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
-      <input type="number" id="inputFrecuenciaHistorial" value="50" min="1" max="999" />
+      <select id="inputFrecuenciaHistorial">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="40">40</option>
+        <option value="50">50</option>
+        <option value="60">60</option>
+        <option value="70">70</option>
+        <option value="80">80</option>
+        <option value="90">90</option>
+        <option value="100">100</option>
+      </select>
     </fieldset>
 
-  <!-- EXPERIMENTAL -->
-<fieldset>
-  <div class="titulo-seccion">EXPERIMENTAL</div>
-  <label for="tipoRuido">Tipo de ruido:</label>
-  <select id="tipoRuido">
-    <option value="none">Sin ruido</option>
-    <option value="perlin">Perlin clásico</option>
-    <option value="perlinImproved">Perlin mejorado</option>
-    <option value="valor">Ruido por valor</option>
-    <option value="simple">Ruido simple</option>
-  </select>
+    <!-- EXPERIMENTAL -->
+    <fieldset>
+      <div class="titulo-seccion">EXPERIMENTAL</div>
+      <label for="tipoRuido">Tipo de ruido:</label>
+      <select id="tipoRuido">
+        <option value="none">Sin ruido</option>
+        <option value="perlin">Perlin clásico</option>
+        <option value="perlinImproved">Perlin mejorado</option>
+        <option value="valor">Ruido por valor</option>
+        <option value="simple">Ruido simple</option>
+      </select>
 
-  <label for="sliderAmplitud">Amplitud:</label>
-  <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1" />
-  <span id="valorAmplitud">1.0</span>
+      <label for="sliderAmplitud">Amplitud:</label>
+      <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1" />
+      <span id="valorAmplitud">1.0</span>
 
-  <label for="sliderFrecuencia">Frecuencia:</label>
-  <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1" />
-  <span id="valorFrecuencia">0.1</span>
-</fieldset>
-
+      <label for="sliderFrecuencia">Frecuencia:</label>
+      <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1" />
+      <span id="valorFrecuencia">0.1</span>
+    </fieldset>
 
     <!-- EXPORTAR -->
     <fieldset>
