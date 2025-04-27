@@ -192,27 +192,28 @@ function draw() {
       noFill();
       strokeWeight(1/zoom);
 
-      historialFormas.forEach(f => {
-        if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
-          // Para curveVertex cerrado debemos:
-          // 1) poner el último punto dos veces al inicio
-          // 2) recorrer todos los puntos
-          // 3) repetir los dos primeros al final
-          beginShape();
-            const L = f.length;
-            curveVertex(f[L-1].x, f[L-1].y);
-            curveVertex(f[0].x,   f[0].y);
-            f.forEach(p => curveVertex(p.x, p.y));
-            curveVertex(f[0].x,   f[0].y);
-            curveVertex(f[1].x,   f[1].y);
-          endShape();
-        } else {
-          // Modo poligonal o historial
-          beginShape();
-            f.forEach(p => vertex(p.x, p.y));
-          endShape(CLOSE);
-        }
-      });
+historialFormas.forEach(f => {
+  if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
+    // Catmull–Rom cerrado sin lazos extra:
+    beginShape();
+      const L = f.length;
+      // 1) duplicar los dos últimos puntos al inicio
+      curveVertex(f[L-2].x, f[L-2].y);
+      curveVertex(f[L-1].x, f[L-1].y);
+      // 2) todos los puntos de la forma
+      f.forEach(p => curveVertex(p.x, p.y));
+      // 3) duplicar los dos primeros al final
+      curveVertex(f[0].x, f[0].y);
+      curveVertex(f[1].x, f[1].y);
+    endShape();  // ← sin CLOSE
+  } else {
+    // Modo poligonal o historial
+    beginShape();
+      f.forEach(p => vertex(p.x, p.y));
+    endShape(CLOSE);
+  }
+});
+
     }
 
     // --- CURVA PRINCIPAL ---
@@ -222,14 +223,17 @@ function draw() {
       strokeWeight(1/zoom);
 
 if (tipoVisualSelect.value() === 'curva') {
+  const L = points.length;
   beginShape();
-    const L = points.length;
-    curveVertex(points[L-1].x, points[L-1].y);
-    curveVertex(points[0].x,   points[0].y);
+    // — dos últimos puntos como control inicial
+    curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
+    curveVertex(points[(L-1)  ].x, points[(L-1)  ].y);
+    // — todos los puntos “reales”
     points.forEach(p => curveVertex(p.x, p.y));
-    curveVertex(points[0].x,   points[0].y);
-    curveVertex(points[1].x,   points[1].y);
-  endShape();    // ← aquí quitas el CLOSE
+    // — duplicar primeros dos para cerrar suavemente
+    curveVertex(points[0].x, points[0].y);
+    curveVertex(points[1].x, points[1].y);
+  endShape();    // ← sin CLOSE
 } else {
         // Poligonal
         beginShape();
