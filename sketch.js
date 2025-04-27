@@ -221,21 +221,20 @@ function draw() {
       noFill();
       strokeWeight(1/zoom);
 
-      if (tipoVisualSelect.value() === 'curva') {
-        // Misma receta para cerrar con curveVertex
-        beginShape();
-          const L = points.length;
-          curveVertex(points[L-1].x, points[L-1].y);
-          curveVertex(points[0].x,   points[0].y);
-          points.forEach(p => curveVertex(p.x, p.y));
-          curveVertex(points[0].x,   points[0].y);
-          curveVertex(points[1].x,   points[1].y);
-        endShape(CLOSE);
-      } else {
+if (tipoVisualSelect.value() === 'curva') {
+  beginShape();
+    const L = points.length;
+    curveVertex(points[L-1].x, points[L-1].y);
+    curveVertex(points[0].x,   points[0].y);
+    points.forEach(p => curveVertex(p.x, p.y));
+    curveVertex(points[0].x,   points[0].y);
+    curveVertex(points[1].x,   points[1].y);
+  endShape();    // ← aquí quitas el CLOSE
+} else {
         // Poligonal
         beginShape();
           points.forEach(p => vertex(p.x, p.y));
-        endShape(CLOSE);
+        endShape();
       }
 
       if (mostrarNodos) {
