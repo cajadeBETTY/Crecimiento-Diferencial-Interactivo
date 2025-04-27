@@ -23,7 +23,7 @@ let valorAmplitudSpan, valorFrecuenciaSpan;
 let sliderRepulsion, valorRepulsionSpan;
 let tipoVisualSelect;
 let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
-let formaGenericaSelect, inputLados;
+let formaGenericaSelect;
 let fileInputSVG;
 
 // History
@@ -49,7 +49,7 @@ function setup() {
   inputFrecuenciaHistorial = select('#inputFrecuenciaHistorial');
   inputPuntos = select('#inputPuntos');
   inputPuntos.input(previewShape);
-  inputFrecuenciaHistorial.input(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
+  inputFrecuenciaHistorial.changed(() => frecuenciaHistorial = int(inputFrecuenciaHistorial.value()));
 
   sliderRadio = select('#sliderRadio');
   radioValorSpan = select('#radioValor');
@@ -58,18 +58,18 @@ function setup() {
 
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
-  sliderFrecuencia = select('#sliderFrecuencia');          // <-- variable correcta
+  sliderFrecuencia = select('#sliderFrecuencia');
   valorAmplitudSpan = select('#valorAmplitud');
   valorFrecuenciaSpan = select('#valorFrecuencia');
   sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));  // <-- idem
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
 
   sliderRepulsion = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
   tipoVisualSelect = select('#tipoVisual');
-  
+
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleNodosBtn = select('#toggleNodosBtn');
   clearHistorialBtn = select('#clearHistorialBtn');
@@ -90,14 +90,10 @@ function setup() {
   select('#btnExportSVG').mousePressed(exportarSVG);
 
   formaGenericaSelect = select('#formaGenericaSelect');
-  inputLados = select('#inputLados');
-  inputLados.attribute('disabled','');
-  // Al cambiar la forma, descartamos cualquier SVG previo:
   formaGenericaSelect.changed(() => {
-    fileLoaded = false;               // <<-- Aquí: reinicia estado SVG al elegir forma genérica
+    fileLoaded = false;
     previewShape();
   });
-  inputLados.input(previewShape);
 
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
@@ -158,7 +154,6 @@ function generarCurvaFromSVG() {
       }
     }
   });
-  // Centrado y escalado
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   pts.forEach(p => {
     minX = min(minX, p.x);
@@ -175,7 +170,6 @@ function generarCurvaFromSVG() {
       (p.y - (minY + h/2)) * s + height/2
     )
   );
-  console.log('Puntos mapeados:', points.length);
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
@@ -186,10 +180,9 @@ function generarCurvaBase() {
   const tipo = formaGenericaSelect.value();
   const n = int(inputPuntos.value());
   const r = float(sliderRadio.value());
-  const lados = tipo === 'poligono' ? int(inputLados.value()) : n;
-  if (tipo !== 'none') {
-    for (let i = 0; i < lados; i++) {
-      const a = TWO_PI * i / lados;
+  if (tipo === 'circulo') {
+    for (let i = 0; i < n; i++) {
+      const a = TWO_PI * i / n;
       points.push(createVector(width/2 + r * cos(a), height/2 + r * sin(a)));
     }
     originalPoints = points.map(p => p.copy());
@@ -272,16 +265,11 @@ function draw() {
   }
   pop();
 
-if (!iniciado || !running || points.length >= maxPoints) return;
-
-// 1) Grabar siempre el historial cada N frames:
-if (frameHistorial % frecuenciaHistorial === 0) {
-  historialFormas.push(points.map(p => p.copy()));
-}
-frameHistorial++;
-
-// 2) Luego el resto de tu lógica de crecimiento...
-
+  if (!iniciado || !running || points.length >= maxPoints) return;
+  if (frameHistorial % frecuenciaHistorial === 0) {
+    historialFormas.push(points.map(p => p.copy()));
+  }
+  frameHistorial++;
 
   let nuevos = [];
   points.forEach((act,i) => {
@@ -295,19 +283,19 @@ frameHistorial++;
         }
       }
     });
-  const tt  = tipoRuidoSelect.value();
-let rn = createVector(0,0);
-const amp = float(sliderAmplitud.value());
-const fr  = float(sliderFrecuencia.value());
+    const tt  = tipoRuidoSelect.value();
+    let rn = createVector(0,0);
+    const amp = float(sliderAmplitud.value());
+    const fr  = float(sliderFrecuencia.value());
 
-if (tt === 'perlin') {
-  const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
-  rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
-}
-else if (tt === 'perlinImproved') {
-  const nx = noise(act.x * fr, noiseOffset);
-  const ny = noise(act.y * fr, noiseOffset + 1000);
-  rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+    if (tt === 'perlin') {
+      const n2 = noise(act.x*fr, act.y*fr + noiseOffset);
+      rn = p5.Vector.fromAngle(n2*TWO_PI).mult(amp);
+    } else if (tt === 'perlinImproved') {
+      const nx = noise(act.x*fr, noiseOffset);
+      const ny = noise(act.y*fr, noiseOffset+1000);
+      rn = createVector((nx-0.5)*amp*2, (ny-0.5)*amp*2);
+
 }
 else if (tt === 'valor') {
   rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
