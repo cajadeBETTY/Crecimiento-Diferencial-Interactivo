@@ -272,11 +272,16 @@ function draw() {
   }
   pop();
 
-  if (!iniciado || !running || points.length >= maxPoints) return;
-  if (mostrarHistorial && frameHistorial % frecuenciaHistorial === 0) {
-    historialFormas.push(points.map(p => p.copy()));
-  }
-  frameHistorial++;
+if (!iniciado || !running || points.length >= maxPoints) return;
+
+// 1) Grabar siempre el historial cada N frames:
+if (frameHistorial % frecuenciaHistorial === 0) {
+  historialFormas.push(points.map(p => p.copy()));
+}
+frameHistorial++;
+
+// 2) Luego el resto de tu lógica de crecimiento...
+
 
   let nuevos = [];
   points.forEach((act,i) => {
