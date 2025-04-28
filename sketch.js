@@ -339,8 +339,8 @@ function draw() {
     textAlign(RIGHT, TOP);
     fill(0);
     const m = 30;
-    const x0 = width - m+10;
-    const y0 = height - m - lines.length * 18;
+    const x0 = width - m ;
+    const y0 = height - m-10 - lines.length * 18;
     for (let i = 0; i < lines.length; i++) {
       text(lines[i], x0, y0 + i * 18);
     }
