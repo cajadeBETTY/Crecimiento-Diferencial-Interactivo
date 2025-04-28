@@ -177,8 +177,6 @@ function setup() {
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  formaGenericaSelect = select('#formaGenericaSelect');
-  formaGenericaSelect.changed(() => { fileLoaded = false; previewShape(); });
 
   fileInputSVG = createFileInput(handleFile);
   fileInputSVG.parent('ui');
