@@ -47,8 +47,14 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  pixelDensity(2); // o simplemente coméntalo para que use window.devicePixelRatio
+   // 1. Mide el ancho del panel
+  const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
+  // 2. Crea el canvas con el ancho restante
+  const c = createCanvas(windowWidth - uiWidth, windowHeight);
+  // 3. Posiciónalo junto al panel
+  c.position(uiWidth, 0);
+
+  pixelDensity(2); // o coméntalo si prefieres devicePixelRatio
   noFill();
 
   // Inputs
@@ -107,6 +113,12 @@ function setup() {
   select('#btnSubirSVG').mousePressed(() => { suppressDrag = true; fileInputSVG.elt.click(); });
 
   previewShape();
+}
+
+function windowResized() {
+  const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
+  resizeCanvas(windowWidth - uiWidth, windowHeight);
+  select('canvas').position(uiWidth, 0);
 }
 
 function previewShape() {
@@ -288,25 +300,18 @@ if (tipoVisualSelect.value() === 'curva') {
     });
     points=nuevos; noiseOffset+=0.01;
   }
-// dimensiones del logo (manteniendo el aspect)
-const margin     = 30;
-const maxLogoW   = 750;
-const aspect     = logoImg.width / logoImg.height;
-const w          = maxLogoW;
-const h          = maxLogoW / aspect;
+// parámetros y dibujar el logo
+  const margin    = 30;
+  const maxLogoW  = 750;
+  const aspect    = logoImg.width / logoImg.height;
+  const w         = maxLogoW;
+  const h         = maxLogoW / aspect;
+  // esquina inferior derecha del canvas
+  const xLogo = width  - w - margin;
+  const yLogo = height - h - margin;
 
-// obtenemos el ancho del panel de UI
-const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
-
-// X estará a la derecha del panel + un pequeño margen
-const x = uiWidth + margin;
-
-// Y seguirá en la parte inferior
-const y = height - h - margin;
-
-// lo dibujamos
-imageMode(CORNER);
-image(logoImg, x, y, w, h);
+  imageMode(CORNER);
+  image(logoImg, xLogo, yLogo, w, h);
 }
 
 // Pan with mouse drag
@@ -366,6 +371,17 @@ function exportarSVG(){
       svg+=`<circle cx="${transformX(p.x)}" cy="${transformY(p.y)}" r="${r}" fill="black"/>`;
     });
   }
+  // mismos parámetros que en draw()
+const margin    = 30;
+const maxLogoW  = 750;
+const aspect    = logoImg.width / logoImg.height;
+const w         = maxLogoW;
+const h         = maxLogoW / aspect;
+const xLogo     = width  - w - margin;
+const yLogo     = height - h - margin;
+
+// inserta la imagen en el SVG
+svg += `<image x="${xLogo}" y="${yLogo}" width="${w}" height="${h}" href="${logoImg.elt.src}" />`;
 
   svg+='</svg>';
   const blob=new Blob([svg],{type:'image/svg+xml'});
