@@ -290,14 +290,20 @@ if (tipoVisualSelect.value() === 'curva') {
   }
   // 3) dibuja el logo “en pantalla fija”
   imageMode(CORNER);
-  const logoSize = 80;   // ajusta el tamaño
-  const m = 10;          // margen al borde
+  // 1) el ancho máximo que quieras para tu logo
+  const maxLogoWidth = 80;
+  const margin = 10;          // margen al borde
+  // 2) la proporción original del logo
+  const aspect = logoImg.width / logoImg.height;
+  // 3) calcula el alto para mantener ratio
+  const w = maxLogoWidth;
+  const h = maxLogoWidth / aspect;
+  // 4) dibuja con esas dimensiones
   image(
     logoImg,
-    width  - logoSize - m,
-    height - logoSize - m,
-    logoSize,
-    logoSize
+    width  - w - margin,
+    height - h - margin,
+    w, h
   );
 }
 
