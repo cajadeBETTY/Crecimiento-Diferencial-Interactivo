@@ -288,23 +288,25 @@ if (tipoVisualSelect.value() === 'curva') {
     });
     points=nuevos; noiseOffset+=0.01;
   }
-  // 3) dibuja el logo “en pantalla fija”
-  imageMode(CORNER);
-  // 1) el ancho máximo que quieras para tu logo
-  const maxLogoWidth = 160;
-  const margin = 40;          // margen al borde
-  // 2) la proporción original del logo
-  const aspect = logoImg.width / logoImg.height;
-  // 3) calcula el alto para mantener ratio
-  const w = maxLogoWidth;
-  const h = maxLogoWidth / aspect;
-  // 4) dibuja con esas dimensiones
-  image(
-    logoImg,
-    width  - w - margin,
-    height - h - margin,
-    w, h
-  );
+// dimensiones del logo (manteniendo el aspect)
+const margin     = 40;
+const maxLogoW   = 200;
+const aspect     = logoImg.width / logoImg.height;
+const w          = maxLogoW;
+const h          = maxLogoW / aspect;
+
+// obtenemos el ancho del panel de UI
+const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
+
+// X estará a la derecha del panel + un pequeño margen
+const x = uiWidth + margin;
+
+// Y seguirá en la parte inferior
+const y = height - h - margin;
+
+// lo dibujamos
+imageMode(CORNER);
+image(logoImg, x, y, w, h);
 }
 
 // Pan with mouse drag
