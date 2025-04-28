@@ -33,32 +33,51 @@
     </fieldset>
 
     <!-- GENERAL -->
+     <!-- 1. BASE DE CRECIMIENTO -->
+  <fieldset>
+    <legend>Base de Crecimiento</legend>
+
+    <!-- 1.1 Círculo Genérico -->
+    <button id="btnCircleBase">Círculo Genérico</button>
+    <!-- 1.2 Subir SVG -->
+    <button id="btnSubirSVGBase">Subir SVG</button>
+  </fieldset>
+
+  <!-- 2. LIMITANTES -->
+  <fieldset>
+    <legend>Limitantes</legend>
+
+    <!-- 2.1 Contorno -->
     <fieldset>
-      <div class="titulo-seccion">GENERAL</div>
-      <label for="sliderRadio">Radio del círculo (mm):</label>
-      <input type="range" id="sliderRadio" min="10" max="300" value="96" step="1" />
-      <span id="radioValor">96</span> mm
-
-      <label for="inputPuntos">Número de puntos iniciales:</label>
-      <input type="number" id="inputPuntos" value="50" min="3" />
-
-      <label for="inputMinDist">Distancia mínima:</label>
-      <input type="number" id="inputMinDist" value="5" step="0.1" min="0.1" />
-
-      <label for="inputMaxDist">Distancia máxima:</label>
-      <input type="number" id="inputMaxDist" value="5" step="0.1" min="0.1" />
-
-      <label for="sliderRepulsion">Factor de repulsión:</label>
-      <input type="range" id="sliderRepulsion" min="0.1" max="5" step="0.1" value="1.5" />
-      <span id="valorRepulsion">1.5</span>
-
-      <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
-      <input type="number" id="inputMaxPoints" value="1000" min="100" />
-
-      <button id="playPauseBtn">▶ Iniciar</button>
-      <button id="restartBtn">🔄 Reiniciar</button>
+      <legend>Contorno</legend>
+      <button id="btnCircleContour">Forma Genérica</button>
+      <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
     </fieldset>
 
+    <!-- 2.2 Obstáculos -->
+    <fieldset>
+      <legend>Obstáculos</legend>
+      <!-- 2.2.1 Número de obstáculos -->
+      <label for="inputNumObstacles">Número de obstáculos:</label>
+      <input type="number" id="inputNumObstacles" min="0" value="0">
+
+      <!-- 2.2.2 Círculo genérico -->
+      <button id="btnCircleObstacle">Círculo Genérico</button>
+      <label for="sliderRadiusObstacle">Radio (mm):</label>
+      <input type="range" id="sliderRadiusObstacle" min="0" max="200" step="1" value="50">
+
+      <!-- 2.2.3 Subir obstáculos -->
+      <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+      <label for="sliderScaleObstacles">Escalar:</label>
+      <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
+
+      <!-- 2.2.4 Mostrar obstáculos -->
+      <label>
+        <input type="checkbox" id="toggleObstacles" checked>
+        Mostrar Obstáculos
+      </label>
+    </fieldset>
+  </fieldset>
     <!-- VISUALIZACIÓN -->
     <fieldset>
       <div class="titulo-seccion">VISUALIZACIÓN</div>
