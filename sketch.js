@@ -1,4 +1,19 @@
 // Sketch.js - Crecimiento Diferencial
+
+// — Contorno (límites) —
+let contourPoints   = [];
+let contourLoaded   = false;
+let fileInputContour;
+
+// — Obstáculos —
+let numObstacles       = 0;
+let obstacleCircles    = [];   // círculo genéricos
+let obstacleSVGPoints  = [];   // puntos desde SVG
+let obstacleScale      = 1;
+let showObstacles      = true;
+let fileInputObstacles;
+
+
 let points = [];
 let originalPoints = [];
 let fileLoaded = false;
@@ -62,6 +77,58 @@ function setup() {
 
   pixelDensity(2); // o coméntalo si prefieres devicePixelRatio
   noFill();
+
+  // — Contorno —
+  const btnCircleContour   = select('#btnCircleContour');
+  const btnSubirSVGContour = select('#btnSubirSVGContour');
+  fileInputContour = createFileInput(handleContourFile);
+  fileInputContour.parent('ui');
+  fileInputContour.hide();
+
+  btnCircleContour.mousePressed(() => {
+    contourLoaded = false;
+    generateContourCircle();
+  });
+  btnSubirSVGContour.mousePressed(() => {
+    suppressDrag = true;
+    fileInputContour.elt.click();
+  });
+
+  // — Obstáculos —
+  const inputNumObstacles    = select('#inputNumObstacles');
+  const btnCircleObstacle    = select('#btnCircleObstacle');
+  const sliderRadiusObstacle = select('#sliderRadiusObstacle');
+  const btnSubirSVGObstacles = select('#btnSubirSVGObstacles');
+  const sliderScaleObstacles = select('#sliderScaleObstacles');
+  const toggleObstaclesCtrl  = select('#toggleObstacles');
+
+  fileInputObstacles = createFileInput(handleObstaclesFile);
+  fileInputObstacles.parent('ui');
+  fileInputObstacles.hide();
+
+  inputNumObstacles.input(() => {
+    numObstacles = int(inputNumObstacles.value());
+    generateObstacleCircles();
+  });
+  btnCircleObstacle.mousePressed(() => {
+    obstacleSVGPoints = [];
+    generateObstacleCircles();
+  });
+  sliderRadiusObstacle.input(() => {
+    generateObstacleCircles();
+  });
+  btnSubirSVGObstacles.mousePressed(() => {
+    suppressDrag = true;
+    fileInputObstacles.elt.click();
+  });
+  sliderScaleObstacles.input(() => {
+    obstacleScale = float(sliderScaleObstacles.value());
+    scaleObstacles();
+  });
+  toggleObstaclesCtrl.changed(() => {
+    showObstacles = toggleObstaclesCtrl.checked();
+  });
+
 
   // Inputs
   inputMinDist = select('#inputMinDist');
@@ -441,5 +508,64 @@ svg += `<image x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" href
 // Helpers for export coordinates
 function transformX(x){return ((x - width/2)*zoom + width/2 + offsetX).toFixed(3);}
 function transformY(y){return ((y - height/2)*zoom + height/2 + offsetY).toFixed(3);}
+
+// 1) Generar un contorno circular genérico
+function generateContourCircle() {
+  contourPoints = [];
+  const n = int(inputPuntos.value());
+  const r = float(sliderRadio.value());
+  for (let i = 0; i < n; i++) {
+    const a = TWO_PI * i / n;
+    contourPoints.push(
+      createVector(width/2 + r * cos(a), height/2 + r * sin(a))
+    );
+  }
+  contourLoaded = true;
+}
+
+// 2) Manejar la carga de SVG de contorno
+function handleContourFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    // parsea file.data (igual que en generarCurvaFromSVG) y llena contourPoints
+    // …
+    contourLoaded = true;
+  } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
+}
+
+// 3) Generar círculos de obstáculos genéricos
+function generateObstacleCircles() {
+  obstacleCircles = [];
+  const n = numObstacles;
+  const r = float(sliderRadiusObstacle.value()) * obstacleScale;
+  for (let i = 0; i < n; i++) {
+    const a = TWO_PI * i / max(n,1);
+    obstacleCircles.push({
+      x: width/2 + (r + 20) * cos(a),  // +20 para separarlos un poco del contorno
+      y: height/2 + (r + 20) * sin(a),
+      r: r
+    });
+  }
+}
+
+// 4) Manejar la carga de SVG de obstáculos
+function handleObstaclesFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    // parsea file.data y llena obstacleSVGPoints con vectores
+    // …
+  } else {
+    alert('Por favor sube un SVG válido para los obstáculos.');
+  }
+}
+
+// 5) Reescalar obstáculos ya existentes (SVG y círculos)
+function scaleObstacles() {
+  // simplemente vuelve a generar todo según obstacleScale
+  generateObstacleCircles();
+  // y, si tienes SVG cargado, ajusta sus puntos
+  // …
+}
+
 
 
