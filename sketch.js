@@ -15,6 +15,9 @@ let isDragging = false;
 let suppressDrag = false;
 let lastMouseX, lastMouseY;
 
+// load logo
+let logoImg;
+
 // UI elements
 let inputPuntos, sliderRadio, radioValorSpan;
 let inputMinDist, inputMaxDist, inputMaxPoints, inputFrecuenciaHistorial;
@@ -36,6 +39,12 @@ let frecuenciaHistorial = 10;
 // Growth params
 let noiseOffset = 0;
 let minDist, maxDist;
+
+//logo in the bottom
+function preload() {
+  // 2) carga tu logo (PNG con transparencia)
+  logoImg = loadImage('assets/logo.png');
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -279,6 +288,17 @@ if (tipoVisualSelect.value() === 'curva') {
     });
     points=nuevos; noiseOffset+=0.01;
   }
+  // 3) dibuja el logo “en pantalla fija”
+  imageMode(CORNER);
+  const logoSize = 80;   // ajusta el tamaño
+  const m = 10;          // margen al borde
+  image(
+    logoImg,
+    width  - logoSize - m,
+    height - logoSize - m,
+    logoSize,
+    logoSize
+  );
 }
 
 // Pan with mouse drag
@@ -350,3 +370,5 @@ function exportarSVG(){
 // Helpers for export coordinates
 function transformX(x){return ((x - width/2)*zoom + width/2 + offsetX).toFixed(3);}
 function transformY(y){return ((y - height/2)*zoom + height/2 + offsetY).toFixed(3);}
+
+
