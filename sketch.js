@@ -335,7 +335,7 @@ function draw() {
 
   push();
     textFont(fuenteMonoLight);
-    textSize(14);
+    textSize(10);
     textAlign(RIGHT, TOP);
     fill(0);
     const m = 20;
