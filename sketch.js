@@ -353,7 +353,7 @@ function draw() {
   const logoW = maxLogoWidth;
   const logoH = maxLogoWidth / logoAspect;
   const logoX = marginLogo;
-  const logoY = height - logoH - marginLogo;
+  const logoY = height - logoH - marginLogo-10;
 
   imageMode(CORNER);
   image(logoImg, logoX, logoY, logoW, logoH);
