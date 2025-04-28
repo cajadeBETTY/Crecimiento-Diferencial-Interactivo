@@ -48,7 +48,7 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  pixelDensity(1);
+  pixelDensity(2); // o simplemente coméntalo para que use window.devicePixelRatio
   noFill();
 
   // Inputs
