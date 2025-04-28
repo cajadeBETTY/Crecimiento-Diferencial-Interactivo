@@ -5,72 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crecimiento Diferencial 2D</title>
   <link rel="stylesheet" href="style.css" />
-  
+
   <!-- Favicon PNG de 32×32 -->
   <link rel="icon"
         type="image/png"
         sizes="32x32"
         href="assets/cajitaweb.png">
-
   <!-- Fallback .ico (opcional) -->
   <link rel="shortcut icon"
         href="assets/cajitaweb.png"
         type="image/png">
-
 </head>
 <body>
   <div id="ui">
-    <!-- ENTRADA DE CURVA -->
+    <!-- TÍTULO -->
     <fieldset>
       <div class="titulo-seccion">CRECIMIENTO DIFERENCIAL</div>
     </fieldset>
 
     <!-- GENERAL -->
-     <!-- 1. BASE DE CRECIMIENTO -->
-  <fieldset>
-    <legend>Base de Crecimiento</legend>
-
-    <!-- 1.1 Círculo Genérico -->
-    <button id="btnCircleBase">Círculo Genérico</button>
-    <!-- 1.2 Subir SVG -->
-    <button id="btnSubirSVGBase">Subir SVG</button>
-  </fieldset>
-
-  <!-- 2. LIMITANTES -->
-  <fieldset>
-    <legend>Limitantes</legend>
-
-    <!-- 2.1 Contorno -->
     <fieldset>
-      <legend>Contorno</legend>
-      <button id="btnCircleContour">Forma Genérica</button>
-      <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
+      <legend>General</legend>
+      <label for="sliderRadio">Radio del círculo (mm):</label>
+      <input type="range" id="sliderRadio" min="1" max="200" step="1" value="96">
+      <span id="radioValor">96</span>
+
+      <label for="inputPuntos">Número de puntos iniciales:</label>
+      <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
+
+      <label for="inputMinDist">Distancia mínima:</label>
+      <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
+
+      <label for="inputMaxDist">Distancia máxima:</label>
+      <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
+
+      <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
+      <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
+
+      <button id="btnReanudar">▶ Reanudar</button>
+      <button id="btnReiniciar">🔄 Reiniciar</button>
     </fieldset>
 
-    <!-- 2.2 Obstáculos -->
+    <!-- BASE DE CRECIMIENTO -->
     <fieldset>
-      <legend>Obstáculos</legend>
-      <!-- 2.2.1 Número de obstáculos -->
-      <label for="inputNumObstacles">Número de obstáculos:</label>
-      <input type="number" id="inputNumObstacles" min="0" value="0">
-
-      <!-- 2.2.2 Círculo genérico -->
-      <button id="btnCircleObstacle">Círculo Genérico</button>
-      <label for="sliderRadiusObstacle">Radio (mm):</label>
-      <input type="range" id="sliderRadiusObstacle" min="0" max="200" step="1" value="50">
-
-      <!-- 2.2.3 Subir obstáculos -->
-      <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
-      <label for="sliderScaleObstacles">Escalar:</label>
-      <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
-
-      <!-- 2.2.4 Mostrar obstáculos -->
-      <label>
-        <input type="checkbox" id="toggleObstacles" checked>
-        Mostrar Obstáculos
-      </label>
+      <legend>Base de Crecimiento</legend>
+      <button id="btnCircleBase">Círculo Genérico</button>
+      <button id="btnSubirSVGBase">Subir SVG</button>
     </fieldset>
-  </fieldset>
+
+    <!-- LIMITANTES -->
+    <fieldset>
+      <legend>Limitantes</legend>
+
+      <!-- Contorno -->
+      <fieldset>
+        <legend>Contorno</legend>
+        <button id="btnCircleContour">Forma Genérica</button>
+        <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
+      </fieldset>
+
+      <!-- Obstáculos -->
+      <fieldset>
+        <legend>Obstáculos</legend>
+        <label for="inputNumObstacles">Número de obstáculos:</label>
+        <input type="number" id="inputNumObstacles" min="0" value="0">
+
+        <button id="btnCircleObstacle">Círculo Genérico</button>
+        <label for="sliderRadiusObstacle">Radio (mm):</label>
+        <input type="range" id="sliderRadiusObstacle" min="0" max="200" step="1" value="50">
+
+        <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+        <label for="sliderScaleObstacles">Escalar:</label>
+        <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
+
+        <label>
+          <input type="checkbox" id="toggleObstacles" checked>
+          Mostrar Obstáculos
+        </label>
+      </fieldset>
+    </fieldset>
+
     <!-- VISUALIZACIÓN -->
     <fieldset>
       <div class="titulo-seccion">VISUALIZACIÓN</div>
@@ -113,11 +127,11 @@
       </select>
 
       <label for="sliderAmplitud">Amplitud:</label>
-      <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1" />
+      <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1">
       <span id="valorAmplitud">1.0</span>
 
       <label for="sliderFrecuencia">Frecuencia:</label>
-      <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1" />
+      <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1">
       <span id="valorFrecuencia">0.1</span>
     </fieldset>
 
