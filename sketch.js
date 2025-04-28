@@ -347,13 +347,13 @@ function draw() {
   pop();
 
   // === 4. LOGO en esquina inferior izquierda ===
-  const marginLogo = 30;
+  const marginLogo = 20;
   const maxLogoWidth = 750;
   const logoAspect = logoImg.width / logoImg.height;
   const logoW = maxLogoWidth;
   const logoH = maxLogoWidth / logoAspect;
   const logoX = marginLogo;
-  const logoY = height - logoH - marginLogo-10;
+  const logoY = height - logoH - marginLogo + 10;
 
   imageMode(CORNER);
   image(logoImg, logoX, logoY, logoW, logoH);
