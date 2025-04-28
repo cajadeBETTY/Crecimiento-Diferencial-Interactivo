@@ -3,7 +3,11 @@ let points = [];
 let originalPoints = [];
 let fileLoaded = false;
 let svgText = '';
+
+let svgText = '';
+let loadedFileName = '';   // ← aquí
 let fuenteMonoLight;  // para Source Code Pro Light
+
 
 
 let running = false;
@@ -133,6 +137,7 @@ function handleFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
     svgText = file.data;
     fileLoaded = true;
+    loadedFileName = file.name;       // ← aquí
     generarCurvaFromSVG();
   } else alert('Por favor sube un archivo SVG válido.');
 }
@@ -216,89 +221,107 @@ function draw() {
     if (mostrarHistorial) {
       stroke(180); noFill(); strokeWeight(1/zoom);
       historialFormas.forEach(f => {
-        if (f.length>1 && tipoVisualSelect.value()==='curva') {
+        if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
           beginShape();
             const L = f.length;
             curveVertex(f[L-2].x, f[L-2].y);
             curveVertex(f[L-1].x, f[L-1].y);
-            f.forEach(p=> curveVertex(p.x,p.y));
+            f.forEach(p => curveVertex(p.x, p.y));
             curveVertex(f[0].x, f[0].y);
             curveVertex(f[1].x, f[1].y);
           endShape();
         } else {
           beginShape();
-            f.forEach(p=> vertex(p.x,p.y));
+            f.forEach(p => vertex(p.x, p.y));
           endShape(CLOSE);
         }
       });
     }
 
     // Curva principal
-    if (points.length>1) {
+    if (points.length > 1) {
       stroke(0); noFill(); strokeWeight(1/zoom);
 
-      if (tipoVisualSelect.value()==='curva') {
+      if (tipoVisualSelect.value() === 'curva') {
         const L = points.length;
         beginShape();
           curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
           curveVertex(points[L-1].x, points[L-1].y);
-          points.forEach(p=> curveVertex(p.x,p.y));
+          points.forEach(p => curveVertex(p.x, p.y));
           curveVertex(points[0].x, points[0].y);
           curveVertex(points[1].x, points[1].y);
         endShape();
       } else {
         beginShape();
-          points.forEach(p=> vertex(p.x,p.y));
+          points.forEach(p => vertex(p.x, p.y));
         endShape(CLOSE);
       }
 
       if (mostrarNodos) {
         fill(0); noStroke();
-        points.forEach(p=> circle(p.x,p.y,4/zoom));
+        points.forEach(p => circle(p.x, p.y, 4/zoom));
       }
     }
   pop();
 
-
-  // === 2. LÓGICA DE CRECIMIENTO (sin cambiar) ===
-  if (iniciado && running && points.length<maxPoints) {
+  // === 2. LÓGICA DE CRECIMIENTO (completa) ===
+  if (iniciado && running && points.length < maxPoints) {
     if (frameHistorial % frecuenciaHistorial === 0) {
-      historialFormas.push(points.map(p=>p.copy()));
+      historialFormas.push(points.map(p => p.copy()));
     }
     frameHistorial++;
+
     let nuevos = [];
-points.forEach((act,i) => {
-  let f = createVector(0,0), c = 0;
-  points.forEach((o,j) => {
-    if (i !== j) {
-      const d = dist(act.x, act.y, o.x, o.y);
-      if (d < minDist) {
-        f.add(p5.Vector.sub(act,o).normalize().mult(float(sliderRepulsion.value())/d));
-        c++;
+    points.forEach((act, i) => {
+      let f = createVector(0, 0), c = 0;
+      points.forEach((o, j) => {
+        if (i !== j) {
+          const d = dist(act.x, act.y, o.x, o.y);
+          if (d < minDist) {
+            f.add(
+              p5.Vector.sub(act, o)
+                .normalize()
+                .mult(float(sliderRepulsion.value()) / d)
+            );
+            c++;
+          }
+        }
+      });
+      let rn = createVector(0, 0);
+      const amp = float(sliderAmplitud.value());
+      const fr = float(sliderFrecuencia.value());
+      const tt = tipoRuidoSelect.value();
+      if (tt === 'perlin') {
+        const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+        rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+      } else if (tt === 'perlinImproved') {
+        const nx = noise(act.x * fr, noiseOffset);
+        const ny = noise(act.y * fr, noiseOffset + 1000);
+        rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+      } else if (tt === 'valor') {
+        rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+      } else if (tt === 'simple') {
+        rn = p5.Vector.random2D().mult(amp);
       }
-    }
-  });
-  // … cálculo de ruido rn según tipo …
-  if (c > 0) {
-    f.div(c).add(rn);
-  } else {
-    f = rn;
+      if (c > 0) {
+        f.div(c).add(rn);
+      } else {
+        f = rn;
+      }
+      act.add(f);
+      nuevos.push(act);
+      const np = points[(i + 1) % points.length];
+      if (p5.Vector.dist(act, np) > maxDist) {
+        nuevos.push(p5.Vector.add(act, np).div(2));
+      }
+    });
+    points = nuevos;
+    noiseOffset += 0.01;
   }
-  act.add(f);
-  nuevos.push(act);
-  const np = points[(i+1)%points.length];
-  if (p5.Vector.dist(act,np) > maxDist) {
-    nuevos.push(p5.Vector.add(act,np).div(2));
-  }
-});
-points = nuevos;
-noiseOffset += 0.01;
-
-  }
-
 
   // === 3. DIBUJAR TEXTO DE INFO ===
-  // arma el array de líneas
+  const initialCount = int(inputPuntos.value());
+  const circleRadiusMm = float(sliderRadio.value());
   const lines = [];
   if (loadedFileName) {
     lines.push(`Archivo Cargado: ${loadedFileName}`);
@@ -311,30 +334,27 @@ noiseOffset += 0.01;
   const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
   lines.push(`Estado: ${estado}`);
 
-  // estilo y posición
   push();
     textFont(fuenteMonoLight);
     textSize(14);
     textAlign(RIGHT, TOP);
     fill(0);
-
     const m = 20;
-    const x0 = width  - m;
+    const x0 = width - m;
     const y0 = height - m - lines.length * 18;
-    for (let i=0; i<lines.length; i++) {
-      text(lines[i], x0, y0 + i*18);
+    for (let i = 0; i < lines.length; i++) {
+      text(lines[i], x0, y0 + i * 18);
     }
   pop();
 
-
   // === 4. LOGO en esquina inferior izquierda ===
-  const marginLogo   = 30;
+  const marginLogo = 30;
   const maxLogoWidth = 750;
-  const logoAspect   = logoImg.width / logoImg.height;
-  const logoW        = maxLogoWidth;
-  const logoH        = maxLogoWidth / logoAspect;
-  const logoX        = marginLogo;
-  const logoY        = height - logoH - marginLogo;
+  const logoAspect = logoImg.width / logoImg.height;
+  const logoW = maxLogoWidth;
+  const logoH = maxLogoWidth / logoAspect;
+  const logoX = marginLogo;
+  const logoY = height - logoH - marginLogo;
 
   imageMode(CORNER);
   image(logoImg, logoX, logoY, logoW, logoH);
