@@ -291,8 +291,8 @@ if (tipoVisualSelect.value() === 'curva') {
   // 3) dibuja el logo “en pantalla fija”
   imageMode(CORNER);
   // 1) el ancho máximo que quieras para tu logo
-  const maxLogoWidth = 80;
-  const margin = 10;          // margen al borde
+  const maxLogoWidth = 160;
+  const margin = 40;          // margen al borde
   // 2) la proporción original del logo
   const aspect = logoImg.width / logoImg.height;
   // 3) calcula el alto para mantener ratio
