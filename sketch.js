@@ -289,7 +289,7 @@ if (tipoVisualSelect.value() === 'curva') {
     points=nuevos; noiseOffset+=0.01;
   }
 // dimensiones del logo (manteniendo el aspect)
-const margin     = 40;
+const margin     = 30;
 const maxLogoW   = 750;
 const aspect     = logoImg.width / logoImg.height;
 const w          = maxLogoW;
