@@ -2,7 +2,6 @@
 let points = [];
 let originalPoints = [];
 let fileLoaded = false;
-let svgText = '';
 
 let svgText = '';
 let loadedFileName = '';   // ← aquí
