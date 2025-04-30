@@ -253,34 +253,54 @@ function generarCurvaFromSVG() {
   iniciado = running = false;
 }
 
+// 1) generarCurvaBase
 function generarCurvaBase() {
   points = [];
   const n = int(inputPuntos.value());
-  const r = float(sliderRadio.value());
-  for (let i=0; i<n; i++) {
-    const a = TWO_PI * i/n;
-    points.push(createVector(width/2 + r*cos(a), height/2 + r*sin(a)));
+  // ← use sliderBaseRadius instead of sliderRadio
+  const r = float(sliderBaseRadius.value());
+  for (let i = 0; i < n; i++) {
+    const a = TWO_PI * i / n;
+    points.push(createVector(
+      width/2 + r * cos(a),
+      height/2 + r * sin(a)
+    ));
   }
-  originalPoints = points.map(p=>p.copy());
+  originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
 
+// 2) fitPoints (called from generarCurvaFromSVG)
 function fitPoints(pts) {
-  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
-  pts.forEach(p=>{minX=min(minX,p.x);maxX=max(maxX,p.x);minY=min(minY,p.y);maxY=max(maxY,p.y);});
-  const s = (2*float(sliderRadio.value()))/max(maxX-minX,maxY-minY);
-  points = pts.map(p=>createVector((p.x-(minX+(maxX-minX)/2))*s + width/2, (p.y-(minY+(maxY-minY)/2))*s + height/2));
+  let minX = Infinity, maxX = -Infinity,
+      minY = Infinity, maxY = -Infinity;
+  pts.forEach(p => {
+    minX = min(minX, p.x);
+    maxX = max(maxX, p.x);
+    minY = min(minY, p.y);
+    maxY = max(maxY, p.y);
+  });
+  // ← again use sliderBaseRadius here
+  const s = (2 * float(sliderBaseRadius.value())) /
+            max(maxX - minX, maxY - minY);
+  points = pts.map(p => createVector(
+    (p.x - (minX + (maxX - minX)/2)) * s + width/2,
+    (p.y - (minY + (maxY - minY)/2)) * s + height/2
+  ));
 }
 
+// 3) iniciarCrecimiento
 function iniciarCrecimiento() {
   if (!points.length) return;
   const n = int(inputPuntos.value());
-  const c = TWO_PI*float(sliderRadio.value());
-  const d = c/max(n,1);
-  minDist = max(float(inputMinDist.value()), d*1.2);
-  maxDist = max(float(inputMaxDist.value()), d*1.2);
+  // ← and here:
+  const c = TWO_PI * float(sliderBaseRadius.value());
+  const d = c / max(n, 1);
+  minDist = max(float(inputMinDist.value()), d * 1.2);
+  maxDist = max(float(inputMaxDist.value()), d * 1.2);
   iniciado = running = true;
 }
+
 
 function togglePlayPause() {
   if (!iniciado) { iniciarCrecimiento(); select('#playPauseBtn').html('⏸ Pausar'); }
