@@ -252,7 +252,186 @@ function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   resizeCanvas(windowWidth - uiWidth, windowHeight);
 }
+function draw() {
+  background(255);
 
+  // — 1. DIBUJAR CONTORNO —
+  if (contourLoaded) {
+    stroke(180); noFill(); strokeWeight(1);
+    beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
+  }
+
+  // — 2. DIBUJAR OBSTÁCULOS —
+  if (showObstacles) {
+    obstacleCircles.forEach(o => {
+      stroke('red'); noFill(); strokeWeight(1);
+      circle(o.x, o.y, o.r * 2);
+    });
+    obstacleSVGPoints.forEach(shape => {
+      stroke('red'); noFill(); strokeWeight(1);
+      beginShape(); shape.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
+    });
+  }
+
+  // — 3. DIBUJAR CURVA bajo transform (zoom/pan) —
+  push();
+    translate(width/2 + offsetX, height/2 + offsetY);
+    scale(zoom);
+    translate(-width/2, -height/2);
+
+    // historial
+    if (mostrarHistorial) {
+      stroke(180); noFill(); strokeWeight(1/zoom);
+      historialFormas.forEach(f => {
+        beginShape();
+          const L = f.length;
+          curveVertex(f[(L-2+L)%L].x, f[(L-2+L)%L].y);
+          curveVertex(f[L-1].x, f[L-1].y);
+          f.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(f[0].x, f[0].y);
+          curveVertex(f[1].x, f[1].y);
+        endShape();
+      });
+    }
+
+    // curva principal
+    if (points.length > 1) {
+      stroke(0); noFill(); strokeWeight(1/zoom);
+      if (tipoVisualSelect.value() === 'curva') {
+        const L = points.length;
+        beginShape();
+          curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
+          curveVertex(points[L-1].x, points[L-1].y);
+          points.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(points[0].x, points[0].y);
+          curveVertex(points[1].x, points[1].y);
+        endShape();
+      } else {
+        beginShape();
+          points.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+      }
+
+      // nodos
+      if (mostrarNodos) {
+        fill(0); noStroke();
+        points.forEach(p => circle(p.x, p.y, 4/zoom));
+      }
+    }
+  pop();
+
+  // — 4. CRECIMIENTO —
+  if (iniciado && running && points.length < maxPoints) {
+    if (frameHistorial % frecuenciaHistorial === 0) {
+      historialFormas.push(points.map(p => p.copy()));
+    }
+    frameHistorial++;
+    let nuevos = [];
+    points.forEach((act, i) => {
+      let f = createVector(0, 0), c = 0;
+      points.forEach((o, j) => {
+        if (i !== j) {
+          const d = dist(act.x, act.y, o.x, o.y);
+          if (d < minDist) {
+            f.add(p5.Vector.sub(act, o).normalize().mult(float(sliderRepulsion.value()) / d));
+            c++;
+          }
+        }
+      });
+      let rn = createVector(0, 0);
+      const tt = tipoRuidoSelect.value();
+      const amp = float(sliderAmplitud.value());
+      const fr = float(sliderFrecuencia.value());
+      if (tt === 'perlin') {
+        const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+        rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+      } else if (tt === 'perlinImproved') {
+        const nx = noise(act.x * fr, noiseOffset);
+        const ny = noise(act.y * fr, noiseOffset + 1000);
+        rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+      } else if (tt === 'valor') {
+        rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+      } else if (tt === 'simple') {
+        rn = p5.Vector.random2D().mult(amp);
+      }
+      if (c > 0) {
+        f.div(c).add(rn);
+      } else {
+        f = rn;
+      }
+
+      // límites contorno
+      const nextPos = p5.Vector.add(act, f);
+      if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
+        f.mult(-1);
+      }
+
+      // repel obstáculos
+      if (showObstacles) {
+        obstacleCircles.forEach(o => {
+          const d = dist(act.x, act.y, o.x, o.y);
+          if (d < o.r) {
+            const repel = p5.Vector.sub(act, createVector(o.x, o.y)).setMag((o.r - d) * 0.1);
+            f.add(repel);
+          }
+        });
+        obstacleSVGPoints.forEach(shape => {
+          if (pointInPolygon(nextPos, shape)) {
+            const repel = p5.Vector.sub(act, nextPos).mult(0.5);
+            f.add(repel);
+          }
+        });
+      }
+
+      act.add(f);
+      nuevos.push(act);
+      const np = points[(i + 1) % points.length];
+      if (p5.Vector.dist(act, np) > maxDist) {
+        nuevos.push(p5.Vector.add(act, np).div(2));
+      }
+    });
+    points = nuevos;
+    noiseOffset += 0.01;
+  }
+
+  // — 5. INFO TEXT —
+  const initialCount = int(inputPuntos.value());
+  const circleRadiusMm = float(sliderBaseRadius.value());
+  const lines = [];
+  if (loadedFileName) {
+    lines.push(`Archivo Cargado: ${loadedFileName}`);
+  } else {
+    lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
+  }
+  const distPts = (TWO_PI * circleRadiusMm) / initialCount;
+  lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
+  lines.push(`Puntos actuales: ${points.length}`);
+  const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
+  lines.push(`Estado: ${estado}`);
+  push();
+    textFont(fuenteMonoLight);
+    textSize(10);
+    textAlign(RIGHT, TOP);
+    fill(0);
+    const m = 30;
+    const x0 = width - m;
+    const y0 = height - m - 10 - lines.length * 18;
+    for (let i = 0; i < lines.length; i++) {
+      text(lines[i], x0, y0 + i * 18);
+    }
+  pop();
+
+  // — 6. Logo —
+  const marginLogo = 20;
+  const maxLogoWidth = 750;
+  const logoAspect = logoImg.width / logoImg.height;
+  const logoW = maxLogoWidth;
+  const logoH = maxLogoWidth / logoAspect;
+  const logoX = marginLogo;
+  const logoY = height - logoH - marginLogo + 10;
+  imageMode(CORNER);
+  image(logoImg, logoX, logoY, logoW, logoH);
+}
 function previewShape() {
   fileLoaded ? generarCurvaFromSVG() : generarCurvaBase();
   redraw();
