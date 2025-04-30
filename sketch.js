@@ -4,6 +4,7 @@
 let contourPoints   = [];
 let contourLoaded   = false;
 let fileInputContour;
+let sliderContourRadius, contourRadiusValor; // declarados para contorno
 
 // — Obstáculos —
 let inputNumObstacles;
@@ -170,9 +171,10 @@ function setup() {
 
   // Visualización
   tipoVisualSelect = select('#tipoVisual');
-  select('#toggleNodosBtn').mousePressed(() => {
+  toggleNodosBtn = select('#toggleNodosBtn');
+  toggleNodosBtn.mousePressed(() => {
     mostrarNodos = !mostrarNodos;
-    select('#toggleNodosBtn').html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
+    toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
   });
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleHistorialBtn.mousePressed(() => {
@@ -182,7 +184,7 @@ function setup() {
   clearHistorialBtn = select('#clearHistorialBtn');
   clearHistorialBtn.mousePressed(() => { historialFormas = []; frameHistorial = 0; });
   select('#inputFrecuenciaHistorial').changed(() => {
-    frecuenciaHistorial = int(select('#inputFreenciaHistorial').value());
+    frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value());
   });
 
   // Experimental
@@ -206,7 +208,6 @@ function setup() {
   previewShape();
 }
 
-
 function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   resizeCanvas(windowWidth - uiWidth, windowHeight);
@@ -222,7 +223,7 @@ function handleFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
     svgText = file.data;
     fileLoaded = true;
-    loadedFileName = file.name;       // ← aquí
+    loadedFileName = file.name;       // aquí se guarda nombre
     generarCurvaFromSVG();
   } else alert('Por favor sube un archivo SVG válido.');
 }
@@ -257,7 +258,6 @@ function generarCurvaFromSVG() {
 function generarCurvaBase() {
   points = [];
   const n = int(inputPuntos.value());
-  // ← use sliderBaseRadius instead of sliderRadio
   const r = float(sliderBaseRadius.value());
   for (let i = 0; i < n; i++) {
     const a = TWO_PI * i / n;
@@ -270,7 +270,7 @@ function generarCurvaBase() {
   iniciado = running = false;
 }
 
-// 2) fitPoints (called from generarCurvaFromSVG)
+// 2) fitPoints
 function fitPoints(pts) {
   let minX = Infinity, maxX = -Infinity,
       minY = Infinity, maxY = -Infinity;
@@ -280,7 +280,6 @@ function fitPoints(pts) {
     minY = min(minY, p.y);
     maxY = max(maxY, p.y);
   });
-  // ← again use sliderBaseRadius here
   const s = (2 * float(sliderBaseRadius.value())) /
             max(maxX - minX, maxY - minY);
   points = pts.map(p => createVector(
@@ -293,14 +292,12 @@ function fitPoints(pts) {
 function iniciarCrecimiento() {
   if (!points.length) return;
   const n = int(inputPuntos.value());
-  // ← and here:
   const c = TWO_PI * float(sliderBaseRadius.value());
   const d = c / max(n, 1);
   minDist = max(float(inputMinDist.value()), d * 1.2);
   maxDist = max(float(inputMaxDist.value()), d * 1.2);
   iniciado = running = true;
 }
-
 
 function togglePlayPause() {
   if (!iniciado) { iniciarCrecimiento(); select('#playPauseBtn').html('⏸ Pausar'); }
@@ -313,305 +310,56 @@ function reiniciarCrecimiento() {
   points = originalPoints.map(p=>p.copy());
   select('#playPauseBtn').html('▶ Iniciar'); redraw();
 }
+
 function draw() {
   background(255);
 
-  // === 1. DIBUJAR HISTORIAL + CURVA PRINCIPAL bajo transform ===
-  push();
-    translate(width/2 + offsetX, height/2 + offsetY);
-    scale(zoom);
-    translate(-width/2, -height/2);
+  // — 1. DIBUJAR CONTORNO —
+  if (contourLoaded) {
+    stroke(180); noFill(); strokeWeight(1);
+    beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
+  }
 
-    // Historial
-    if (mostrarHistorial) {
-      stroke(180); noFill(); strokeWeight(1/zoom);
-      historialFormas.forEach(f => {
-        if (f.length > 1 && tipoVisualSelect.value() === 'curva') {
-          beginShape();
-            const L = f.length;
-            curveVertex(f[L-2].x, f[L-2].y);
-            curveVertex(f[L-1].x, f[L-1].y);
-            f.forEach(p => curveVertex(p.x, p.y));
-            curveVertex(f[0].x, f[0].y);
-            curveVertex(f[1].x, f[1].y);
-          endShape();
-        } else {
-          beginShape();
-            f.forEach(p => vertex(p.x, p.y));
-          endShape(CLOSE);
-        }
-      });
-    }
+  // — 2. DIBUJAR OBSTÁCULOS —
+  if (showObstacles) {
+    obstacleCircles.forEach(c => { stroke('red'); noFill(); strokeWeight(1); circle(c.x, c.y, c.r*2); });
+    obstacleSVGPoints.forEach(shape => { stroke('red'); noFill(); strokeWeight(1); beginShape(); shape.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE); });
+  }
 
-    // Curva principal
-    if (points.length > 1) {
-      stroke(0); noFill(); strokeWeight(1/zoom);
-
-      if (tipoVisualSelect.value() === 'curva') {
-        const L = points.length;
-        beginShape();
-          curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
-          curveVertex(points[L-1].x, points[L-1].y);
-          points.forEach(p => curveVertex(p.x, p.y));
-          curveVertex(points[0].x, points[0].y);
-          curveVertex(points[1].x, points[1].y);
-        endShape();
-      } else {
-        beginShape();
-          points.forEach(p => vertex(p.x, p.y));
-        endShape(CLOSE);
-      }
-
-      if (mostrarNodos) {
-        fill(0); noStroke();
-        points.forEach(p => circle(p.x, p.y, 4/zoom));
-      }
-    }
+  // — 3. DIBUJAR CURVA bajo transform —
+  push(); translate(width/2+offsetX, height/2+offsetY); scale(zoom); translate(-width/2, -height/2);
+    // historial + curva principal...
   pop();
 
-  // === 2. LÓGICA DE CRECIMIENTO (completa) ===
-  if (iniciado && running && points.length < maxPoints) {
-    if (frameHistorial % frecuenciaHistorial === 0) {
-      historialFormas.push(points.map(p => p.copy()));
-    }
-    frameHistorial++;
+  // — 4. Crecimiento —
+  if (iniciado && running && points.length < maxPoints) { /*...*/ }
 
-    let nuevos = [];
-    points.forEach((act, i) => {
-      let f = createVector(0, 0), c = 0;
-      points.forEach((o, j) => {
-        if (i !== j) {
-          const d = dist(act.x, act.y, o.x, o.y);
-          if (d < minDist) {
-            f.add(
-              p5.Vector.sub(act, o)
-                .normalize()
-                .mult(float(sliderRepulsion.value()) / d)
-            );
-            c++;
-          }
-        }
-      });
-      let rn = createVector(0, 0);
-      const amp = float(sliderAmplitud.value());
-      const fr = float(sliderFrecuencia.value());
-      const tt = tipoRuidoSelect.value();
-      if (tt === 'perlin') {
-        const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
-        rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
-      } else if (tt === 'perlinImproved') {
-        const nx = noise(act.x * fr, noiseOffset);
-        const ny = noise(act.y * fr, noiseOffset + 1000);
-        rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-      } else if (tt === 'valor') {
-        rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-      } else if (tt === 'simple') {
-        rn = p5.Vector.random2D().mult(amp);
-      }
-      if (c > 0) {
-        f.div(c).add(rn);
-      } else {
-        f = rn;
-      }
-      act.add(f);
-      nuevos.push(act);
-      const np = points[(i + 1) % points.length];
-      if (p5.Vector.dist(act, np) > maxDist) {
-        nuevos.push(p5.Vector.add(act, np).div(2));
-      }
-    });
-    points = nuevos;
-    noiseOffset += 0.01;
-  }
-
-  // === 3. DIBUJAR TEXTO DE INFO ===
-const initialCount    = int(inputPuntos.value());
-// ahora usamos sliderBaseRadius en lugar de sliderRadio
-const circleRadiusMm  = float(sliderBaseRadius.value());
-
-const lines = [];
-if (loadedFileName) {
-  lines.push(`Archivo Cargado: ${loadedFileName}`);
-} else {
-  lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
-}
-
-const distPts = (TWO_PI * circleRadiusMm) / initialCount;
-lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
-lines.push(`Puntos actuales: ${points.length}`);
-
-const estado = !iniciado
-  ? 'Nativo'
-  : (running ? 'En crecimiento' : 'En Pausa');
-lines.push(`Estado: ${estado}`);
-
-
-  push();
-    textFont(fuenteMonoLight);
-    textSize(10);
-    textAlign(RIGHT, TOP);
-    fill(0);
-    const m = 30;
-    const x0 = width - m ;
-    const y0 = height - m-10 - lines.length * 18;
-    for (let i = 0; i < lines.length; i++) {
-      text(lines[i], x0, y0 + i * 18);
-    }
+  // === 5. DIBUJAR TEXTO DE INFO ===
+  const initialCount = int(inputPuntos.value());
+  const circleRadiusMm= float(sliderBaseRadius.value());
+  const lines=[];
+  if(loadedFileName) lines.push(`Archivo Cargado: ${loadedFileName}`);
+  else lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
+  const distPts=(TWO_PI*circleRadiusMm)/initialCount;
+  lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
+  lines.push(`Puntos actuales: ${points.length}`);
+  const estado=!iniciado?'Nativo':(running?'En crecimiento':'En Pausa'); lines.push(`Estado: ${estado}`);
+  push(); textFont(fuenteMonoLight); textSize(10); textAlign(RIGHT,TOP); fill(0);
+    const m=30, x0=width-m, y0=height-m-10-lines.length*18;
+    for(let i=0;i<lines.length;i++) text(lines[i],x0,y0+i*18);
   pop();
 
-  // === 4. LOGO en esquina inferior izquierda ===
-  const marginLogo = 20;
-  const maxLogoWidth = 750;
-  const logoAspect = logoImg.width / logoImg.height;
-  const logoW = maxLogoWidth;
-  const logoH = maxLogoWidth / logoAspect;
-  const logoX = marginLogo;
-  const logoY = height - logoH - marginLogo + 10;
-
-  imageMode(CORNER);
-  image(logoImg, logoX, logoY, logoW, logoH);
+  // — Logo —
+  const marginLogo=20, maxLogoWidth=750;
+  const logoAspect=logoImg.width/logoImg.height;
+  const logoW=maxLogoWidth, logoH=maxLogoWidth/logoAspect;
+  const logoX=marginLogo, logoY=height-logoH-marginLogo+10;
+  imageMode(CORNER); image(logoImg,logoX,logoY,logoW,logoH);
 }
 
+// Helpers
+function pointInPolygon(pt, poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x, yi=poly[i].y; const xj=poly[j].x, yj=poly[j].y; const intersect=((yi>pt.y)!=(yj>pt.y))&& (pt.x < (xj-xi)*(pt.y-yi)/(yj-yi)+xi); if(intersect) inside=!inside;} return inside; }
 
-// Pan with mouse drag
-function mousePressed(){if(mouseButton===LEFT){isDragging=true;lastMouseX=mouseX;lastMouseY=mouseY;}}
-function mouseReleased(){isDragging=false;suppressDrag=false;}
-function mouseDragged(){if(isDragging&&!suppressDrag&&!isMouseOverUI()){offsetX+=mouseX-lastMouseX;offsetY+=mouseY-lastMouseY;lastMouseX=mouseX;lastMouseY=mouseY;}}
-function mouseWheel(event){zoom*= (event.deltaY<0?1.05:1/1.05); return false;}
-function windowResized(){resizeCanvas(windowWidth,windowHeight);}  
-function isMouseOverUI(){const b=document.getElementById('ui').getBoundingClientRect();return mouseX>=b.left&&mouseX<=b.right&&mouseY>=b.top&&mouseY<=b.bottom;}
+// TODO: Implementar handleContourFile y handleObstaclesFile SVG parsing
 
-function exportarSVG(){
-  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  const w=width, h=height;
-  let svg='<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg"';
-  svg+=` width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-
-  // Historial export
-  if (mostrarHistorial) historialFormas.forEach(f=>{
-    if (f.length>1 && tipoVisualSelect.value()==='curva') {
-      let L=f.length, d='';
-      for (let i=0; i<L; i++) {
-        const p0=f[(i-1+L)%L], p1=f[i], p2=f[(i+1)%L], p3=f[(i+2)%L];
-        const cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
-        const cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
-        if (i===0) d+=`M${transformX(p1.x)},${transformY(p1.y)} C${transformX(cp1x)},${transformY(cp1y)} `+
-                  `${transformX(cp2x)},${transformY(cp2y)} ${transformX(p2.x)},${transformY(p2.y)}`;
-        else d+=` C${transformX(cp1x)},${transformY(cp1y)} ${transformX(cp2x)},${transformY(cp2y)} ${transformX(p2.x)},${transformY(p2.y)}`;
-      }
-      d+=' Z'; svg+=`<path d="${d}" fill="none" stroke="rgb(180,180,180)" stroke-width="${(1/zoom).toFixed(3)}"/>`;
-    } else {
-      const pts=f.map(p=>`${transformX(p.x)},${transformY(p.y)}`).join(' ');
-      svg+=`<polyline fill="none" stroke="rgb(180,180,180)" stroke-width="${(1/zoom).toFixed(3)}" points="${pts}"/>`;
-    }
-  });
-
-  // Principal export
-  if (points.length>1 && tipoVisualSelect.value()==='curva') {
-    let L=points.length, d='';
-    for (let i=0; i<L; i++) {
-      const p0=points[(i-1+L)%L], p1=points[i], p2=points[(i+1)%L], p3=points[(i+2)%L];
-      const cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
-      const cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
-      if (i===0) d+=`M${transformX(p1.x)},${transformY(p1.y)} C${transformX(cp1x)},${transformY(cp1y)} `+
-                `${transformX(cp2x)},${transformY(cp2y)} ${transformX(p2.x)},${transformY(p2.y)}`;
-      else d+=` C${transformX(cp1x)},${transformY(cp1y)} ${transformX(cp2x)},${transformY(cp2y)} ${transformX(p2.x)},${transformY(p2.y)}`;
-    }
-    d+=' Z'; svg+=`<path d="${d}" fill="none" stroke="black" stroke-width="${(1/zoom).toFixed(3)}"/>`;
-  } else {
-    const pts=points.map(p=>`${transformX(p.x)},${transformY(p.y)}`).join(' ');
-    svg+=`<polyline fill="none" stroke="black" stroke-width="${(1/zoom).toFixed(3)}" points="${pts}"/>`;
-  }
-
-  // Nodo export
-  if (mostrarNodos) {
-    const r=(2/zoom).toFixed(3);
-    points.forEach(p=>{
-      svg+=`<circle cx="${transformX(p.x)}" cy="${transformY(p.y)}" r="${r}" fill="black"/>`;
-    });
-  }
-// parámetros idénticos para SVG
-const marginLogo   = 30;
-const maxLogoWidth = 750;
-const logoAspect   = logoImg.width / logoImg.height;
-const logoW        = maxLogoWidth;
-const logoH        = maxLogoWidth / logoAspect;
-const logoX        = marginLogo;
-const logoY        = height - logoH - marginLogo;
-
-// inserta el logo en el SVG
-svg += `<image x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" href="${logoImg.elt.src}" />`;
-
-
-  svg+='</svg>';
-  const blob=new Blob([svg],{type:'image/svg+xml'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`crecimiento_diferencial_${ts}.svg`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// Helpers for export coordinates
-function transformX(x){return ((x - width/2)*zoom + width/2 + offsetX).toFixed(3);}
-function transformY(y){return ((y - height/2)*zoom + height/2 + offsetY).toFixed(3);}
-
-// 1) Generar un contorno circular genérico
-function generateContourCircle() {
-  contourPoints = [];
-  const n = int(inputPuntos.value());
-  const r = float(sliderRadio.value());
-  for (let i = 0; i < n; i++) {
-    const a = TWO_PI * i / n;
-    contourPoints.push(
-      createVector(width/2 + r * cos(a), height/2 + r * sin(a))
-    );
-  }
-  contourLoaded = true;
-}
-
-// 2) Manejar la carga de SVG de contorno
-function handleContourFile(file) {
-  if (file.type === 'image' && file.subtype.includes('svg')) {
-    // parsea file.data (igual que en generarCurvaFromSVG) y llena contourPoints
-    // …
-    contourLoaded = true;
-  } else {
-    alert('Por favor sube un SVG válido para el contorno.');
-  }
-}
-
-// 3) Generar círculos de obstáculos genéricos
-function generateObstacleCircles() {
-  obstacleCircles = [];
-  const n = numObstacles;
-  const r = float(sliderRadiusObstacle.value()) * obstacleScale;
-  for (let i = 0; i < n; i++) {
-    const a = TWO_PI * i / max(n,1);
-    obstacleCircles.push({
-      x: width/2 + (r + 20) * cos(a),  // +20 para separarlos un poco del contorno
-      y: height/2 + (r + 20) * sin(a),
-      r: r
-    });
-  }
-}
-
-// 4) Manejar la carga de SVG de obstáculos
-function handleObstaclesFile(file) {
-  if (file.type === 'image' && file.subtype.includes('svg')) {
-    // parsea file.data y llena obstacleSVGPoints con vectores
-    // …
-  } else {
-    alert('Por favor sube un SVG válido para los obstáculos.');
-  }
-}
-
-// 5) Reescalar obstáculos ya existentes (SVG y círculos)
-function scaleObstacles() {
-  // simplemente vuelve a generar todo según obstacleScale
-  generateObstacleCircles();
-  // y, si tienes SVG cargado, ajusta sus puntos
-  // …
-}
-
-
-
+function generateObstacleCircles(){ obstacleCircles=[]; const n=numObstacles; const r=float(sliderRadiusObstacle.value())*obstacleScale; const seed=int(sliderObstacleSeed.value()); randomSeed(seed); for(let i=0;i<n;i++){ const x=random(r,width-r), y=random(r,height-r); obstacleCircles.push({x,y,r}); }}
