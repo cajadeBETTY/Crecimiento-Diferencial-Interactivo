@@ -425,19 +425,26 @@ function draw() {
   }
 
   // === 3. DIBUJAR TEXTO DE INFO ===
-  const initialCount = int(inputPuntos.value());
-  const circleRadiusMm = float(sliderRadio.value());
-  const lines = [];
-  if (loadedFileName) {
-    lines.push(`Archivo Cargado: ${loadedFileName}`);
-  } else {
-    lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
-  }
-  const distPts = (TWO_PI * circleRadiusMm) / initialCount;
-  lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
-  lines.push(`Puntos actuales: ${points.length}`);
-  const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
-  lines.push(`Estado: ${estado}`);
+const initialCount    = int(inputPuntos.value());
+// ahora usamos sliderBaseRadius en lugar de sliderRadio
+const circleRadiusMm  = float(sliderBaseRadius.value());
+
+const lines = [];
+if (loadedFileName) {
+  lines.push(`Archivo Cargado: ${loadedFileName}`);
+} else {
+  lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
+}
+
+const distPts = (TWO_PI * circleRadiusMm) / initialCount;
+lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
+lines.push(`Puntos actuales: ${points.length}`);
+
+const estado = !iniciado
+  ? 'Nativo'
+  : (running ? 'En crecimiento' : 'En Pausa');
+lines.push(`Estado: ${estado}`);
+
 
   push();
     textFont(fuenteMonoLight);
