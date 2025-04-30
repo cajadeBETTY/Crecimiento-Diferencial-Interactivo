@@ -72,6 +72,13 @@ function preload() {
   fuenteMonoLight = loadFont('assets/SourceCodePro-Light.ttf');
 }
 
+
+// === Export SVG stub ===
+function exportarSVG(){
+  // TODO: implementar exportar a SVG
+  alert('Función de exportarSVG aún no implementada');
+}
+
 function setup() {
   // Canvas
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
