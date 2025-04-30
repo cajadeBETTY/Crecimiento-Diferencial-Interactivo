@@ -153,7 +153,42 @@ function generarCurvaFromSVG() {
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
+function generarCurvaFromSVG() {
+  // Parsea el SVG cargado y genera puntos
+  let raw = svgText;
+  if (raw.startsWith('data:image/svg+xml;base64,')) {
+    raw = atob(raw.split(',')[1]);
+  }
+  const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
+  const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
+  if (!elems.length) return;
 
+  const n = int(inputPuntos.value());
+  let pts = [];
+
+  elems.forEach(el => {
+    if (el.tagName === 'path') {
+      const L = el.getTotalLength();
+      for (let i = 0; i < n; i++) {
+        const pt = el.getPointAtLength((i / n) * L);
+        pts.push(createVector(pt.x, pt.y));
+      }
+    } else {
+      const list = el.points;
+      const count = list.numberOfItems;
+      for (let i = 0; i < n; i++) {
+        const idx = floor((i / n) * count);
+        const c = list.getItem(idx);
+        pts.push(createVector(c.x, c.y));
+      }
+    }
+  });
+
+  // Ajusta y centra los puntos en el canvas
+  fitPoints(pts);
+  originalPoints = points.map(p => p.copy());
+  iniciado = running = false;
+}
 function fitPoints(pts) {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   pts.forEach(p => { minX = min(minX, p.x); maxX = max(maxX, p.x); minY = min(minY, p.y); maxY = max(maxY, p.y); });
@@ -233,14 +268,3 @@ function handleFile(file) {
   } else alert('Por favor sube un archivo SVG válido.');
 }
 
-function generarCurvaFromSVG() {
-  let raw = svgText;
-  if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
-  const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
-  const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
-  if (!elems.length) return;
-  const n = int(inputPuntos.value()); let pts = [];
-  elems.forEach(el => {
-    if (el.tagName === 'path') {
-      const L = el.getTotalLength(); for (let i=0; i<n; i++) pts.push(createVector(...Object.values(el.getPointAtLength((i/n)*L))));
-    } else { const list = el.points, coords = Array.from({length:list.numberOfItems},(_,i)=>list.getItem(i)); for (let i=0; i<n; i++){ const c=coords[floor((i/n)*coords.length)]; pts.push(createVector
