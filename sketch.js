@@ -6,23 +6,33 @@ let contourLoaded   = false;
 let fileInputContour;
 
 // — Obstáculos —
+let inputNumObstacles;
 let numObstacles       = 0;
-let obstacleCircles    = [];   // círculo genéricos
-let obstacleSVGPoints  = [];   // puntos desde SVG
+let obstacleCircles    = [];
+let obstacleSVGPoints  = [];
+let sliderRadiusObstacle, obstacleRadiusValor;
+let sliderObstacleSeed,   obstacleSeedValor;
+let sliderScaleObstacles, obstacleScaleValor;
 let obstacleScale      = 1;
 let showObstacles      = true;
 let fileInputObstacles;
 
+// — Base de crecimiento —
+let sliderBaseRadius, baseRadiusValor;
+let fileInputBase;
+
+// — Nodo y Curva —
+let inputPuntos;
+let inputMinDist;
+let inputMaxDist;
+let inputMaxPoints;
 
 let points = [];
 let originalPoints = [];
 let fileLoaded = false;
-
 let svgText = '';
-let loadedFileName = '';   // ← aquí
-let fuenteMonoLight;  // para Source Code Pro Light
-
-
+let loadedFileName = '';
+let fuenteMonoLight;
 
 let running = false;
 let iniciado = false;
@@ -35,19 +45,9 @@ let isDragging = false;
 let suppressDrag = false;
 let lastMouseX, lastMouseY;
 
-// load logo
-let logoImg;
-
-// UI elements
-let inputPuntos, sliderRadio, radioValorSpan;
-let inputMinDist, inputMaxDist, inputMaxPoints, inputFrecuenciaHistorial;
-let tipoRuidoSelect, sliderAmplitud, sliderFrecuencia;
-let valorAmplitudSpan, valorFrecuenciaSpan;
-let sliderRepulsion, valorRepulsionSpan;
+// UI Visualization
 let tipoVisualSelect;
 let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
-let formaGenericaSelect;
-let fileInputSVG;
 
 // History
 let mostrarHistorial = false;
@@ -56,28 +56,30 @@ let historialFormas = [];
 let frameHistorial = 0;
 let frecuenciaHistorial = 10;
 
+// Experimental
+let tipoRuidoSelect;
+let sliderAmplitud, sliderFrecuencia, sliderRepulsion;
+let valorAmplitudSpan, valorFrecuenciaSpan, valorRepulsionSpan;
+
 // Growth params
 let noiseOffset = 0;
 let minDist, maxDist;
 
-//logo in the bottom
+// Load assets
 function preload() {
-  // 2) carga tu logo (PNG con transparencia)
   logoImg = loadImage('assets/logo.png');
   fuenteMonoLight = loadFont('assets/SourceCodePro-Light.ttf');
 }
 
 function setup() {
-  // Canvas junto al UI
+  // Canvas
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   const c = createCanvas(windowWidth - uiWidth, windowHeight);
   c.position(uiWidth, 0);
   pixelDensity(2);
   noFill();
 
-  // Preload ya cargó logo y fuente
-
-  // — BASE DE CRECIMIENTO: radio y botones —
+  // Base de Crecimiento controls
   sliderBaseRadius = select('#sliderBaseRadius');
   baseRadiusValor  = select('#baseRadiusValor');
   sliderBaseRadius.input(() => {
@@ -96,7 +98,7 @@ function setup() {
     fileInputBase.elt.click();
   });
 
-  // — CONTORNO: radio y botones —
+  // Contorno controls
   sliderContourRadius = select('#sliderContourRadius');
   contourRadiusValor   = select('#contourRadiusValor');
   sliderContourRadius.input(() => {
@@ -115,7 +117,7 @@ function setup() {
     fileInputContour.elt.click();
   });
 
-  // — OBSTÁCULOS: número, radio, seed, escala, toggle —
+  // Obstáculos controls
   inputNumObstacles   = select('#inputNumObstacles');
   sliderRadiusObstacle = select('#sliderRadiusObstacle');
   obstacleRadiusValor  = select('#obstacleRadiusValor');
@@ -156,19 +158,18 @@ function setup() {
     fileInputObstacles.elt.click();
   });
 
-  // — NODOS: puntos y distancias —
-  inputPuntos   = select('#inputPuntos');
-  inputMinDist  = select('#inputMinDist');
-  inputMaxDist  = select('#inputMaxDist');
-  inputMaxPoints= select('#inputMaxPoints');
+  // Nodos controls
+  inputPuntos     = select('#inputPuntos');
+  inputMinDist    = select('#inputMinDist');
+  inputMaxDist    = select('#inputMaxDist');
+  inputMaxPoints  = select('#inputMaxPoints');
   inputPuntos.input(previewShape);
-  // en iniciarCrecimiento lees inputMinDist/inputMaxDist
   inputMaxPoints.input(() => { maxPoints = int(inputMaxPoints.value()); });
   select('#playPauseBtn').mousePressed(togglePlayPause);
   select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
-  // — VISUALIZACIÓN —
-  tipoVisualSelect   = select('#tipoVisual');
+  // Visualización
+  tipoVisualSelect = select('#tipoVisual');
   select('#toggleNodosBtn').mousePressed(() => {
     mostrarNodos = !mostrarNodos;
     select('#toggleNodosBtn').html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
@@ -181,10 +182,10 @@ function setup() {
   clearHistorialBtn = select('#clearHistorialBtn');
   clearHistorialBtn.mousePressed(() => { historialFormas = []; frameHistorial = 0; });
   select('#inputFrecuenciaHistorial').changed(() => {
-    frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value());
+    frecuenciaHistorial = int(select('#inputFreenciaHistorial').value());
   });
 
-  // — EXPERIMENTAL —
+  // Experimental
   tipoRuidoSelect     = select('#tipoRuido');
   sliderAmplitud      = select('#sliderAmplitud');
   valorAmplitudSpan   = select('#valorAmplitud');
@@ -197,11 +198,11 @@ function setup() {
   sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
 
-  // — EXPORTAR —
+  // Exportar
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // Finally: dibuja la forma inicial
+  // Inicial
   previewShape();
 }
 
