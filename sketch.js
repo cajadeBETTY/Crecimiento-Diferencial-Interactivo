@@ -361,5 +361,23 @@ function draw() {
 function pointInPolygon(pt, poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x, yi=poly[i].y; const xj=poly[j].x, yj=poly[j].y; const intersect=((yi>pt.y)!=(yj>pt.y))&& (pt.x < (xj-xi)*(pt.y-yi)/(yj-yi)+xi); if(intersect) inside=!inside;} return inside; }
 
 // TODO: Implementar handleContourFile y handleObstaclesFile SVG parsing
+// === Manejadores de carga de SVG (stubs) ===
+function handleContourFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    // TODO: parsear file.data y llenar contourPoints
+    // por ahora marcamos como cargado para evitar errores:
+    contourLoaded = true;
+  } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
+}
+
+function handleObstaclesFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    // TODO: parsear file.data y llenar obstacleSVGPoints
+  } else {
+    alert('Por favor sube un SVG válido para los obstáculos.');
+  }
+}
 
 function generateObstacleCircles(){ obstacleCircles=[]; const n=numObstacles; const r=float(sliderRadiusObstacle.value())*obstacleScale; const seed=int(sliderObstacleSeed.value()); randomSeed(seed); for(let i=0;i<n;i++){ const x=random(r,width-r), y=random(r,height-r); obstacleCircles.push({x,y,r}); }}
