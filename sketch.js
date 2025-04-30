@@ -94,7 +94,10 @@ function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
     // TODO: parsear SVG
     contourLoaded = true;
-  } else alert('Por favor sube un SVG válido para el contorno.');
+  } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
+
 }
 
 // Obstáculos functions
