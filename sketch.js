@@ -160,7 +160,38 @@ function fitPoints(pts) {
   const s = (2 * float(sliderBaseRadius.value())) / max(maxX - minX, maxY - minY);
   points = pts.map(p => createVector((p.x - (minX + (maxX - minX)/2))*s + width/2, (p.y - (minY + (maxY - minY)/2))*s + height/2));
 }
+// Control de inicio/pausa y reinicio
+function iniciarCrecimiento() {
+  if (!points.length) return;
+  const n = int(inputPuntos.value());
+  const c = TWO_PI * float(sliderBaseRadius.value());
+  const d = c / max(n, 1);
+  minDist = max(float(inputMinDist.value()), d * 1.2);
+  maxDist = max(float(inputMaxDist.value()), d * 1.2);
+  iniciado = running = true;
+}
 
+function togglePlayPause() {
+  if (!iniciado) {
+    iniciarCrecimiento();
+    select('#playPauseBtn').html('⏸ Pausar');
+  } else {
+    running = !running;
+    select('#playPauseBtn').html(running ? '⏸ Pausar' : '▶ Reanudar');
+  }
+}
+
+function reiniciarCrecimiento() {
+  running = iniciado = false;
+  offsetX = offsetY = 0;
+  zoom = 1;
+  noiseOffset = 0;
+  historialFormas = [];
+  frameHistorial = 0;
+  points = originalPoints.map(p => p.copy());
+  select('#playPauseBtn').html('▶ Iniciar');
+  redraw();
+}
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   createCanvas(windowWidth - uiWidth, windowHeight).position(uiWidth, 0);
