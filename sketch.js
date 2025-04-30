@@ -73,11 +73,29 @@ function preload() {
 }
 
 
-// === Export SVG stub ===
-function exportarSVG(){
-  // TODO: implementar exportar a SVG
-  alert('Función de exportarSVG aún no implementada');
+// === Contorno generico circular ===
+function generateContourCircle() {
+  contourPoints = [];
+  const n = int(inputPuntos.value());
+  const r = float(sliderContourRadius.value());
+  for (let i = 0; i < n; i++) {
+    const a = TWO_PI * i / n;
+    contourPoints.push(createVector(
+      width/2 + r * cos(a),
+      height/2 + r * sin(a)
+    ));
+  }
+  contourLoaded = true;
 }
+
+// === Handler de archivo contorno SVG ===
+function handleContourFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    // TODO: parsear file.data y llenar contourPoints
+    contourLoaded = true;
+  } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
 
 function setup() {
   // Canvas
