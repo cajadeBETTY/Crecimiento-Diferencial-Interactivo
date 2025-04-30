@@ -75,38 +75,19 @@ function setup() {
   pixelDensity(2);
   noFill();
 
-  // — CARGA DEL LOGO Y LA FUENTE —
-  logoImg = loadImage('assets/logo.png');
-  fuenteMonoLight = loadFont('assets/SourceCodePro-Light.ttf');
+  // Preload ya cargó logo y fuente
 
-  // — CONTROLES “General” —
-  sliderRadio     = select('#sliderRadio');
-  radioValorSpan  = select('#radioValor');
-  inputPuntos     = select('#inputPuntos');
-  inputMinDist    = select('#inputMinDist');
-  inputMaxDist    = select('#inputMaxDist');
-  inputMaxPoints  = select('#inputMaxPoints');
-
-  sliderRadio.input(() => {
-    radioValorSpan.html(sliderRadio.value());
+  // — BASE DE CRECIMIENTO: radio y botones —
+  sliderBaseRadius = select('#sliderBaseRadius');
+  baseRadiusValor  = select('#baseRadiusValor');
+  sliderBaseRadius.input(() => {
+    baseRadiusValor.html(sliderBaseRadius.value());
     previewShape();
   });
-  inputPuntos.input(previewShape);
-  inputMinDist.input(() => {});
-  inputMaxDist.input(() => {});
-  inputMaxPoints.input(() => { maxPoints = int(inputMaxPoints.value()); });
-
-  // — BOTONES Reanudar / Reiniciar —
-  select('#playPauseBtn').mousePressed(togglePlayPause);
-  select('#restartBtn').mousePressed(reiniciarCrecimiento);
-
-  // — “Base de Crecimiento” —
-  // 1) Generar círculo genérico
   select('#btnCircleBase').mousePressed(() => {
     fileLoaded = false;
     previewShape();
   });
-  // 2) Subir SVG base
   fileInputBase = createFileInput(handleFile);
   fileInputBase.parent('ui');
   fileInputBase.hide();
@@ -115,7 +96,13 @@ function setup() {
     fileInputBase.elt.click();
   });
 
-  // — LIMITANTES: Contorno —
+  // — CONTORNO: radio y botones —
+  sliderContourRadius = select('#sliderContourRadius');
+  contourRadiusValor   = select('#contourRadiusValor');
+  sliderContourRadius.input(() => {
+    contourRadiusValor.html(sliderContourRadius.value());
+    generateContourCircle();
+  });
   select('#btnCircleContour').mousePressed(() => {
     contourLoaded = false;
     generateContourCircle();
@@ -128,20 +115,39 @@ function setup() {
     fileInputContour.elt.click();
   });
 
-  // — LIMITANTES: Obstáculos —
-  const inputNumObstacles    = select('#inputNumObstacles');
-  const sliderRadiusObstacle = select('#sliderRadiusObstacle');
-  const sliderScaleObstacles = select('#sliderScaleObstacles');
+  // — OBSTÁCULOS: número, radio, seed, escala, toggle —
+  inputNumObstacles   = select('#inputNumObstacles');
+  sliderRadiusObstacle = select('#sliderRadiusObstacle');
+  obstacleRadiusValor  = select('#obstacleRadiusValor');
+  sliderObstacleSeed   = select('#sliderObstacleSeed');
+  obstacleSeedValor    = select('#obstacleSeedValor');
+  sliderScaleObstacles = select('#sliderScaleObstacles');
+  obstacleScaleValor   = select('#obstacleScaleValor');
 
   inputNumObstacles.input(() => {
     numObstacles = int(inputNumObstacles.value());
     generateObstacleCircles();
   });
+  sliderRadiusObstacle.input(() => {
+    obstacleRadiusValor.html(sliderRadiusObstacle.value());
+    generateObstacleCircles();
+  });
+  sliderObstacleSeed.input(() => {
+    obstacleSeedValor.html(sliderObstacleSeed.value());
+    generateObstacleCircles();
+  });
+  sliderScaleObstacles.input(() => {
+    obstacleScaleValor.html(sliderScaleObstacles.value());
+    obstacleScale = float(sliderScaleObstacles.value());
+    scaleObstacles();
+  });
+  select('#toggleObstacles').changed(() => {
+    showObstacles = select('#toggleObstacles').checked();
+  });
   select('#btnCircleObstacle').mousePressed(() => {
     obstacleSVGPoints = [];
     generateObstacleCircles();
   });
-  sliderRadiusObstacle.input(generateObstacleCircles);
   fileInputObstacles = createFileInput(handleObstaclesFile);
   fileInputObstacles.parent('ui');
   fileInputObstacles.hide();
@@ -149,20 +155,24 @@ function setup() {
     suppressDrag = true;
     fileInputObstacles.elt.click();
   });
-  sliderScaleObstacles.input(() => {
-    obstacleScale = float(sliderScaleObstacles.value());
-    scaleObstacles();
-  });
-  select('#toggleObstacles').changed(() => {
-    showObstacles = select('#toggleObstacles').checked();
-  });
+
+  // — NODOS: puntos y distancias —
+  inputPuntos   = select('#inputPuntos');
+  inputMinDist  = select('#inputMinDist');
+  inputMaxDist  = select('#inputMaxDist');
+  inputMaxPoints= select('#inputMaxPoints');
+  inputPuntos.input(previewShape);
+  // en iniciarCrecimiento lees inputMinDist/inputMaxDist
+  inputMaxPoints.input(() => { maxPoints = int(inputMaxPoints.value()); });
+  select('#playPauseBtn').mousePressed(togglePlayPause);
+  select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
   // — VISUALIZACIÓN —
+  tipoVisualSelect   = select('#tipoVisual');
   select('#toggleNodosBtn').mousePressed(() => {
     mostrarNodos = !mostrarNodos;
     select('#toggleNodosBtn').html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
   });
-  tipoVisualSelect = select('#tipoVisual');
   toggleHistorialBtn = select('#toggleHistorialBtn');
   toggleHistorialBtn.mousePressed(() => {
     mostrarHistorial = !mostrarHistorial;
@@ -175,13 +185,13 @@ function setup() {
   });
 
   // — EXPERIMENTAL —
-  tipoRuidoSelect   = select('#tipoRuido');
-  sliderAmplitud    = select('#sliderAmplitud');
-  valorAmplitudSpan = select('#valorAmplitud');
-  sliderFrecuencia  = select('#sliderFrecuencia');
+  tipoRuidoSelect     = select('#tipoRuido');
+  sliderAmplitud      = select('#sliderAmplitud');
+  valorAmplitudSpan   = select('#valorAmplitud');
+  sliderFrecuencia    = select('#sliderFrecuencia');
   valorFrecuenciaSpan = select('#valorFrecuencia');
-  sliderRepulsion   = select('#sliderRepulsion');
-  valorRepulsionSpan = select('#valorRepulsion');
+  sliderRepulsion     = select('#sliderRepulsion');
+  valorRepulsionSpan  = select('#valorRepulsion');
 
   sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
   sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
@@ -191,7 +201,7 @@ function setup() {
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // Genera shape inicial
+  // Finally: dibuja la forma inicial
   previewShape();
 }
 
