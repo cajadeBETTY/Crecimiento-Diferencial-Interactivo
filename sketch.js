@@ -28,6 +28,9 @@ let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
 let activeBase       = false;
 let activeContour    = false;
 let activeObstacles  = false;
+let draggingBase = false;
+let draggingContour = false;
+let draggingObstacle = false;
 
 // ■ UI layout
 const uiMargin      = 10;    // margen desde el borde
@@ -53,6 +56,16 @@ let isDragging = false, suppressDrag = false;
 let lastMouseX, lastMouseY;
 // Assets
 let logoImg, fuenteMonoLight;
+
+// — Helpers —
+// Umbral de selección en coordenadas de usuario (no de pantalla)
+const selectThreshold = 10;
+
+// — Variables de estado (coloca en globals) —
+let draggingIndexBase    = -1;
+let draggingIndexContour = -1;
+let draggingObstacleIndex= -1;
+
 
 function preload() {
   logoImg = loadImage('assets/logo.png');
@@ -309,83 +322,68 @@ function reiniciarCrecimiento() {
   redraw();
 }
 
-/**
- * Detecta clics sobre el menú overlay en canvas y alterna los flags.
- * @param {number} mx - Coordenada X del mouse.
- * @param {number} my - Coordenada Y del mouse.
- * @returns {boolean} true si el clic cayó sobre una casilla (y se alternó), false en caso contrario.
- */
+
+// — Detectar clic en overlay —
 function checkUIClick(mx, my) {
-  // Posición de la UI overlay (esquina superior derecha)
   const startX = width - uiMargin;
   const startY = uiMargin;
-
-  // ■ Curva Base
-  if (
-    mx >= startX - uiBoxSize && mx <= startX &&
-    my >= startY && my <= startY + uiBoxSize
-  ) {
+  // Base
+  if (mx >= startX - uiBoxSize && mx <= startX && my >= startY && my <= startY + uiBoxSize) {
     activeBase = !activeBase;
     return true;
   }
-
-  // ■ Curva Contorno
-  if (
-    mx >= startX - uiBoxSize && mx <= startX &&
-    my >= startY + uiSpacing && my <= startY + uiSpacing + uiBoxSize
-  ) {
+  // Contorno
+  if (mx >= startX - uiBoxSize && mx <= startX && my >= startY + uiSpacing && my <= startY + uiSpacing + uiBoxSize) {
     activeContour = !activeContour;
     return true;
   }
-
-  // ■ Obstáculos
-  if (
-    mx >= startX - uiBoxSize && mx <= startX &&
-    my >= startY + 2 * uiSpacing && my <= startY + 2 * uiSpacing + uiBoxSize
-  ) {
+  // Obstáculos
+  if (mx >= startX - uiBoxSize && mx <= startX && my >= startY + 2*uiSpacing && my <= startY + 2*uiSpacing + uiBoxSize) {
     activeObstacles = !activeObstacles;
     return true;
   }
-
   return false;
 }
 
-
-// 7) Pan/zoom & overlay UI toggles
+// — Manejo de mouse —
 function mousePressed() {
   if (mouseButton === LEFT) {
-    // 1) Overlay UI (canvas) click
     if (checkUIClick(mouseX, mouseY)) {
-      suppressDrag = true;
-      return;
+      return; // solo toggles
     }
-    // 2) DOM UI (left panel) click detection
-    if (isMouseOverUI()) {
-      suppressDrag = true;
-      return;
-    }
-    // 3) Otherwise, start pan/drag
-    if (!suppressDrag) {
-      isDragging   = true;
-      lastMouseX   = mouseX;
-      lastMouseY   = mouseY;
+    if (activeBase) {
+      selectBaseCurve(mouseX, mouseY);
+    } else if (activeContour) {
+      selectContourCurve(mouseX, mouseY);
+    } else if (activeObstacles) {
+      selectObstacle(mouseX, mouseY);
+    } else {
+      // pan/zoom existente o nada
+      isDragging = true;
+      lastMouseX = mouseX;
+      lastMouseY = mouseY;
     }
   }
 }
 
 function mouseDragged() {
-  if (isDragging && !suppressDrag) {
-    // Pan the canvas
-    offsetX      += mouseX - lastMouseX;
-    offsetY      += mouseY - lastMouseY;
-    lastMouseX    = mouseX;
-    lastMouseY    = mouseY;
+  if (draggingBase) {
+    dragBaseCurve(mouseX, mouseY);
+  } else if (draggingContour) {
+    dragContourCurve(mouseX, mouseY);
+  } else if (draggingObstacle) {
+    dragObstacle(mouseX, mouseY);
+  } else if (isDragging) {
+    offsetX += mouseX - lastMouseX;
+    offsetY += mouseY - lastMouseY;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
   }
 }
 
 function mouseReleased() {
   isDragging = false;
-  suppressDrag = false;
+  draggingBase = draggingContour = draggingObstacle = false;
 }
 
 function mouseWheel(event) {
@@ -402,7 +400,103 @@ function isMouseOverUI() {
          mouseY <= b.bottom;
 }
 
+// — Base Curve — 
+function selectBaseCurve(mx, my) {
+  const loc = toLocalCoords(mx, my);
+  // 1) buscar punto cercano
+  draggingIndexBase = points.findIndex(p => dist(p.x, p.y, loc.x, loc.y) < selectThreshold);
+  if (draggingIndexBase !== -1) {
+    draggingBase = true;
+  } else {
+    // 2) si no hay punto, verificar bounding box para arrastrar toda la curva
+    const xs = points.map(p => p.x), ys = points.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    if (loc.x >= minX && loc.x <= maxX && loc.y >= minY && loc.y <= maxY) {
+      draggingIndexBase = -1; 
+      draggingBase = true;
+    }
+  }
+  // guarda para calcular delta
+  lastMouseX = mx; 
+  lastMouseY = my;
+}
 
+function dragBaseCurve(mx, my) {
+  const dx = (mx - lastMouseX) / zoom;
+  const dy = (my - lastMouseY) / zoom;
+  if (draggingIndexBase >= 0) {
+    // mover solo ese punto
+    points[draggingIndexBase].x += dx;
+    points[draggingIndexBase].y += dy;
+  } else {
+    // mover toda la curva
+    points.forEach(p => {
+      p.x += dx;
+      p.y += dy;
+    });
+  }
+  lastMouseX = mx;
+  lastMouseY = my;
+}
+
+// — Contour Curve —
+function selectContourCurve(mx, my) {
+  const loc = toLocalCoords(mx, my);
+  draggingIndexContour = contourPoints.findIndex(p => dist(p.x, p.y, loc.x, loc.y) < selectThreshold);
+  if (draggingIndexContour !== -1) {
+    draggingContour = true;
+  } else {
+    // bounding box
+    const xs = contourPoints.map(p => p.x), ys = contourPoints.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    if (loc.x >= minX && loc.x <= maxX && loc.y >= minY && loc.y <= maxY) {
+      draggingIndexContour = -1;
+      draggingContour = true;
+    }
+  }
+  lastMouseX = mx; lastMouseY = my;
+}
+
+function dragContourCurve(mx, my) {
+  const dx = (mx - lastMouseX) / zoom;
+  const dy = (my - lastMouseY) / zoom;
+  if (draggingIndexContour >= 0) {
+    contourPoints[draggingIndexContour].x += dx;
+    contourPoints[draggingIndexContour].y += dy;
+  } else {
+    contourPoints.forEach(p => {
+      p.x += dx;
+      p.y += dy;
+    });
+  }
+  lastMouseX = mx;
+  lastMouseY = my;
+}
+
+// — Obstáculos (círculos) —
+function selectObstacle(mx, my) {
+  const loc = toLocalCoords(mx, my);
+  // prueba cada círculo
+  draggingObstacleIndex = obstacleCircles.findIndex(o => dist(loc.x, loc.y, o.x, o.y) < o.r);
+  if (draggingObstacleIndex !== -1) {
+    draggingObstacle = true;
+  }
+  lastMouseX = mx; lastMouseY = my;
+}
+
+function dragObstacle(mx, my) {
+  const dx = (mx - lastMouseX) / zoom;
+  const dy = (my - lastMouseY) / zoom;
+  if (draggingObstacleIndex >= 0) {
+    const o = obstacleCircles[draggingObstacleIndex];
+    o.x += dx;
+    o.y += dy;
+  }
+  lastMouseX = mx;
+  lastMouseY = my;
+}
 // 8) Setup
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
@@ -712,34 +806,26 @@ function draw() {
 
 // Función de dibujo del menú overlay y logo
 function drawOverlayUI() {
-  push();
-    noFill();
-    stroke(0);
-    strokeWeight(1);
-    textAlign(LEFT, TOP);
-    textSize(14);
-
-    const startX = width - uiMargin;
-    const startY = uiMargin;
-    const items = [
-      { label: 'Curva Base',     flag: () => activeBase },
-      { label: 'Curva Contorno', flag: () => activeContour },
-      { label: 'Obstáculos',     flag: () => activeObstacles }
-    ];
-    items.forEach((item, i) => {
-      const y = startY + i * uiSpacing;
-      const x0 = startX - uiBoxSize;
-      rect(x0, y, uiBoxSize, uiBoxSize);
-      if (item.flag()) {
-        line(x0, y, x0 + uiBoxSize, y + uiBoxSize);
-        line(x0 + uiBoxSize, y, x0, y + uiBoxSize);
-      }
-      noStroke();
-      fill(0);
-      text(item.label, x0 - uiTextOffset - textWidth(item.label), y);
-      stroke(0);
-      noFill();
-    });
+  push(); noFill(); stroke(0); strokeWeight(1); textAlign(LEFT, TOP); textSize(14);
+  const startX = width - uiMargin;
+  const startY = uiMargin;
+  const items = [
+    { label: 'Curva Base',     flag: () => activeBase },
+    { label: 'Curva Contorno', flag: () => activeContour },
+    { label: 'Obstáculos',     flag: () => activeObstacles }
+  ];
+  items.forEach((item, i) => {
+    const y = startY + i * uiSpacing;
+    const x0 = startX - uiBoxSize;
+    rect(x0, y, uiBoxSize, uiBoxSize);
+    if (item.flag()) {
+      line(x0, y, x0 + uiBoxSize, y + uiBoxSize);
+      line(x0 + uiBoxSize, y, x0, y + uiBoxSize);
+    }
+    noStroke(); fill(0);
+    text(item.label, x0 - uiTextOffset - textWidth(item.label), y);
+    stroke(0); noFill();
+  });
   pop();
 
   push();
