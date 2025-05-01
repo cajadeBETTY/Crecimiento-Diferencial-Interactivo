@@ -395,7 +395,15 @@ function pointInPolygon(point, vs) {
 function draw() {
   background(255);
 
-  // — 1. DIBUJAR CONTORNO —
+  
+
+  // — 3. DIBUJAR CURVA bajo transform (zoom/pan) —
+  push();
+    translate(width/2 + offsetX, height/2 + offsetY);
+    scale(zoom);
+    translate(-width/2, -height/2);
+
+    // — 1. DIBUJAR CONTORNO —
   if (contourLoaded) {
     stroke(180); noFill(); strokeWeight(1);
     beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
@@ -412,13 +420,7 @@ function draw() {
       beginShape(); shape.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
     });
   }
-
-  // — 3. DIBUJAR CURVA bajo transform (zoom/pan) —
-  push();
-    translate(width/2 + offsetX, height/2 + offsetY);
-    scale(zoom);
-    translate(-width/2, -height/2);
-
+  
     // historial
     if (mostrarHistorial) {
       stroke(180); noFill(); strokeWeight(1/zoom);
@@ -460,80 +462,105 @@ function draw() {
     }
   pop();
 
-  // — 4. CRECIMIENTO —
-  if (iniciado && running && points.length < maxPoints) {
-    if (frameHistorial % frecuenciaHistorial === 0) {
-      historialFormas.push(points.map(p => p.copy()));
-    }
-    frameHistorial++;
-    let nuevos = [];
-    points.forEach((act, i) => {
-      let f = createVector(0, 0), c = 0;
-      points.forEach((o, j) => {
-        if (i !== j) {
-          const d = dist(act.x, act.y, o.x, o.y);
-          if (d < minDist) {
-            f.add(p5.Vector.sub(act, o).normalize().mult(float(sliderRepulsion.value()) / d));
-            c++;
-          }
+ // — 4. CRECIMIENTO —
+if (iniciado && running && points.length < maxPoints) {
+  // guardar historial
+  if (frameHistorial % frecuenciaHistorial === 0) {
+    historialFormas.push(points.map(p => p.copy()));
+  }
+  frameHistorial++;
+
+  let nuevos = [];
+
+  points.forEach((act, i) => {
+    let f = createVector(0, 0), c = 0;
+
+    // — repulsión entre puntos —
+    points.forEach((o, j) => {
+      if (i !== j) {
+        const d = dist(act.x, act.y, o.x, o.y);
+        if (d < minDist) {
+          f.add(p5.Vector.sub(act, o).normalize()
+            .mult(float(sliderRepulsion.value()) / d));
+          c++;
         }
-      });
-      let rn = createVector(0, 0);
-      const tt = tipoRuidoSelect.value();
-      const amp = float(sliderAmplitud.value());
-      const fr = float(sliderFrecuencia.value());
-      if (tt === 'perlin') {
-        const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
-        rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
-      } else if (tt === 'perlinImproved') {
-        const nx = noise(act.x * fr, noiseOffset);
-        const ny = noise(act.y * fr, noiseOffset + 1000);
-        rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-      } else if (tt === 'valor') {
-        rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-      } else if (tt === 'simple') {
-        rn = p5.Vector.random2D().mult(amp);
-      }
-      if (c > 0) {
-        f.div(c).add(rn);
-      } else {
-        f = rn;
-      }
-
-      // límites contorno
-      const nextPos = p5.Vector.add(act, f);
-      if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
-          f.rotate(PI);
-          f.mult(0.5);
-      }
-
-      // repel obstáculos
-      if (showObstacles) {
-        obstacleCircles.forEach(o => {
-          const d = dist(act.x, act.y, o.x, o.y);
-          if (d < o.r) {
-            const repel = p5.Vector.sub(act, createVector(o.x, o.y)).setMag((o.r - d) * 0.1);
-            f.add(repel);
-          }
-        });
-        obstacleSVGPoints.forEach(shape => {
-          if (pointInPolygon(nextPos, shape)) {
-            const repel = p5.Vector.sub(act, nextPos).mult(0.5);
-            f.add(repel);
-          }
-        });
-      }
-
-      act.add(f);
-      nuevos.push(act);
-      const np = points[(i + 1) % points.length];
-      if (p5.Vector.dist(act, np) > maxDist) {
-        nuevos.push(p5.Vector.add(act, np).div(2));
       }
     });
-    points = nuevos;
-    noiseOffset += 0.01;
-  }
+    // — ruido —
+    let rn = createVector(0, 0);
+    const tt = tipoRuidoSelect.value();
+    const amp = float(sliderAmplitud.value());
+    const fr = float(sliderFrecuencia.value());
+    if (tt === 'perlin') {
+      const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+      rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+    } else if (tt === 'perlinImproved') {
+      const nx = noise(act.x * fr, noiseOffset);
+      const ny = noise(act.y * fr, noiseOffset + 1000);
+      rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
+    } else if (tt === 'valor') {
+      rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+    } else if (tt === 'simple') {
+      rn = p5.Vector.random2D().mult(amp);
+    }
+    if (c > 0) {
+      f.div(c).add(rn);
+    } else {
+      f = rn;
+    }
+
+    // — límites contorno (steering hacia centroide) —
+    const nextPos = p5.Vector.add(act, f);
+    if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
+      // calcula centroide (omitimos cierre explícito)
+      let centroid = contourPoints
+        .slice(0, contourPoints.length - 1)
+        .reduce((ac, v) => ac.add(v), createVector(0, 0))
+        .div(contourPoints.length - 1);
+      f = p5.Vector.sub(centroid, act)
+        .normalize()
+        .mult(f.mag());
+    }
+
+    // — repulsión mejorada de obstáculos —
+    if (showObstacles) {
+      // círculos
+      obstacleCircles.forEach(o => {
+        const centro = createVector(o.x, o.y);
+        const dNext = p5.Vector.dist(nextPos, centro);
+        if (dNext < o.r) {
+          let away = p5.Vector.sub(act, centro).normalize();
+          let strength = (o.r - dNext) * 0.5;
+          f.add(away.mult(strength));
+        }
+      });
+      // polígonos SVG
+      obstacleSVGPoints.forEach(shape => {
+        if (pointInPolygon(nextPos, shape)) {
+          let centroidSVG = shape
+            .slice(0, shape.length - 1)
+            .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
+            .div(shape.length - 1);
+          let away = p5.Vector.sub(act, centroidSVG).normalize();
+          let strength = 5;
+          f.add(away.mult(strength));
+        }
+      });
+    }
+
+    // — aplica el movimiento y subdivisión —
+    act.add(f);
+    nuevos.push(act);
+    const np = puntos[(i + 1) % points.length];
+    if (p5.Vector.dist(act, np) > maxDist) {
+      nuevos.push(p5.Vector.add(act, np).div(2));
+    }
+  }); // fin de forEach
+
+  // reasignar puntos y avanzar ruído
+  points = nuevos;
+  noiseOffset += 0.01;
+}
 
   // — 5. INFO TEXT —
   const initialCount = int(inputPuntos.value());
