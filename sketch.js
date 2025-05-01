@@ -1,14 +1,12 @@
 // Sketch.js - Crecimiento Diferencial
 
-// — Contorno (límites) —
+// — Variables globales —
+// Contorno
 let contourPoints = [];
 let contourLoaded = false;
-let fileInputContour;
 let sliderContourRadius, contourRadiusValor;
-
-// — Obstáculos —
-let inputNumObstacles;
-let numObstacles = 0;
+// Obstáculos
+let inputNumObstacles, numObstacles = 0;
 let obstacleCircles = [];
 let obstacleSVGPoints = [];
 let sliderRadiusObstacle, obstacleRadiusValor;
@@ -16,99 +14,101 @@ let sliderObstacleSeed, obstacleSeedValor;
 let sliderScaleObstacles, obstacleScaleValor;
 let obstacleScale = 1;
 let showObstacles = true;
-let fileInputObstacles;
-
-// — Base de crecimiento —
+// Base de crecimiento
 let sliderBaseRadius, baseRadiusValor;
 let fileInputBase;
-
-// — Nodo y Curva —
-let inputPuntos;
-let inputMinDist;
-let inputMaxDist;
-let inputMaxPoints;
-
-let points = [];
-let originalPoints = [];
-let fileLoaded = false;
-let svgText = '';
-let loadedFileName = '';
-let fuenteMonoLight;
-
-let running = false;
-let iniciado = false;
-let maxPoints = 2000;
-
-let zoom = 1;
-let offsetX = 0;
-let offsetY = 0;
-
-// UI Visualization
+// Nodos y Curva
+let inputPuntos, inputMinDist, inputMaxDist, inputMaxPoints;
+let points = [], originalPoints = [];
+let fileLoaded = false, svgText = '', loadedFileName = '';
+// UI
 let tipoVisualSelect;
 let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
-
-// History
-let mostrarHistorial = false;
-let mostrarNodos = true;
-let historialFormas = [];
-let frameHistorial = 0;
-let frecuenciaHistorial = 10;
-
+// Historial
+let mostrarHistorial = false, mostrarNodos = true;
+let historialFormas = [], frameHistorial = 0, frecuenciaHistorial = 10;
 // Experimental
 let tipoRuidoSelect;
-let sliderAmplitud, sliderFrecuencia, sliderRepulsion;
-let valorAmplitudSpan, valorFrecuenciaSpan, valorRepulsionSpan;
-
-// Growth params
-let noiseOffset = 0;
-let minDist, maxDist;
+let sliderAmplitud, valorAmplitudSpan;
+let sliderFrecuencia, valorFrecuenciaSpan;
+let sliderRepulsion, valorRepulsionSpan;
+// Crecimiento
+ylet running = false, iniciado = false;
+let maxPoints = 2000;
+let noiseOffset = 0, minDist, maxDist;
+// Transform
+ylet zoom = 1, offsetX = 0, offsetY = 0;
+let isDragging = false, suppressDrag = false;
+let lastMouseX, lastMouseY;
+// Assets
+let logoImg, fuenteMonoLight;
 
 function preload() {
   logoImg = loadImage('assets/logo.png');
   fuenteMonoLight = loadFont('assets/SourceCodePro-Light.ttf');
 }
 
-// Export SVG (unchanged) ...
+// 1) Manejador de archivo base SVG
+function handleFile(file) {
+  if (file.type === 'image' && file.subtype.includes('svg')) {
+    svgText = file.data;
+    fileLoaded = true;
+    loadedFileName = file.name;
+    generarCurvaFromSVG();
+  } else {
+    alert('Por favor sube un archivo SVG válido.');
+  }
+}
+
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   const w = width, h = height;
+
+  // Cabecera del SVG
   let svg = '<?xml version="1.0" encoding="UTF-8"?>';
   svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
 
-  // Contorno
+  // 1. Contorno
   if (contourLoaded) {
     const pts = contourPoints.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
     svg += `<polyline fill="none" stroke="gray" stroke-width="2" points="${pts}"/>`;
   }
-  // Obstáculos
+
+  // 2. Obstáculos
   if (showObstacles) {
+    // Círculos genéricos
     obstacleCircles.forEach(o => {
       svg += `<circle cx="${o.x.toFixed(3)}" cy="${o.y.toFixed(3)}" r="${o.r.toFixed(3)}" fill="none" stroke="red" stroke-width="2"/>`;
     });
+    // Formas SVG
     obstacleSVGPoints.forEach(shape => {
       const pts = shape.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
       svg += `<polyline fill="none" stroke="red" stroke-width="2" points="${pts}"/>`;
     });
   }
-  // Historial
+
+  // 3. Historial
   if (mostrarHistorial) {
     historialFormas.forEach(f => {
       const pts = f.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
       svg += `<polyline fill="none" stroke="lightgray" stroke-width="1" points="${pts}"/>`;
     });
   }
-  // Curva principal
+
+  // 4. Curva principal
   if (points.length > 1) {
     const pts = points.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
     svg += `<polyline fill="none" stroke="black" stroke-width="2" points="${pts}"/>`;
   }
-  // Nodos
+
+  // 5. Nodos
   if (mostrarNodos) {
     points.forEach(p => {
       svg += `<circle cx="${p.x.toFixed(3)}" cy="${p.y.toFixed(3)}" r="2" fill="black"/>`;
     });
   }
-  // Logo
+
+  // 6. Logo en esquina
   const margin = 30;
   const aspect = logoImg.width / logoImg.height;
   const lw = Math.min(750, w - 2*margin);
@@ -117,16 +117,22 @@ function exportarSVG() {
   const ly = h - lh - margin;
   svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoImg.elt.src}"/>`;
 
+  // Cierre de SVG
   svg += '</svg>';
+
+  // Descarga automática
   const blob = new Blob([svg], { type: 'image/svg+xml' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
   a.download = `crecimiento_diferencial_${ts}.svg`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-// Contorno
+// 3) Contorno
 function generateContourCircle() {
   contourPoints = [];
   const n = int(inputPuntos.value());
@@ -138,9 +144,8 @@ function generateContourCircle() {
   contourLoaded = true;
 }
 
-function handleContourFile(file)function handleContourFile(file) {
+function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
-    // Parsear SVG y llenar contourPoints
     let raw = file.data;
     if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
     const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
@@ -166,28 +171,15 @@ function handleContourFile(file)function handleContourFile(file) {
     alert('Por favor sube un SVG válido para el contorno.');
   }
 }
-}
-    });
-    contourLoaded = true;
-  } else {
-    alert('Por favor sube un SVG válido para el contorno.');
-  }
-} else {
-    alert('Por favor sube un SVG válido para el contorno.');
-  }
-}
 
-// Obstáculos
+// 4) Obstáculos
 function handleObstaclesFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
-    // Parsear SVG y llenar obstacleSVGPoints
     let raw = file.data;
     if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
     const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
-    const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
-    obstacleSVGPoints = [];
-    elems.forEach(el => {
-      let shape = [];
+    obstacleSVGPoints = Array.from(doc.querySelectorAll('path, polyline, polygon')).map(el => {
+      const shape = [];
       if (el.tagName === 'path') {
         const L = el.getTotalLength();
         for (let i = 0; i <= L; i++) {
@@ -201,12 +193,9 @@ function handleObstaclesFile(file) {
           shape.push(createVector(p.x, p.y));
         }
       }
-      obstacleSVGPoints.push(shape);
+      return shape;
     });
   } else {
-    alert('Por favor sube un SVG válido para los obstáculos.');
-  }
-} else {
     alert('Por favor sube un SVG válido para los obstáculos.');
   }
 }
@@ -215,8 +204,7 @@ function generateObstacleCircles() {
   obstacleCircles = [];
   const n = numObstacles;
   const r = float(sliderRadiusObstacle.value()) * obstacleScale;
-  const seed = int(sliderObstacleSeed.value());
-  randomSeed(seed);
+  randomSeed(int(sliderObstacleSeed.value()));
   for (let i = 0; i < n; i++) {
     const x = random(r, width - r);
     const y = random(r, height - r);
@@ -224,73 +212,62 @@ function generateObstacleCircles() {
   }
 }
 
-// Curva base y SVG
+// 5) Curva base y SVG
 function generarCurvaBase() {
   points = [];
   const n = int(inputPuntos.value());
   const r = float(sliderBaseRadius.value());
   for (let i = 0; i < n; i++) {
     const a = TWO_PI * i / n;
-    points.push(createVector(width/2 + r*cos(a), height/2 + r*sin(a)));  
+    points.push(createVector(width/2 + r*cos(a), height/2 + r*sin(a)));
   }
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
 
 function generarCurvaFromSVG() {
-  // Parsea el SVG cargado y genera puntos
   let raw = svgText;
-  if (raw.startsWith('data:image/svg+xml;base64,')) {
-    raw = atob(raw.split(',')[1]);
-  }
+  if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
   const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
   const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
   if (!elems.length) return;
-
   const n = int(inputPuntos.value());
-  let pts = [];
-
+  const pts = [];
   elems.forEach(el => {
     if (el.tagName === 'path') {
       const L = el.getTotalLength();
       for (let i = 0; i < n; i++) {
-        const pt = el.getPointAtLength((i / n) * L);
+        const pt = el.getPointAtLength((i/n)*L);
         pts.push(createVector(pt.x, pt.y));
       }
     } else {
       const list = el.points;
-      const count = list.numberOfItems;
       for (let i = 0; i < n; i++) {
-        const idx = floor((i / n) * count);
-        const c = list.getItem(idx);
-        pts.push(createVector(c.x, c.y));
+        const p = list.getItem(floor((i/n)*list.numberOfItems));
+        pts.push(createVector(p.x, p.y));
       }
     }
   });
-
-  // Ajusta y centra los puntos en el canvas
   fitPoints(pts);
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
 
-
 function fitPoints(pts) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  pts.forEach(p => { minX = min(minX, p.x); maxX = max(maxX, p.x); minY = min(minY, p.y); maxY = max(maxY, p.y); });
-  const s = (2 * float(sliderBaseRadius.value())) / max(maxX - minX, maxY - minY);
-  points = pts.map(p => createVector((p.x - (minX + (maxX - minX)/2))*s + width/2, (p.y - (minY + (maxY - minY)/2))*s + height/2));
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  pts.forEach(p => { minX=min(minX,p.x); maxX=max(maxX,p.x); minY=min(minY,p.y); maxY=max(maxY,p.y); });
+  const s = (2*float(sliderBaseRadius.value()))/max(maxX-minX, maxY-minY);
+  points = pts.map(p => createVector((p.x-(minX+(maxX-minX)/2))*s + width/2, (p.y-(minY+(maxY-minY)/2))*s + height/2));
 }
 
-
-// Control de inicio/pausa y reinicio
+// 6) Control de crecimiento
 function iniciarCrecimiento() {
   if (!points.length) return;
   const n = int(inputPuntos.value());
   const c = TWO_PI * float(sliderBaseRadius.value());
-  const d = c / max(n, 1);
-  minDist = max(float(inputMinDist.value()), d * 1.2);
-  maxDist = max(float(inputMaxDist.value()), d * 1.2);
+  const d = c/max(n,1);
+  minDist = max(float(inputMinDist.value()), d*1.2);
+  maxDist = max(float(inputMaxDist.value()), d*1.2);
   iniciado = running = true;
 }
 
@@ -300,132 +277,92 @@ function togglePlayPause() {
     select('#playPauseBtn').html('⏸ Pausar');
   } else {
     running = !running;
-    select('#playPauseBtn').html(running ? '⏸ Pausar' : '▶ Reanudar');
+    select('#playPauseBtn').html(running?'⏸ Pausar':'▶ Reanudar');
   }
 }
 
 function reiniciarCrecimiento() {
-  running = iniciado = false;
-  offsetX = offsetY = 0;
-  zoom = 1;
-  noiseOffset = 0;
-  historialFormas = [];
-  frameHistorial = 0;
-  points = originalPoints.map(p => p.copy());
+  running=iniciado=false;
+  offsetX=offsetY=0; zoom=1; noiseOffset=0;
+  historialFormas=[]; frameHistorial=0;
+  points = originalPoints.map(p=>p.copy());
   select('#playPauseBtn').html('▶ Iniciar');
   redraw();
 }
 
-// Pan/Zoom Handlers
-eventListeners = true;
-function mousePressed() {
-  if (mouseButton === LEFT && !suppressDrag) {
-    isDragging = true;
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-  }
-}
+// 7) Pan/zoom
+function mousePressed(){ if(mouseButton===LEFT && !suppressDrag){ isDragging=true; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function mouseReleased(){ isDragging=false; suppressDrag=false; }
+function mouseDragged(){ if(isDragging && !suppressDrag && !isMouseOverUI()){ offsetX+=mouseX-lastMouseX; offsetY+=mouseY-lastMouseY; lastMouseX=mouseX; lastMouseY=mouseY; }}
+function mouseWheel(event){ zoom*=(event.deltaY<0?1.05:1/1.05); return false; }
+function isMouseOverUI(){ const b=document.getElementById('ui').getBoundingClientRect(); return mouseX>=b.left && mouseX<=b.right && mouseY>=b.top && mouseY<=b.bottom; }
 
-function mouseReleased() {
-  isDragging = false;
-  suppressDrag = false;
-}
-
-function mouseDragged() {
-  if (isDragging && !suppressDrag && !isMouseOverUI()) {
-    offsetX += mouseX - lastMouseX;
-    offsetY += mouseY - lastMouseY;
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-  }
-}
-
-function mouseWheel(event) {
-  zoom *= (event.deltaY < 0 ? 1.05 : 1 / 1.05);
-  return false;
-}
-
-function isMouseOverUI() {
-  const b = document.getElementById('ui').getBoundingClientRect();
-  return (mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom);
-}
-
+// 8) Setup
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
-  createCanvas(windowWidth - uiWidth, windowHeight).position(uiWidth, 0);
+  createCanvas(windowWidth-uiWidth, windowHeight).position(uiWidth, 0);
   pixelDensity(2);
 
   // Base de Crecimiento
-  sliderBaseRadius = select('#sliderBaseRadius'); baseRadiusValor = select('#baseRadiusValor');
-  sliderBaseRadius.input(() => { baseRadiusValor.html(sliderBaseRadius.value()); previewShape(); });
-  select('#btnCircleBase').mousePressed(() => { fileLoaded = false; previewShape(); });
-  fileInputBase = createFileInput(handleFile).parent('ui').hide();
-  select('#btnSubirSVGBase').mousePressed(() => { suppressDrag = true; fileInputBase.elt.click(); });
+  sliderBaseRadius=select('#sliderBaseRadius'); baseRadiusValor=select('#baseRadiusValor');
+  sliderBaseRadius.input(()=>{ baseRadiusValor.html(sliderBaseRadius.value()); previewShape(); });
+  select('#btnCircleBase').mousePressed(()=>{ fileLoaded=false; previewShape(); });
+  fileInputBase=createFileInput(handleFile).parent('ui').hide();
+  select('#btnSubirSVGBase').mousePressed(()=>{ suppressDrag=true; fileInputBase.elt.click(); });
 
   // Contorno
-  sliderContourRadius = select('#sliderContourRadius'); contourRadiusValor = select('#contourRadiusValor');
-  sliderContourRadius.input(() => { contourRadiusValor.html(sliderContourRadius.value()); generateContourCircle(); });
-  select('#btnCircleContour').mousePressed(() => { contourLoaded = false; generateContourCircle(); });
-  fileInputContour = createFileInput(handleContourFile).parent('ui').hide();
-  select('#btnSubirSVGContour').mousePressed(() => { suppressDrag = true; fileInputContour.elt.click(); });
+  sliderContourRadius=select('#sliderContourRadius'); contourRadiusValor=select('#contourRadiusValor');
+  sliderContourRadius.input(()=>{ contourRadiusValor.html(sliderContourRadius.value()); generateContourCircle(); });
+  select('#btnCircleContour').mousePressed(()=>{ contourLoaded=false; generateContourCircle(); });
+  createFileInput(handleContourFile).parent('ui').hide();
+  select('#btnSubirSVGContour').mousePressed(()=>{ suppressDrag=true; select('input[type=file]').elt.click(); });
 
   // Obstáculos
-  inputNumObstacles = select('#inputNumObstacles');
-  sliderRadiusObstacle = select('#sliderRadiusObstacle'); obstacleRadiusValor = select('#obstacleRadiusValor');
-  sliderObstacleSeed = select('#sliderObstacleSeed'); obstacleSeedValor = select('#obstacleSeedValor');
-  sliderScaleObstacles = select('#sliderScaleObstacles'); obstacleScaleValor = select('#obstacleScaleValor');
-  inputNumObstacles.input(() => { numObstacles = int(inputNumObstacles.value()); generateObstacleCircles(); });
-  sliderRadiusObstacle.input(() => { obstacleRadiusValor.html(sliderRadiusObstacle.value()); generateObstacleCircles(); });
-  sliderObstacleSeed.input(() => { obstacleSeedValor.html(sliderObstacleSeed.value()); generateObstacleCircles(); });
-  sliderScaleObstacles.input(() => { obstacleScaleValor.html(sliderScaleObstacles.value()); obstacleScale = float(sliderScaleObstacles.value()); generateObstacleCircles(); });
-  select('#toggleObstacles').changed(() => showObstacles = select('#toggleObstacles').checked());
-  select('#btnCircleObstacle').mousePressed(() => { obstacleSVGPoints = []; generateObstacleCircles(); });
-  fileInputObstacles = createFileInput(handleObstaclesFile).parent('ui').hide();
-  select('#btnSubirSVGObstacles').mousePressed(() => { suppressDrag = true; fileInputObstacles.elt.click(); });
+  inputNumObstacles=select('#inputNumObstacles');
+  sliderRadiusObstacle=select('#sliderRadiusObstacle'); obstacleRadiusValor=select('#obstacleRadiusValor');
+  sliderObstacleSeed=select('#sliderObstacleSeed'); obstacleSeedValor=select('#obstacleSeedValor');
+  sliderScaleObstacles=select('#sliderScaleObstacles'); obstacleScaleValor=select('#obstacleScaleValor');
+  inputNumObstacles.input(()=>{ numObstacles=int(inputNumObstacles.value()); generateObstacleCircles(); });
+  sliderRadiusObstacle.input(()=>{ obstacleRadiusValor.html(sliderRadiusObstacle.value()); generateObstacleCircles(); });
+  sliderObstacleSeed.input(()=>{ obstacleSeedValor.html(sliderObstacleSeed.value()); generateObstacleCircles(); });
+  sliderScaleObstacles.input(()=>{ obstacleScaleValor.html(sliderScaleObstacles.value()); obstacleScale=float(sliderScaleObstacles.value()); generateObstacleCircles(); });
+  select('#toggleObstacles').changed(()=>showObstacles=select('#toggleObstacles').checked());
+  select('#btnCircleObstacle').mousePressed(()=>{ obstacleSVGPoints=[]; generateObstacleCircles(); });
+  createFileInput(handleObstaclesFile).parent('ui').hide();
+  select('#btnSubirSVGObstacles').mousePressed(()=>{ suppressDrag=true; select('input[type=file]').elt.click(); });
 
   // Nodos
-  inputPuntos = select('#inputPuntos'); inputMinDist = select('#inputMinDist'); inputMaxDist = select('#inputMaxDist'); inputMaxPoints = select('#inputMaxPoints');
-  inputPuntos.input(previewShape); inputMaxPoints.input(() => maxPoints = int(inputMaxPoints.value()));
+  inputPuntos=select('#inputPuntos'); inputMinDist=select('#inputMinDist'); inputMaxDist=select('#inputMaxDist'); inputMaxPoints=select('#inputMaxPoints');
+  inputPuntos.input(previewShape); inputMaxPoints.input(()=>maxPoints=int(inputMaxPoints.value()));
   select('#playPauseBtn').mousePressed(togglePlayPause); select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
   // Visualización
-  tipoVisualSelect = select('#tipoVisual');
-  toggleNodosBtn = select('#toggleNodosBtn').mousePressed(() => { mostrarNodos = !mostrarNodos; toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos':'🔘 Mostrar nodos'); });
-  toggleHistorialBtn = select('#toggleHistorialBtn').mousePressed(() => { mostrarHistorial = !mostrarHistorial; toggleHistorialBtn.html(mostrarHistorial ? '🕘 Ocultar historial':'🕘 Ver historial'); });
-  clearHistorialBtn = select('#clearHistorialBtn').mousePressed(() => { historialFormas = []; frameHistorial = 0; });
-  select('#inputFrecuenciaHistorial').changed(() => frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value()));
+  tipoVisualSelect=select('#tipoVisual');
+  toggleNodosBtn=select('#toggleNodosBtn').mousePressed(()=>{ mostrarNodos=!mostrarNodos; toggleNodosBtn.html(mostrarNodos?'🔘 Ocultar nodos':'🔘 Mostrar nodos'); });
+  toggleHistorialBtn=select('#toggleHistorialBtn').mousePressed(()=>{ mostrarHistorial=!mostrarHistorial; toggleHistorialBtn.html(mostrarHistorial?'🕘 Ocultar historial':'🕘 Ver historial'); });
+  clearHistorialBtn=select('#clearHistorialBtn').mousePressed(()=>{ historialFormas=[]; frameHistorial=0; });
+  select('#inputFrecuenciaHistorial').changed(()=>frecuenciaHistorial=int(select('#inputFrecuenciaHistorial').value()));
 
-  // Experimental controls
-  tipoRuidoSelect = select('#tipoRuido');
-  sliderAmplitud = select('#sliderAmplitud');
-  valorAmplitudSpan = select('#valorAmplitud');
-  sliderFrecuencia = select('#sliderFrecuencia');
-  valorFrecuenciaSpan = select('#valorFrecuencia');
-  sliderRepulsion = select('#sliderRepulsion');
-  valorRepulsionSpan = select('#valorRepulsion');
-
-  // Actualizar valores de spans al mover sliders
-  sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
-  sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
-  
+  // Experimental
+  tipoRuidoSelect=select('#tipoRuido');
+  sliderAmplitud=select('#sliderAmplitud'); valorAmplitudSpan=select('#valorAmplitud'); sliderFrecuencia=select('#sliderFrecuencia'); valorFrecuenciaSpan=select('#valorFrecuencia'); sliderRepulsion=select('#sliderRepulsion'); valorRepulsionSpan=select('#valorRepulsion');
+  sliderAmplitud.input(()=>valorAmplitudSpan.html(sliderAmplitud.value()));
+  sliderFrecuencia.input(()=>valorFrecuenciaSpan.html(sliderFrecuencia.value()));
+  sliderRepulsion.input(()=>valorRepulsionSpan.html(sliderRepulsion.value()));
 
   // Export
-  select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
+  select('#btnExportPNG').mousePressed(()=>saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // Draw initial base circle
+  // Inicializar base y dibujar
   generarCurvaBase();
   redraw();
 }
 
 function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
-  resizeCanvas(windowWidth - uiWidth, windowHeight);
-  select('canvas').position(uiWidth, 0);
-}() {
-  const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
-  resizeCanvas(windowWidth - uiWidth, windowHeight);
+  resizeCanvas(windowWidth-uiWidth, windowHeight);
+  select('canvas').position(uiWidth,0);
 }
 
 function previewShape() {
