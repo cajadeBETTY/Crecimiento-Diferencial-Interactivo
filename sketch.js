@@ -602,80 +602,66 @@ function draw() {
   lines.push(`Estado: ${estado}`);
   // — 1) DIBUJAR BAJO TRANSFORM (zoom/pan) —
   push();
-    translate(width / 2 + offsetX, height / 2 + offsetY);
+    translate(width/2 + offsetX, height/2 + offsetY);
     scale(zoom);
-    translate(-width / 2, -height / 2);
+    translate(-width/2, -height/2);
 
-    // 1a. Contorno
-    if (activeContour && contourLoaded) {
-      stroke(180);
-      noFill();
-      strokeWeight(1);
-      beginShape();
-        contourPoints.forEach(p => vertex(p.x, p.y));
-      endShape(CLOSE);
+    // 1a. Contorno — siempre visible (NO usar activeContour aquí)
+    if (contourLoaded) {
+      stroke(180); noFill(); strokeWeight(1);
+      beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
     }
 
-    // 1b. Obstáculos
-    if (activeObstacles) {
-      obstacleCircles.forEach(o => {
-        stroke(255, 0, 0);
-        noFill();
-        strokeWeight(1);
-        circle(o.x, o.y, o.r * 2);
-      });
-      obstacleSVGPoints.forEach(shape => {
-        stroke(255, 0, 0);
-        noFill();
-        strokeWeight(1);
-        beginShape();
-          shape.forEach(p => vertex(p.x, p.y));
-        endShape(CLOSE);
-      });
-    }
+    // 1b. Obstáculos — siempre visibles (NO usar activeObstacles aquí)
+    obstacleCircles.forEach(o => {
+      stroke(255,0,0); noFill(); strokeWeight(1);
+      circle(o.x, o.y, o.r*2);
+    });
+    obstacleSVGPoints.forEach(shape => {
+      stroke(255,0,0); noFill(); strokeWeight(1);
+      beginShape(); shape.forEach(p => vertex(p.x,p.y)); endShape(CLOSE);
+    });
 
-    // 1c. Historial
+    // 1c. Historial — opcional
     if (mostrarHistorial) {
-      stroke(180);
-      noFill();
-      strokeWeight(1 / zoom);
+      stroke(180); noFill(); strokeWeight(1/zoom);
       historialFormas.forEach(f => {
         beginShape();
-          const L = f.length;
-          curveVertex(f[(L - 2 + L) % L].x, f[(L - 2 + L) % L].y);
-          curveVertex(f[L - 1].x, f[L - 1].y);
-          f.forEach(p => curveVertex(p.x, p.y));
-          curveVertex(f[0].x, f[0].y);
-          curveVertex(f[1].x, f[1].y);
+        /* ... */
         endShape();
       });
     }
-
-    // 1d. Curva principal
-    if (activeBase && points.length > 1) {
-      stroke(0);
-      noFill();
-      strokeWeight(1 / zoom);
-      if (tipoVisualSelect.value() === 'curva') {
+      // ===== CAMBIO CLAVE =====
+    // 1d. Curva principal — ¡SIEMPRE dibujar!
+    //  - Se dibuja siempre, independientemente del estado de activeBase
+    if (points.length > 1) {
+      stroke(0); noFill(); strokeWeight(1/zoom);
+      if (!iniciado) {
+        // Dibujo inicial: forma genérica
+        beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
+      } else if (tipoVisualSelect.value() === 'curva') {
+        // Dibujo suave
         const L = points.length;
         beginShape();
-          curveVertex(points[(L - 2 + L) % L].x, points[(L - 2 + L) % L].y);
-          curveVertex(points[L - 1].x, points[L - 1].y);
-          points.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
+          curveVertex(points[L-1].x, points[L-1].y);
+          points.forEach(p=>curveVertex(p.x,p.y));
           curveVertex(points[0].x, points[0].y);
           curveVertex(points[1].x, points[1].y);
         endShape();
       } else {
-        beginShape();
-          points.forEach(p => vertex(p.x, p.y));
-        endShape(CLOSE);
+        // Dibujo poligonal
+        beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
       }
+
+      // nodos — opcional
       if (mostrarNodos) {
-        fill(0);
-        noStroke();
-        points.forEach(p => circle(p.x, p.y, 4 / zoom));
+        fill(0); noStroke();
+        points.forEach(p=>circle(p.x,p.y,4/zoom));
       }
     }
+    // ===== FIN CAMBIO =====
+
   pop();
 
   // — 2) CRECIMIENTO —
