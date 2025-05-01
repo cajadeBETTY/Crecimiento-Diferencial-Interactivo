@@ -33,11 +33,11 @@ let sliderAmplitud, valorAmplitudSpan;
 let sliderFrecuencia, valorFrecuenciaSpan;
 let sliderRepulsion, valorRepulsionSpan;
 // Crecimiento
-ylet running = false, iniciado = false;
+let running = false, iniciado = false;
 let maxPoints = 2000;
 let noiseOffset = 0, minDist, maxDist;
 // Transform
-ylet zoom = 1, offsetX = 0, offsetY = 0;
+let zoom = 1, offsetX = 0, offsetY = 0;
 let isDragging = false, suppressDrag = false;
 let lastMouseX, lastMouseY;
 // Assets
