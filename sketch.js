@@ -132,17 +132,25 @@ function exportarSVG() {
   URL.revokeObjectURL(url);
 }
 
-// 3) Contorno
+// 3) Contorno: genera un polígono circular y añade explícitamente el cierre
 function generateContourCircle() {
   contourPoints = [];
   const n = int(inputPuntos.value());
   const r = float(sliderContourRadius.value());
   for (let i = 0; i < n; i++) {
     const a = TWO_PI * i / n;
-    contourPoints.push(createVector(width/2 + r*cos(a), height/2 + r*sin(a)));
+    contourPoints.push(createVector(
+      width/2 + r * cos(a),
+      height/2 + r * sin(a)
+    ));
+  }
+  // Añade el primer punto al final para un cierre explícito
+  if (contourPoints.length > 0) {
+    contourPoints.push(contourPoints[0].copy());
   }
   contourLoaded = true;
 }
+
 
 function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
@@ -370,6 +378,20 @@ function previewShape() {
   redraw();
 }
 
+function pointInPolygon(point, vs) {
+  let x = point.x, y = point.y;
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    let xi = vs[i].x, yi = vs[i].y;
+    let xj = vs[j].x, yj = vs[j].y;
+    let intersect = ((yi > y) !== (yj > y)) &&
+      (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+
 function draw() {
   background(255);
 
@@ -481,7 +503,8 @@ function draw() {
       // límites contorno
       const nextPos = p5.Vector.add(act, f);
       if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
-        f.mult(-1);
+          f.rotate(PI);
+          f.mult(0.5);
       }
 
       // repel obstáculos
