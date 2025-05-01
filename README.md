@@ -1,5 +1,6 @@
 ÍNDICE DEL SKETCH.JS
 
+
 Variables declaradas
 1.1. Contorno
   • contourPoints
