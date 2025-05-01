@@ -24,6 +24,17 @@ let fileLoaded = false, svgText = '', loadedFileName = '';
 // UI
 let tipoVisualSelect;
 let toggleHistorialBtn, toggleNodosBtn, clearHistorialBtn;
+// ■ UI flags
+let activeBase       = false;
+let activeContour    = false;
+let activeObstacles  = false;
+
+// ■ UI layout
+const uiMargin      = 10;    // margen desde el borde
+const uiSpacing     = 20;    // separación vertical entre ítems
+const uiBoxSize     = 12;    // tamaño del checkbox
+const uiTextOffset  = 5;     // separación texto–caja
+
 // Historial
 let mostrarHistorial = false, mostrarNodos = true;
 let historialFormas = [], frameHistorial = 0, frecuenciaHistorial = 10;
@@ -298,12 +309,99 @@ function reiniciarCrecimiento() {
   redraw();
 }
 
-// 7) Pan/zoom
-function mousePressed(){ if(mouseButton===LEFT && !suppressDrag){ isDragging=true; lastMouseX=mouseX; lastMouseY=mouseY; }}
-function mouseReleased(){ isDragging=false; suppressDrag=false; }
-function mouseDragged(){ if(isDragging && !suppressDrag && !isMouseOverUI()){ offsetX+=mouseX-lastMouseX; offsetY+=mouseY-lastMouseY; lastMouseX=mouseX; lastMouseY=mouseY; }}
-function mouseWheel(event){ zoom*=(event.deltaY<0?1.05:1/1.05); return false; }
-function isMouseOverUI(){ const b=document.getElementById('ui').getBoundingClientRect(); return mouseX>=b.left && mouseX<=b.right && mouseY>=b.top && mouseY<=b.bottom; }
+/**
+ * Detecta clics sobre el menú overlay en canvas y alterna los flags.
+ * @param {number} mx - Coordenada X del mouse.
+ * @param {number} my - Coordenada Y del mouse.
+ * @returns {boolean} true si el clic cayó sobre una casilla (y se alternó), false en caso contrario.
+ */
+function checkUIClick(mx, my) {
+  // Posición de la UI overlay (esquina superior derecha)
+  const startX = width - uiMargin;
+  const startY = uiMargin;
+
+  // ■ Curva Base
+  if (
+    mx >= startX - uiBoxSize && mx <= startX &&
+    my >= startY && my <= startY + uiBoxSize
+  ) {
+    activeBase = !activeBase;
+    return true;
+  }
+
+  // ■ Curva Contorno
+  if (
+    mx >= startX - uiBoxSize && mx <= startX &&
+    my >= startY + uiSpacing && my <= startY + uiSpacing + uiBoxSize
+  ) {
+    activeContour = !activeContour;
+    return true;
+  }
+
+  // ■ Obstáculos
+  if (
+    mx >= startX - uiBoxSize && mx <= startX &&
+    my >= startY + 2 * uiSpacing && my <= startY + 2 * uiSpacing + uiBoxSize
+  ) {
+    activeObstacles = !activeObstacles;
+    return true;
+  }
+
+  return false;
+}
+
+
+// 7) Pan/zoom & overlay UI toggles
+function mousePressed() {
+  if (mouseButton === LEFT) {
+    // 1) Overlay UI (canvas) click
+    if (checkUIClick(mouseX, mouseY)) {
+      suppressDrag = true;
+      return;
+    }
+    // 2) DOM UI (left panel) click detection
+    if (isMouseOverUI()) {
+      suppressDrag = true;
+      return;
+    }
+    // 3) Otherwise, start pan/drag
+    if (!suppressDrag) {
+      isDragging   = true;
+      lastMouseX   = mouseX;
+      lastMouseY   = mouseY;
+    }
+  }
+}
+
+function mouseDragged() {
+  if (isDragging && !suppressDrag) {
+    // Pan the canvas
+    offsetX      += mouseX - lastMouseX;
+    offsetY      += mouseY - lastMouseY;
+    lastMouseX    = mouseX;
+    lastMouseY    = mouseY;
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+  suppressDrag = false;
+}
+
+function mouseWheel(event) {
+  zoom *= (event.deltaY < 0 ? 1.05 : 1/1.05);
+  return false; // prevenir scroll de página
+}
+
+// Sigue usando esta función para el panel HTML existente (id="ui")
+function isMouseOverUI() {
+  const b = document.getElementById('ui').getBoundingClientRect();
+  return mouseX >= b.left &&
+         mouseX <= b.right &&
+         mouseY >= b.top &&
+         mouseY <= b.bottom;
+}
+
 
 // 8) Setup
 function setup() {
@@ -391,176 +489,11 @@ function pointInPolygon(point, vs) {
   return inside;
 }
 
-
+// Función principal de dibujo
 function draw() {
   background(255);
 
-  
-
-  // — 3. DIBUJAR CURVA bajo transform (zoom/pan) —
-  push();
-    translate(width/2 + offsetX, height/2 + offsetY);
-    scale(zoom);
-    translate(-width/2, -height/2);
-
-    // — 1. DIBUJAR CONTORNO —
-  if (contourLoaded) {
-    stroke(180); noFill(); strokeWeight(1);
-    beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
-  }
-
-  // — 2. DIBUJAR OBSTÁCULOS —
-  if (showObstacles) {
-    obstacleCircles.forEach(o => {
-      stroke('red'); noFill(); strokeWeight(1);
-      circle(o.x, o.y, o.r * 2);
-    });
-    obstacleSVGPoints.forEach(shape => {
-      stroke('red'); noFill(); strokeWeight(1);
-      beginShape(); shape.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
-    });
-  }
-  
-    // historial
-    if (mostrarHistorial) {
-      stroke(180); noFill(); strokeWeight(1/zoom);
-      historialFormas.forEach(f => {
-        beginShape();
-          const L = f.length;
-          curveVertex(f[(L-2+L)%L].x, f[(L-2+L)%L].y);
-          curveVertex(f[L-1].x, f[L-1].y);
-          f.forEach(p => curveVertex(p.x, p.y));
-          curveVertex(f[0].x, f[0].y);
-          curveVertex(f[1].x, f[1].y);
-        endShape();
-      });
-    }
-
-    // curva principal
-    if (points.length > 1) {
-      stroke(0); noFill(); strokeWeight(1/zoom);
-      if (tipoVisualSelect.value() === 'curva') {
-        const L = points.length;
-        beginShape();
-          curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
-          curveVertex(points[L-1].x, points[L-1].y);
-          points.forEach(p => curveVertex(p.x, p.y));
-          curveVertex(points[0].x, points[0].y);
-          curveVertex(points[1].x, points[1].y);
-        endShape();
-      } else {
-        beginShape();
-          points.forEach(p => vertex(p.x, p.y));
-        endShape(CLOSE);
-      }
-
-      // nodos
-      if (mostrarNodos) {
-        fill(0); noStroke();
-        points.forEach(p => circle(p.x, p.y, 4/zoom));
-      }
-    }
-  pop();
-
-// — 4. CRECIMIENTO —
-if (iniciado && running && points.length < maxPoints) {
-  if (frameHistorial % frecuenciaHistorial === 0) {
-    historialFormas.push(points.map(p => p.copy()));
-  }
-  frameHistorial++;
-
-  let nuevos = [];
-
-  points.forEach((act, i) => {
-    let f = createVector(0, 0), c = 0;
-
-    // repulsión entre puntos
-    points.forEach((o, j) => {
-      if (i !== j) {
-        const d = dist(act.x, act.y, o.x, o.y);
-        if (d < minDist) {
-          f.add(p5.Vector.sub(act, o).normalize()
-            .mult(float(sliderRepulsion.value()) / d));
-          c++;
-        }
-      }
-    });
-
-    // ruido
-    let rn = createVector(0, 0);
-    const tt = tipoRuidoSelect.value();
-    const amp = float(sliderAmplitud.value());
-    const fr = float(sliderFrecuencia.value());
-    if (tt === 'perlin') {
-      const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
-      rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
-    } else if (tt === 'perlinImproved') {
-      const nx = noise(act.x * fr, noiseOffset);
-      const ny = noise(act.y * fr, noiseOffset + 1000);
-      rn = createVector((nx - 0.5) * amp * 2, (ny - 0.5) * amp * 2);
-    } else if (tt === 'valor') {
-      rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
-    } else if (tt === 'simple') {
-      rn = p5.Vector.random2D().mult(amp);
-    }
-    if (c > 0) {
-      f.div(c).add(rn);
-    } else {
-      f = rn;
-    }
-
-    // límites contorno
-    const nextPos = p5.Vector.add(act, f);
-    if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
-      let centroid = contourPoints
-        .slice(0, contourPoints.length - 1)
-        .reduce((ac, v) => ac.add(v), createVector(0, 0))
-        .div(contourPoints.length - 1);
-      f = p5.Vector.sub(centroid, act)
-        .normalize()
-        .mult(f.mag());
-    }
-
-    // repulsión obstáculos
-    if (showObstacles) {
-      obstacleCircles.forEach(o => {
-        const centro = createVector(o.x, o.y);
-        const dNext = p5.Vector.dist(nextPos, centro);
-        if (dNext < o.r) {
-          let away = p5.Vector.sub(act, centro).normalize();
-          let strength = (o.r - dNext) * 0.5;
-          f.add(away.mult(strength));
-        }
-      });
-      obstacleSVGPoints.forEach(shape => {
-        if (pointInPolygon(nextPos, shape)) {
-          let centroidSVG = shape
-            .slice(0, shape.length - 1)
-            .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
-            .div(shape.length - 1);
-          let away = p5.Vector.sub(act, centroidSVG).normalize();
-          let strength = 5;
-          f.add(away.mult(strength));
-        }
-      });
-    }
-
-    // aplica el movimiento y subdivisión
-    act.add(f);
-    nuevos.push(act);
-    const np = points[(i + 1) % points.length];
-    if (p5.Vector.dist(act, np) > maxDist) {
-      nuevos.push(p5.Vector.add(act, np).div(2));
-    }
-  });
-
-  // reasigna y avanza ruido
-  points = nuevos;
-  noiseOffset += 0.01;
-}
-
-
-  // — 5. INFO TEXT —
+  // — PREPARAR TEXTO DE INFORMACIÓN —
   const initialCount = int(inputPuntos.value());
   const circleRadiusMm = float(sliderBaseRadius.value());
   const lines = [];
@@ -574,27 +507,248 @@ if (iniciado && running && points.length < maxPoints) {
   lines.push(`Puntos actuales: ${points.length}`);
   const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
   lines.push(`Estado: ${estado}`);
+
+  // — 1) DIBUJAR BAJO TRANSFORM (zoom/pan) —
+  push();
+    translate(width / 2 + offsetX, height / 2 + offsetY);
+    scale(zoom);
+    translate(-width / 2, -height / 2);
+
+    // 1a. Contorno
+    if (activeContour && contourLoaded) {
+      stroke(180);
+      noFill();
+      strokeWeight(1);
+      beginShape();
+        contourPoints.forEach(p => vertex(p.x, p.y));
+      endShape(CLOSE);
+    }
+
+    // 1b. Obstáculos
+    if (activeObstacles) {
+      obstacleCircles.forEach(o => {
+        stroke(255, 0, 0);
+        noFill();
+        strokeWeight(1);
+        circle(o.x, o.y, o.r * 2);
+      });
+      obstacleSVGPoints.forEach(shape => {
+        stroke(255, 0, 0);
+        noFill();
+        strokeWeight(1);
+        beginShape();
+          shape.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+      });
+    }
+
+    // 1c. Historial
+    if (mostrarHistorial) {
+      stroke(180);
+      noFill();
+      strokeWeight(1 / zoom);
+      historialFormas.forEach(f => {
+        beginShape();
+          const L = f.length;
+          curveVertex(f[(L - 2 + L) % L].x, f[(L - 2 + L) % L].y);
+          curveVertex(f[L - 1].x, f[L - 1].y);
+          f.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(f[0].x, f[0].y);
+          curveVertex(f[1].x, f[1].y);
+        endShape();
+      });
+    }
+
+    // 1d. Curva principal
+    if (activeBase && points.length > 1) {
+      stroke(0);
+      noFill();
+      strokeWeight(1 / zoom);
+      if (tipoVisualSelect.value() === 'curva') {
+        const L = points.length;
+        beginShape();
+          curveVertex(points[(L - 2 + L) % L].x, points[(L - 2 + L) % L].y);
+          curveVertex(points[L - 1].x, points[L - 1].y);
+          points.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(points[0].x, points[0].y);
+          curveVertex(points[1].x, points[1].y);
+        endShape();
+      } else {
+        beginShape();
+          points.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+      }
+      if (mostrarNodos) {
+        fill(0);
+        noStroke();
+        points.forEach(p => circle(p.x, p.y, 4 / zoom));
+      }
+    }
+  pop();
+
+  // — 2) CRECIMIENTO —
+  if (iniciado && running && points.length < maxPoints) {
+    // Historial de formas
+    if (frameHistorial % frecuenciaHistorial === 0) {
+      historialFormas.push(points.map(p => p.copy()));
+      if (historialFormas.length > 100) {
+        historialFormas.shift(); // Límite de histórico
+      }
+    }
+    frameHistorial++;
+
+    // Generar nuevos puntos
+    let nuevos = [];
+    points.forEach((act, i) => {
+      let f = createVector(0, 0), c = 0;
+
+      // Repulsión entre puntos
+      points.forEach((o, j) => {
+        if (i !== j) {
+          const d = dist(act.x, act.y, o.x, o.y);
+          if (d < minDist) {
+            f.add(
+              p5.Vector.sub(act, o)
+                .normalize()
+                .mult(float(sliderRepulsion.value()) / d)
+            );
+            c++;
+          }
+        }
+      });
+
+      // Ruido
+      let rn = createVector(0, 0);
+      const tt  = tipoRuidoSelect.value();
+      const amp = float(sliderAmplitud.value());
+      const fr  = float(sliderFrecuencia.value());
+      switch (tt) {
+        case 'perlin': {
+          const n2 = noise(act.x * fr, act.y * fr + noiseOffset);
+          rn = p5.Vector.fromAngle(n2 * TWO_PI).mult(amp);
+          break;
+        }
+        case 'perlinImproved': {
+          rn = createVector(
+            (noise(act.x * fr, noiseOffset) - 0.5) * amp * 2,
+            (noise(act.y * fr, noiseOffset + 1000) - 0.5) * amp * 2
+          );
+          break;
+        }
+        case 'valor': {
+          rn = createVector(random(-1, 1) * amp, random(-1, 1) * amp);
+          break;
+        }
+        case 'simple': {
+          rn = p5.Vector.random2D().mult(amp);
+          break;
+        }
+      }
+      f = (c > 0) ? f.div(c).add(rn) : rn;
+
+      // Límites de contorno
+      const nextPos = p5.Vector.add(act, f);
+      if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
+        const centroid =
+          contourPoints.slice(0, -1)
+            .reduce((ac, v) => ac.add(v), createVector(0, 0))
+            .div(contourPoints.length - 1);
+        f = p5.Vector.sub(centroid, act).normalize().mult(f.mag());
+      }
+
+      // Repulsión de obstáculos
+      if (activeObstacles) {
+        obstacleCircles.forEach(o => {
+          const centro = createVector(o.x, o.y);
+          const dNext  = p5.Vector.dist(nextPos, centro);
+          if (dNext < o.r) {
+            const away     = p5.Vector.sub(act, centro).normalize();
+            const strength = (o.r - dNext) * float(sliderObstacleStrength.value());
+            f.add(away.mult(strength));
+          }
+        });
+        obstacleSVGPoints.forEach(shape => {
+          if (pointInPolygon(nextPos, shape)) {
+            const centroidSVG =
+              shape.slice(0, -1)
+                .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
+                .div(shape.length - 1);
+            const away     = p5.Vector.sub(act, centroidSVG).normalize();
+            const strength = float(sliderObstacleStrength.value());
+            f.add(away.mult(strength));
+          }
+        });
+      }
+
+      // Movimiento y subdivisión
+      act.add(f);
+      nuevos.push(act);
+      const np = points[(i + 1) % points.length];
+      if (p5.Vector.dist(act, np) > maxDist) {
+        nuevos.push(p5.Vector.add(act, np).div(2));
+      }
+    });
+
+    // Reasignar y avanzar ruido
+    points = nuevos;
+    noiseOffset = (noiseOffset + 0.01) % 1000;
+  } // <- Cierre exacto del bloque CRECIMIENTO
+
+  // — 3) TEXTO DE INFO EN BORDE INFERIOR —
   push();
     textFont(fuenteMonoLight);
     textSize(10);
     textAlign(RIGHT, TOP);
     fill(0);
-    const m = 30;
-    const x0 = width - m;
-    const y0 = height - m - 10 - lines.length * 18;
-    for (let i = 0; i < lines.length; i++) {
-      text(lines[i], x0, y0 + i * 18);
-    }
+    const m2 = 30;
+    const x0_ = width - m2;
+    const y0_ = height - m2 - 10 - lines.length * 18;
+    lines.forEach((line, idx) => text(line, x0_, y0_ + idx * 18));
   pop();
 
-  // — 6. Logo —
-  const marginLogo = 20;
-  const maxLogoWidth = 750;
-  const logoAspect = logoImg.width / logoImg.height;
-  const logoW = maxLogoWidth;
-  const logoH = maxLogoWidth / logoAspect;
-  const logoX = marginLogo;
-  const logoY = height - logoH - marginLogo + 10;
-  imageMode(CORNER);
-  image(logoImg, logoX, logoY, logoW, logoH);
+  // — 4) OVERLAY UI Y LOGO —
+  drawOverlayUI();
+}
+
+// Función de dibujo del menú overlay y logo
+function drawOverlayUI() {
+  push();
+    noFill();
+    stroke(0);
+    strokeWeight(1);
+    textAlign(LEFT, TOP);
+    textSize(14);
+
+    const startX = width - uiMargin;
+    const startY = uiMargin;
+    const items = [
+      { label: 'Curva Base',     flag: () => activeBase },
+      { label: 'Curva Contorno', flag: () => activeContour },
+      { label: 'Obstáculos',     flag: () => activeObstacles }
+    ];
+    items.forEach((item, i) => {
+      const y = startY + i * uiSpacing;
+      const x0 = startX - uiBoxSize;
+      rect(x0, y, uiBoxSize, uiBoxSize);
+      if (item.flag()) {
+        line(x0, y, x0 + uiBoxSize, y + uiBoxSize);
+        line(x0 + uiBoxSize, y, x0, y + uiBoxSize);
+      }
+      noStroke();
+      fill(0);
+      text(item.label, x0 - uiTextOffset - textWidth(item.label), y);
+      stroke(0);
+      noFill();
+    });
+  pop();
+
+  push();
+    const marginLogo = 20;
+    const maxLogoWidth = 100;
+    const aspect = logoImg.width / logoImg.height;
+    const logoW = min(maxLogoWidth, logoImg.width);
+    const logoH = logoW / aspect;
+    imageMode(CORNER);
+    image(logoImg, marginLogo, height - logoH - marginLogo, logoW, logoH);
+  pop();
 }
