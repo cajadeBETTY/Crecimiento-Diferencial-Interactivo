@@ -462,9 +462,8 @@ function draw() {
     }
   pop();
 
- // — 4. CRECIMIENTO —
+// — 4. CRECIMIENTO —
 if (iniciado && running && points.length < maxPoints) {
-  // guardar historial
   if (frameHistorial % frecuenciaHistorial === 0) {
     historialFormas.push(points.map(p => p.copy()));
   }
@@ -475,7 +474,7 @@ if (iniciado && running && points.length < maxPoints) {
   points.forEach((act, i) => {
     let f = createVector(0, 0), c = 0;
 
-    // — repulsión entre puntos —
+    // repulsión entre puntos
     points.forEach((o, j) => {
       if (i !== j) {
         const d = dist(act.x, act.y, o.x, o.y);
@@ -486,7 +485,8 @@ if (iniciado && running && points.length < maxPoints) {
         }
       }
     });
-    // — ruido —
+
+    // ruido
     let rn = createVector(0, 0);
     const tt = tipoRuidoSelect.value();
     const amp = float(sliderAmplitud.value());
@@ -509,10 +509,9 @@ if (iniciado && running && points.length < maxPoints) {
       f = rn;
     }
 
-    // — límites contorno (steering hacia centroide) —
+    // límites contorno
     const nextPos = p5.Vector.add(act, f);
     if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
-      // calcula centroide (omitimos cierre explícito)
       let centroid = contourPoints
         .slice(0, contourPoints.length - 1)
         .reduce((ac, v) => ac.add(v), createVector(0, 0))
@@ -522,9 +521,8 @@ if (iniciado && running && points.length < maxPoints) {
         .mult(f.mag());
     }
 
-    // — repulsión mejorada de obstáculos —
+    // repulsión obstáculos
     if (showObstacles) {
-      // círculos
       obstacleCircles.forEach(o => {
         const centro = createVector(o.x, o.y);
         const dNext = p5.Vector.dist(nextPos, centro);
@@ -534,7 +532,6 @@ if (iniciado && running && points.length < maxPoints) {
           f.add(away.mult(strength));
         }
       });
-      // polígonos SVG
       obstacleSVGPoints.forEach(shape => {
         if (pointInPolygon(nextPos, shape)) {
           let centroidSVG = shape
@@ -548,19 +545,20 @@ if (iniciado && running && points.length < maxPoints) {
       });
     }
 
-    // — aplica el movimiento y subdivisión —
+    // aplica el movimiento y subdivisión
     act.add(f);
     nuevos.push(act);
-    const np = puntos[(i + 1) % points.length];
+    const np = points[(i + 1) % points.length];
     if (p5.Vector.dist(act, np) > maxDist) {
       nuevos.push(p5.Vector.add(act, np).div(2));
     }
-  }); // fin de forEach
+  });
 
-  // reasignar puntos y avanzar ruído
+  // reasigna y avanza ruido
   points = nuevos;
   noiseOffset += 0.01;
 }
+
 
   // — 5. INFO TEXT —
   const initialCount = int(inputPuntos.value());
