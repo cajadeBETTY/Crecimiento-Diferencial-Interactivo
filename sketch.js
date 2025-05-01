@@ -138,7 +138,7 @@ function generateContourCircle() {
   contourLoaded = true;
 }
 
-function handleContourFile(file) {
+function handleContourFile(file)function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
     // Parsear SVG y llenar contourPoints
     let raw = file.data;
@@ -160,6 +160,13 @@ function handleContourFile(file) {
           contourPoints.push(createVector(p.x, p.y));
         }
       }
+    });
+    contourLoaded = true;
+  } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
+}
+}
     });
     contourLoaded = true;
   } else {
