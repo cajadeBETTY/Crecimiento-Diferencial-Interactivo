@@ -69,7 +69,62 @@ function preload() {
 }
 
 // Export SVG (unchanged) ...
-function exportarSVG() { /* ... */ }
+function exportarSVG() {
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const w = width, h = height;
+  let svg = '<?xml version="1.0" encoding="UTF-8"?>';
+  svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+
+  // Contorno
+  if (contourLoaded) {
+    const pts = contourPoints.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+    svg += `<polyline fill="none" stroke="gray" stroke-width="2" points="${pts}"/>`;
+  }
+  // Obstáculos
+  if (showObstacles) {
+    obstacleCircles.forEach(o => {
+      svg += `<circle cx="${o.x.toFixed(3)}" cy="${o.y.toFixed(3)}" r="${o.r.toFixed(3)}" fill="none" stroke="red" stroke-width="2"/>`;
+    });
+    obstacleSVGPoints.forEach(shape => {
+      const pts = shape.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+      svg += `<polyline fill="none" stroke="red" stroke-width="2" points="${pts}"/>`;
+    });
+  }
+  // Historial
+  if (mostrarHistorial) {
+    historialFormas.forEach(f => {
+      const pts = f.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+      svg += `<polyline fill="none" stroke="lightgray" stroke-width="1" points="${pts}"/>`;
+    });
+  }
+  // Curva principal
+  if (points.length > 1) {
+    const pts = points.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+    svg += `<polyline fill="none" stroke="black" stroke-width="2" points="${pts}"/>`;
+  }
+  // Nodos
+  if (mostrarNodos) {
+    points.forEach(p => {
+      svg += `<circle cx="${p.x.toFixed(3)}" cy="${p.y.toFixed(3)}" r="2" fill="black"/>`;
+    });
+  }
+  // Logo
+  const margin = 30;
+  const aspect = logoImg.width / logoImg.height;
+  const lw = Math.min(750, w - 2*margin);
+  const lh = lw / aspect;
+  const lx = margin;
+  const ly = h - lh - margin;
+  svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoImg.elt.src}"/>`;
+
+  svg += '</svg>';
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `crecimiento_diferencial_${ts}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // Contorno
 function generateContourCircle() {
@@ -85,9 +140,32 @@ function generateContourCircle() {
 
 function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
-    // TODO: parse SVG
+    // Parsear SVG y llenar contourPoints
+    let raw = file.data;
+    if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
+    const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
+    const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
+    contourPoints = [];
+    elems.forEach(el => {
+      if (el.tagName === 'path') {
+        const L = el.getTotalLength();
+        for (let i = 0; i <= L; i++) {
+          const pt = el.getPointAtLength(i);
+          contourPoints.push(createVector(pt.x, pt.y));
+        }
+      } else {
+        const list = el.points;
+        for (let j = 0; j < list.numberOfItems; j++) {
+          const p = list.getItem(j);
+          contourPoints.push(createVector(p.x, p.y));
+        }
+      }
+    });
     contourLoaded = true;
   } else {
+    alert('Por favor sube un SVG válido para el contorno.');
+  }
+} else {
     alert('Por favor sube un SVG válido para el contorno.');
   }
 }
@@ -95,9 +173,33 @@ function handleContourFile(file) {
 // Obstáculos
 function handleObstaclesFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
-    // TODO: parse SVG
-    // Fill obstacleSVGPoints
+    // Parsear SVG y llenar obstacleSVGPoints
+    let raw = file.data;
+    if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
+    const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
+    const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
+    obstacleSVGPoints = [];
+    elems.forEach(el => {
+      let shape = [];
+      if (el.tagName === 'path') {
+        const L = el.getTotalLength();
+        for (let i = 0; i <= L; i++) {
+          const pt = el.getPointAtLength(i);
+          shape.push(createVector(pt.x, pt.y));
+        }
+      } else {
+        const list = el.points;
+        for (let j = 0; j < list.numberOfItems; j++) {
+          const p = list.getItem(j);
+          shape.push(createVector(p.x, p.y));
+        }
+      }
+      obstacleSVGPoints.push(shape);
+    });
   } else {
+    alert('Por favor sube un SVG válido para los obstáculos.');
+  }
+} else {
     alert('Por favor sube un SVG válido para los obstáculos.');
   }
 }
@@ -207,6 +309,40 @@ function reiniciarCrecimiento() {
   redraw();
 }
 
+// Pan/Zoom Handlers
+eventListeners = true;
+function mousePressed() {
+  if (mouseButton === LEFT && !suppressDrag) {
+    isDragging = true;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+  suppressDrag = false;
+}
+
+function mouseDragged() {
+  if (isDragging && !suppressDrag && !isMouseOverUI()) {
+    offsetX += mouseX - lastMouseX;
+    offsetY += mouseY - lastMouseY;
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  }
+}
+
+function mouseWheel(event) {
+  zoom *= (event.deltaY < 0 ? 1.05 : 1 / 1.05);
+  return false;
+}
+
+function isMouseOverUI() {
+  const b = document.getElementById('ui').getBoundingClientRect();
+  return (mouseX >= b.left && mouseX <= b.right && mouseY >= b.top && mouseY <= b.bottom);
+}
+
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   createCanvas(windowWidth - uiWidth, windowHeight).position(uiWidth, 0);
@@ -252,7 +388,7 @@ function setup() {
   clearHistorialBtn = select('#clearHistorialBtn').mousePressed(() => { historialFormas = []; frameHistorial = 0; });
   select('#inputFrecuenciaHistorial').changed(() => frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value()));
 
-   // Experimental controls
+  // Experimental controls
   tipoRuidoSelect = select('#tipoRuido');
   sliderAmplitud = select('#sliderAmplitud');
   valorAmplitudSpan = select('#valorAmplitud');
@@ -266,6 +402,7 @@ function setup() {
   sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
   sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
   
+
   // Export
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
@@ -276,6 +413,10 @@ function setup() {
 }
 
 function windowResized() {
+  const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
+  resizeCanvas(windowWidth - uiWidth, windowHeight);
+  select('canvas').position(uiWidth, 0);
+}() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   resizeCanvas(windowWidth - uiWidth, windowHeight);
 }
@@ -465,4 +606,3 @@ function draw() {
   imageMode(CORNER);
   image(logoImg, logoX, logoY, logoW, logoH);
 }
-
