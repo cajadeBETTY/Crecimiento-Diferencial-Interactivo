@@ -129,30 +129,42 @@ function generarCurvaBase() {
 }
 
 function generarCurvaFromSVG() {
+  // Parsea el SVG cargado y genera puntos
   let raw = svgText;
-  if (raw.startsWith('data:image/svg+xml;base64,')) raw = atob(raw.split(',')[1]);
+  if (raw.startsWith('data:image/svg+xml;base64,')) {
+    raw = atob(raw.split(',')[1]);
+  }
   const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
   const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
   if (!elems.length) return;
+
   const n = int(inputPuntos.value());
   let pts = [];
+
   elems.forEach(el => {
     if (el.tagName === 'path') {
       const L = el.getTotalLength();
-      for (let i = 0; i < n; i++) pts.push(createVector(...Object.values(el.getPointAtLength((i/n)*L))));
+      for (let i = 0; i < n; i++) {
+        const pt = el.getPointAtLength((i / n) * L);
+        pts.push(createVector(pt.x, pt.y));
+      }
     } else {
       const list = el.points;
-      const coords = Array.from({ length: list.numberOfItems }, (_, i) => list.getItem(i));
+      const count = list.numberOfItems;
       for (let i = 0; i < n; i++) {
-        const c = coords[floor((i/n)*coords.length)];
+        const idx = floor((i / n) * count);
+        const c = list.getItem(idx);
         pts.push(createVector(c.x, c.y));
       }
     }
   });
+
+  // Ajusta y centra los puntos en el canvas
   fitPoints(pts);
   originalPoints = points.map(p => p.copy());
   iniciado = running = false;
 }
+
 
 function fitPoints(pts) {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -160,6 +172,8 @@ function fitPoints(pts) {
   const s = (2 * float(sliderBaseRadius.value())) / max(maxX - minX, maxY - minY);
   points = pts.map(p => createVector((p.x - (minX + (maxX - minX)/2))*s + width/2, (p.y - (minY + (maxY - minY)/2))*s + height/2));
 }
+
+
 // Control de inicio/pausa y reinicio
 function iniciarCrecimiento() {
   if (!points.length) return;
@@ -192,6 +206,7 @@ function reiniciarCrecimiento() {
   select('#playPauseBtn').html('▶ Iniciar');
   redraw();
 }
+
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   createCanvas(windowWidth - uiWidth, windowHeight).position(uiWidth, 0);
@@ -237,8 +252,20 @@ function setup() {
   clearHistorialBtn = select('#clearHistorialBtn').mousePressed(() => { historialFormas = []; frameHistorial = 0; });
   select('#inputFrecuenciaHistorial').changed(() => frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value()));
 
-  // Experimental controls...
+   // Experimental controls
+  tipoRuidoSelect = select('#tipoRuido');
+  sliderAmplitud = select('#sliderAmplitud');
+  valorAmplitudSpan = select('#valorAmplitud');
+  sliderFrecuencia = select('#sliderFrecuencia');
+  valorFrecuenciaSpan = select('#valorFrecuencia');
+  sliderRepulsion = select('#sliderRepulsion');
+  valorRepulsionSpan = select('#valorRepulsion');
 
+  // Actualizar valores de spans al mover sliders
+  sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
+  sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
+  
   // Export
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial','png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
@@ -252,6 +279,12 @@ function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
   resizeCanvas(windowWidth - uiWidth, windowHeight);
 }
+
+function previewShape() {
+  fileLoaded ? generarCurvaFromSVG() : generarCurvaBase();
+  redraw();
+}
+
 function draw() {
   background(255);
 
@@ -432,50 +465,4 @@ function draw() {
   imageMode(CORNER);
   image(logoImg, logoX, logoY, logoW, logoH);
 }
-function previewShape() {
-  fileLoaded ? generarCurvaFromSVG() : generarCurvaBase();
-  redraw();
-}
 
-function handleFile(file) {
-  if (file.type === 'image' && file.subtype.includes('svg')) {
-    svgText = file.data; fileLoaded = true; loadedFileName = file.name; generarCurvaFromSVG();
-  } else alert('Por favor sube un archivo SVG válido.');
-}
-
-function generarCurvaFromSVG() {
-  // Parsea el SVG cargado y genera puntos
-  let raw = svgText;
-  if (raw.startsWith('data:image/svg+xml;base64,')) {
-    raw = atob(raw.split(',')[1]);
-  }
-  const doc = new DOMParser().parseFromString(raw, 'image/svg+xml');
-  const elems = Array.from(doc.querySelectorAll('path, polyline, polygon'));
-  if (!elems.length) return;
-
-  const n = int(inputPuntos.value());
-  let pts = [];
-
-  elems.forEach(el => {
-    if (el.tagName === 'path') {
-      const L = el.getTotalLength();
-      for (let i = 0; i < n; i++) {
-        const pt = el.getPointAtLength((i / n) * L);
-        pts.push(createVector(pt.x, pt.y));
-      }
-    } else {
-      const list = el.points;
-      const count = list.numberOfItems;
-      for (let i = 0; i < n; i++) {
-        const idx = floor((i / n) * count);
-        const c = list.getItem(idx);
-        pts.push(createVector(c.x, c.y));
-      }
-    }
-  });
-
-  // Ajusta y centra los puntos en el canvas
-  fitPoints(pts);
-  originalPoints = points.map(p => p.copy());
-  iniciado = running = false;
-}
