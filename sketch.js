@@ -586,7 +586,6 @@ function pointInPolygon(point, vs) {
 // Función principal de dibujo
 function draw() {
   background(255);
-
   // — PREPARAR TEXTO DE INFORMACIÓN —
   const initialCount = int(inputPuntos.value());
   const circleRadiusMm = float(sliderBaseRadius.value());
@@ -601,7 +600,6 @@ function draw() {
   lines.push(`Puntos actuales: ${points.length}`);
   const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
   lines.push(`Estado: ${estado}`);
-
   // — 1) DIBUJAR BAJO TRANSFORM (zoom/pan) —
   push();
     translate(width / 2 + offsetX, height / 2 + offsetY);
