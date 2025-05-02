@@ -635,12 +635,18 @@ function draw() {
       beginShape(); shape.forEach(p => vertex(p.x,p.y)); endShape(CLOSE);
     });
 
-    // 1c. Historial — opcional
+      // 3) Dibujar historial si está activado
     if (mostrarHistorial) {
       stroke(180); noFill(); strokeWeight(1/zoom);
       historialFormas.forEach(f => {
         beginShape();
-        /* ... */
+          const Lh = f.length;
+          // Curva suavizada del historial
+          curveVertex(f[(Lh - 2 + Lh) % Lh].x, f[(Lh - 2 + Lh) % Lh].y);
+          curveVertex(f[Lh - 1].x, f[Lh - 1].y);
+          f.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(f[0].x, f[0].y);
+          curveVertex(f[1].x, f[1].y);
         endShape();
       });
     }
