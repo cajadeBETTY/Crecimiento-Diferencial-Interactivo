@@ -737,14 +737,14 @@ function draw() {
         f = p5.Vector.sub(centroid, act).normalize().mult(f.mag());
       }
 
-      // Repulsión de obstáculos
+// ===== AGREGAR REPULSIÓN DE OBSTÁCULOS =====
       if (activeObstacles) {
         obstacleCircles.forEach(o => {
           const centro = createVector(o.x, o.y);
-          const dNext  = p5.Vector.dist(nextPos, centro);
-          if (dNext < o.r) {
-            const away     = p5.Vector.sub(act, centro).normalize();
-            const strength = (o.r - dNext) * float(sliderObstacleStrength.value());
+          const dObs = p5.Vector.dist(nextPos, centro);
+          if (dObs < o.r) {
+            const away = p5.Vector.sub(act, centro).normalize();
+            const strength = (o.r - dObs) * 0.5; // repulsión constante
             f.add(away.mult(strength));
           }
         });
@@ -754,12 +754,13 @@ function draw() {
               shape.slice(0, -1)
                 .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
                 .div(shape.length - 1);
-            const away     = p5.Vector.sub(act, centroidSVG).normalize();
-            const strength = float(sliderObstacleStrength.value());
-            f.add(away.mult(strength));
+            const away = p5.Vector.sub(act, centroidSVG).normalize();
+            f.add(away.mult(5)); // repulsión constante
           }
         });
       }
+      // ===== FIN REPULSIÓN OBSTÁCULOS =====
+
 
       // Movimiento y subdivisión
       act.add(f);
