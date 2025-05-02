@@ -1,5 +1,18 @@
 // Sketch.js - Crecimiento Diferencial
+// 🟢 INSERTAR ESTA FUNCIÓN ANTES DE CUALQUIER SELECT/DRAG:
+// Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
+toLocalCoords = (mx, my) => ({
+  x: (mx - (width/2 + offsetX)) / zoom + width/2,
+  y: (my - (height/2 + offsetY)) / zoom + height/2
+});
 
+// Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
+function toLocalCoords(mx, my) {
+  return {
+    x: (mx - (width/2 + offsetX)) / zoom + width/2,
+    y: (my - (height/2 + offsetY)) / zoom + height/2
+  };
+}
 // — Variables globales —
 // Contorno
 let contourPoints = [];
