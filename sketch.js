@@ -638,9 +638,7 @@ function draw() {
         endShape();
       });
     }
-    }
-      });
-    }
+ 
 
     // ⚠️ CAMBIO: Dibujar curva base siempre (eliminar condición activeBase)
     if (points.length > 1) {
