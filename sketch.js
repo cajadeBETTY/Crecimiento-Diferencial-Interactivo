@@ -678,36 +678,26 @@ function draw() {
   pop();
 
   // — 2) CRECIMIENTO —
-  if (iniciado && running && points.length < maxPoints) {
+   if (iniciado && running && points.length < maxPoints) {
     // Historial de formas
     if (frameHistorial % frecuenciaHistorial === 0) {
       historialFormas.push(points.map(p => p.copy()));
-      if (historialFormas.length > 100) {
-        historialFormas.shift(); // Límite de histórico
-      }
     }
     frameHistorial++;
 
-    // Generar nuevos puntos
     let nuevos = [];
     points.forEach((act, i) => {
       let f = createVector(0, 0), c = 0;
-
-      // Repulsión entre puntos
+      // repulsión entre puntos (igual que antes)
       points.forEach((o, j) => {
         if (i !== j) {
           const d = dist(act.x, act.y, o.x, o.y);
           if (d < minDist) {
-            f.add(
-              p5.Vector.sub(act, o)
-                .normalize()
-                .mult(float(sliderRepulsion.value()) / d)
-            );
+            f.add(p5.Vector.sub(act, o).normalize().mult(float(sliderRepulsion.value()) / d));
             c++;
           }
         }
       });
-
       // Ruido
       let rn = createVector(0, 0);
       const tt  = tipoRuidoSelect.value();
