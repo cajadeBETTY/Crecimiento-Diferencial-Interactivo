@@ -145,29 +145,33 @@ function exportarSVG() {
     });
   }
 
-  // 6. Logo en esquina
-  const margin = 30;
-  const aspect = logoImg.width / logoImg.height;
-  const lw = Math.min(750, w - 2*margin);
-  const lh = lw / aspect;
-  const lx = margin;
-  const ly = h - lh - margin;
-  svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoImg.elt.src}"/>`;
+// 6. Logo en esquina (exportar SVG)
+const margin = 30;
+const w = width;
+const h = height;
+const aspect = logoImg.width / logoImg.height;
+const lw = Math.min(750, w - 2 * margin);
+const lh = lw / aspect;
+const lx = margin;
+const ly = h - lh - margin;
+// Convertir el logo a base64 para incrustarlo
+const logoDataURL = logoImg.canvas.toDataURL();
+svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoDataURL}"/>`;
 
-  // Cierre de SVG
-  svg += '</svg>';
+// Cierre de SVG
+svg += '</svg>';
 
-  // Descarga automática
-  const blob = new Blob([svg], { type: 'image/svg+xml' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `crecimiento_diferencial_${ts}.svg`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+// Descarga automática
+const blob = new Blob([svg], { type: 'image/svg+xml' });
+const url  = URL.createObjectURL(blob);
+const a    = document.createElement('a');
+a.href     = url;
+a.download = `crecimiento_diferencial_${ts}.svg`;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+
 
 // 3) Contorno: genera un polígono circular y añade explícitamente el cierre
 function generateContourCircle() {
