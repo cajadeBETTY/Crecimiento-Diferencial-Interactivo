@@ -147,8 +147,7 @@ function exportarSVG() {
 
 // 6. Logo en esquina (exportar SVG)
 const margin = 30;
-const w = width;
-const h = height;
+
 const aspect = logoImg.width / logoImg.height;
 const lw = Math.min(750, w - 2 * margin);
 const lh = lw / aspect;
