@@ -599,46 +599,31 @@ function pointInPolygon(point, vs) {
   return inside;
 }
 
-// Función principal de dibujo
 function draw() {
   background(255);
-  // — PREPARAR TEXTO DE INFORMACIÓN —
-  const initialCount = int(inputPuntos.value());
-  const circleRadiusMm = float(sliderBaseRadius.value());
-  const lines = [];
-  if (loadedFileName) {
-    lines.push(`Archivo Cargado: ${loadedFileName}`);
-  } else {
-    lines.push(`Forma Genérica: Círculo con ${initialCount} puntos`);
-  }
-  const distPts = (TWO_PI * circleRadiusMm) / initialCount;
-  lines.push(`Distancia entre puntos: ${distPts.toFixed(2)} mm`);
-  lines.push(`Puntos actuales: ${points.length}`);
-  const estado = !iniciado ? 'Nativo' : (running ? 'En crecimiento' : 'En Pausa');
-  lines.push(`Estado: ${estado}`);
-  // — 1) DIBUJAR BAJO TRANSFORM (zoom/pan) —
+
+  // 1) Dibujar contorno siempre (no usar activeContour para visibilidad)
   push();
     translate(width/2 + offsetX, height/2 + offsetY);
     scale(zoom);
     translate(-width/2, -height/2);
 
-    // 1a. Contorno — siempre visible (NO usar activeContour aquí)
     if (contourLoaded) {
       stroke(180); noFill(); strokeWeight(1);
-      beginShape(); contourPoints.forEach(p => vertex(p.x, p.y)); endShape(CLOSE);
+      beginShape(); contourPoints.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
     }
 
-    // 1b. Obstáculos — siempre visibles (NO usar activeObstacles aquí)
-    obstacleCircles.forEach(o => {
+    // 2) Dibujar obstáculos siempre (no usar activeObstacles para visibilidad)
+    obstacleCircles.forEach(o=>{
       stroke(255,0,0); noFill(); strokeWeight(1);
-      circle(o.x, o.y, o.r*2);
+      circle(o.x,o.y,o.r*2);
     });
-    obstacleSVGPoints.forEach(shape => {
+    obstacleSVGPoints.forEach(shape=>{
       stroke(255,0,0); noFill(); strokeWeight(1);
-      beginShape(); shape.forEach(p => vertex(p.x,p.y)); endShape(CLOSE);
+      beginShape(); shape.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
     });
 
-      // 3) Dibujar historial si está activado
+    // 3) Dibujar historial si está activado
     if (mostrarHistorial) {
       stroke(180); noFill(); strokeWeight(1/zoom);
       historialFormas.forEach(f => {
@@ -653,41 +638,34 @@ function draw() {
         endShape();
       });
     }
-      // ===== CAMBIO CLAVE =====
-    // 1d. Curva principal — ¡SIEMPRE dibujar!
-    //  - Se dibuja siempre, independientemente del estado de activeBase
+    }
+      });
+    }
+
+    // ⚠️ CAMBIO: Dibujar curva base siempre (eliminar condición activeBase)
     if (points.length > 1) {
       stroke(0); noFill(); strokeWeight(1/zoom);
       if (!iniciado) {
-        // Dibujo inicial: forma genérica
+        // Modo preview inicial
         beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
-      } else if (tipoVisualSelect.value() === 'curva') {
-        // Dibujo suave
+      } else if (tipoVisualSelect.value()==='curva') {
         const L = points.length;
         beginShape();
-          curveVertex(points[(L-2+L)%L].x, points[(L-2+L)%L].y);
-          curveVertex(points[L-1].x, points[L-1].y);
+          curveVertex(points[(L-2+L)%L].x,points[(L-2+L)%L].y);
           points.forEach(p=>curveVertex(p.x,p.y));
-          curveVertex(points[0].x, points[0].y);
-          curveVertex(points[1].x, points[1].y);
+          curveVertex(points[0].x,points[0].y);
         endShape();
       } else {
-        // Dibujo poligonal
         beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
       }
-
-      // nodos — opcional
       if (mostrarNodos) {
-        fill(0); noStroke();
-        points.forEach(p=>circle(p.x,p.y,4/zoom));
+        fill(0); noStroke(); points.forEach(p=>circle(p.x,p.y,4/zoom));
       }
     }
-    // ===== FIN CAMBIO =====
-
   pop();
 
-  // — 2) CRECIMIENTO —
-   if (iniciado && running && points.length < maxPoints) {
+  // 4) Lógica de crecimiento
+  if (iniciado && running && points.length < maxPoints) {
     // Historial de formas
     if (frameHistorial % frecuenciaHistorial === 0) {
       historialFormas.push(points.map(p => p.copy()));
