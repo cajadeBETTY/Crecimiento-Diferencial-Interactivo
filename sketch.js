@@ -834,4 +834,4 @@ function drawOverlayUI() {
     imageMode(CORNER);
     image(logoImg, marginLogo, height - logoH - marginLogo, logoW, logoH);
   pop();
-}
+}}
