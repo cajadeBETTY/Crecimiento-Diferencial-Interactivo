@@ -1,4 +1,4 @@
-f// Sketch.js - Crecimiento Diferencial
+// Sketch.js - Crecimiento Diferencial
 // 🟢 INSERTAR ESTA FUNCIÓN ANTES DE CUALQUIER SELECT/DRAG:
 // Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
 toLocalCoords = (mx, my) => ({
@@ -170,6 +170,7 @@ document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
 URL.revokeObjectURL(url);
+  
 }
 
 
