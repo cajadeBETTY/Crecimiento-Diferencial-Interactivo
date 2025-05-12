@@ -1,4 +1,4 @@
-// Sketch.js - Crecimiento Diferencial
+f// Sketch.js - Crecimiento Diferencial
 // 🟢 INSERTAR ESTA FUNCIÓN ANTES DE CUALQUIER SELECT/DRAG:
 // Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
 toLocalCoords = (mx, my) => ({
@@ -170,6 +170,7 @@ document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
 URL.revokeObjectURL(url);
+}
 
 
 // 3) Contorno: genera un polígono circular y añade explícitamente el cierre
@@ -810,4 +811,4 @@ function drawOverlayUI() {
     imageMode(CORNER);
     image(logoImg, marginLogo, height - logoH - marginLogo, logoW, logoH);
   pop();
-}}
+}
