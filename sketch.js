@@ -604,34 +604,46 @@ function pointInPolygon(point, vs) {
 function draw() {
   background(255);
 
-  // 1) Dibujar contorno siempre (no usar activeContour para visibilidad)
+  // 1) Dibujar contorno siempre
   push();
     translate(width/2 + offsetX, height/2 + offsetY);
     scale(zoom);
     translate(-width/2, -height/2);
 
     if (contourLoaded) {
-      stroke(180); noFill(); strokeWeight(1);
-      beginShape(); contourPoints.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
+      stroke(180);
+      noFill();
+      strokeWeight(1);
+      beginShape();
+        contourPoints.forEach(p => vertex(p.x, p.y));
+      endShape(CLOSE);
     }
 
-    // 2) Dibujar obstáculos siempre (no usar activeObstacles para visibilidad)
-    obstacleCircles.forEach(o=>{
-      stroke(255,0,0); noFill(); strokeWeight(1);
-      circle(o.x,o.y,o.r*2);
+    // 2) Dibujar obstáculos siempre
+    obstacleCircles.forEach(o => {
+      stroke(255, 0, 0);
+      noFill();
+      strokeWeight(1);
+      circle(o.x, o.y, o.r * 2);
     });
-    obstacleSVGPoints.forEach(shape=>{
-      stroke(255,0,0); noFill(); strokeWeight(1);
-      beginShape(); shape.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
+    obstacleSVGPoints.forEach(shape => {
+      stroke(255, 0, 0);
+      noFill();
+      strokeWeight(1);
+      beginShape();
+        shape.forEach(p => vertex(p.x, p.y));
+      endShape(CLOSE);
     });
 
     // 3) Dibujar historial si está activado
     if (mostrarHistorial) {
-      stroke(180); noFill(); strokeWeight(1/zoom);
+      stroke(180);
+      noFill();
+      strokeWeight(1/zoom);
       historialFormas.forEach(f => {
         beginShape();
           const Lh = f.length;
-          // Curva suavizada del historial
+          // curva suavizada de historial
           curveVertex(f[(Lh - 2 + Lh) % Lh].x, f[(Lh - 2 + Lh) % Lh].y);
           curveVertex(f[Lh - 1].x, f[Lh - 1].y);
           f.forEach(p => curveVertex(p.x, p.y));
@@ -640,33 +652,43 @@ function draw() {
         endShape();
       });
     }
- 
 
-    // ⚠️ CAMBIO: Dibujar curva base siempre (eliminar condición activeBase)
+    // 4) Dibujar curva principal siempre
     if (points.length > 1) {
-      stroke(0); noFill(); strokeWeight(1/zoom);
+      stroke(0);
+      noFill();
+      strokeWeight(1/zoom);
+
       if (!iniciado) {
-        // Modo preview inicial
-        beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
-      } else if (tipoVisualSelect.value()==='curva') {
+        // preview inicial
+        beginShape();
+          points.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+
+      } else if (tipoVisualSelect.value() === 'curva') {
         const L = points.length;
         beginShape();
-          curveVertex(points[(L-2+L)%L].x,points[(L-2+L)%L].y);
-          points.forEach(p=>curveVertex(p.x,p.y));
-          curveVertex(points[0].x,points[0].y);
+          curveVertex(points[(L - 2 + L) % L].x, points[(L - 2 + L) % L].y);
+          points.forEach(p => curveVertex(p.x, p.y));
+          curveVertex(points[0].x, points[0].y);
         endShape();
+
       } else {
-        beginShape(); points.forEach(p=>vertex(p.x,p.y)); endShape(CLOSE);
+        beginShape();
+          points.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
       }
+
       if (mostrarNodos) {
-        fill(0); noStroke(); points.forEach(p=>circle(p.x,p.y,4/zoom));
+        fill(0);
+        noStroke();
+        points.forEach(p => circle(p.x, p.y, 4/zoom));
       }
     }
   pop();
 
-  // 4) Lógica de crecimiento
+  // 5) Lógica de crecimiento
   if (iniciado && running && points.length < maxPoints) {
-    // Historial de formas
     if (frameHistorial % frecuenciaHistorial === 0) {
       historialFormas.push(points.map(p => p.copy()));
     }
@@ -675,7 +697,8 @@ function draw() {
     let nuevos = [];
     points.forEach((act, i) => {
       let f = createVector(0, 0), c = 0;
-      // repulsión entre puntos (igual que antes)
+
+      // repulsión entre puntos
       points.forEach((o, j) => {
         if (i !== j) {
           const d = dist(act.x, act.y, o.x, o.y);
@@ -685,7 +708,8 @@ function draw() {
           }
         }
       });
-      // Ruido
+
+      // ruido
       let rn = createVector(0, 0);
       const tt  = tipoRuidoSelect.value();
       const amp = float(sliderAmplitud.value());
@@ -714,42 +738,40 @@ function draw() {
       }
       f = (c > 0) ? f.div(c).add(rn) : rn;
 
-      // Límites de contorno
+      // contorno
       const nextPos = p5.Vector.add(act, f);
       if (contourLoaded && !pointInPolygon(nextPos, contourPoints)) {
-        const centroid =
-          contourPoints.slice(0, -1)
-            .reduce((ac, v) => ac.add(v), createVector(0, 0))
-            .div(contourPoints.length - 1);
+        const centroid = contourPoints
+          .slice(0, -1)
+          .reduce((ac, v) => ac.add(v), createVector(0, 0))
+          .div(contourPoints.length - 1);
         f = p5.Vector.sub(centroid, act).normalize().mult(f.mag());
       }
 
-// ===== AGREGAR REPULSIÓN DE OBSTÁCULOS =====
+      // obstáculos
       if (activeObstacles) {
         obstacleCircles.forEach(o => {
           const centro = createVector(o.x, o.y);
           const dObs = p5.Vector.dist(nextPos, centro);
           if (dObs < o.r) {
             const away = p5.Vector.sub(act, centro).normalize();
-            const strength = (o.r - dObs) * 0.5; // repulsión constante
+            const strength = (o.r - dObs) * 0.5;
             f.add(away.mult(strength));
           }
         });
         obstacleSVGPoints.forEach(shape => {
           if (pointInPolygon(nextPos, shape)) {
-            const centroidSVG =
-              shape.slice(0, -1)
-                .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
-                .div(shape.length - 1);
+            const centroidSVG = shape
+              .slice(0, -1)
+              .reduce((ac, v) => ac.add(v.copy()), createVector(0, 0))
+              .div(shape.length - 1);
             const away = p5.Vector.sub(act, centroidSVG).normalize();
-            f.add(away.mult(5)); // repulsión constante
+            f.add(away.mult(5));
           }
         });
       }
-      // ===== FIN REPULSIÓN OBSTÁCULOS =====
 
-
-      // Movimiento y subdivisión
+      // movimiento y subdivisión
       act.add(f);
       nuevos.push(act);
       const np = points[(i + 1) % points.length];
@@ -758,26 +780,28 @@ function draw() {
       }
     });
 
-    // Reasignar y avanzar ruido
     points = nuevos;
     noiseOffset = (noiseOffset + 0.01) % 1000;
-  } // <- Cierre exacto del bloque CRECIMIENTO
+  }
 
-  // — 3) TEXTO DE INFO EN BORDE INFERIOR —
-  push();
-    textFont(fuenteMonoLight);
-    textSize(10);
-    textAlign(RIGHT, TOP);
-    fill(0);
-    const m2 = 30;
-    const x0_ = width - m2;
-    const y0_ = height - m2 - 10 - lines.length * 18;
-    lines.forEach((line, idx) => text(line, x0_, y0_ + idx * 18));
-  pop();
+  // 6) Texto de info en borde inferior (sólo si existe `lines`)
+  if (typeof lines !== 'undefined' && Array.isArray(lines)) {
+    push();
+      textFont(fuenteMonoLight);
+      textSize(10);
+      textAlign(RIGHT, TOP);
+      fill(0);
+      const m2 = 30;
+      const x0_ = width - m2;
+      const y0_ = height - m2 - 10 - lines.length * 18;
+      lines.forEach((line, idx) => text(line, x0_, y0_ + idx * 18));
+    pop();
+  }
 
-  // — 4) OVERLAY UI Y LOGO —
+  // 7) Overlay UI y logo
   drawOverlayUI();
 }
+
 
 // Función de dibujo del menú overlay y logo
 function drawOverlayUI() {
