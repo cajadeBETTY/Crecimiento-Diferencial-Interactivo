@@ -518,64 +518,135 @@ function dragObstacle(mx, my) {
 // 8) Setup
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
-  createCanvas(windowWidth-uiWidth, windowHeight).position(uiWidth, 0);
+  createCanvas(windowWidth - uiWidth, windowHeight).position(uiWidth, 0);
   pixelDensity(2);
 
-  // Base de Crecimiento
-  sliderBaseRadius=select('#sliderBaseRadius'); baseRadiusValor=select('#baseRadiusValor');
-  sliderBaseRadius.input(()=>{ baseRadiusValor.html(sliderBaseRadius.value()); previewShape(); });
-  select('#btnCircleBase').mousePressed(()=>{ fileLoaded=false; previewShape(); });
-  fileInputBase=createFileInput(handleFile).parent('ui').hide();
-  select('#btnSubirSVGBase').mousePressed(()=>{ suppressDrag=true; fileInputBase.elt.click(); });
+  // — Base de Crecimiento —
+  sliderBaseRadius   = select('#sliderBaseRadius');
+  baseRadiusValor    = select('#baseRadiusValor');
+  sliderBaseRadius.input(() => {
+    baseRadiusValor.html(sliderBaseRadius.value());
+    previewShape();
+  });
+  select('#btnCircleBase').mousePressed(() => {
+    fileLoaded = false;
+    previewShape();
+  });
+  // input exclusivo para curva base
+  fileInputBase = createFileInput(handleFile).parent('ui').hide();
+  select('#btnSubirSVGBase').mousePressed(() => {
+    suppressDrag = true;
+    fileInputBase.elt.click();
+  });
 
-  // Contorno
-  sliderContourRadius=select('#sliderContourRadius'); contourRadiusValor=select('#contourRadiusValor');
-  sliderContourRadius.input(()=>{ contourRadiusValor.html(sliderContourRadius.value()); generateContourCircle(); });
-  select('#btnCircleContour').mousePressed(()=>{ contourLoaded=false; generateContourCircle(); });
-  createFileInput(handleContourFile).parent('ui').hide();
-  select('#btnSubirSVGContour').mousePressed(()=>{ suppressDrag=true; select('input[type=file]').elt.click(); });
+  // — Contorno —
+  sliderContourRadius  = select('#sliderContourRadius');
+  contourRadiusValor   = select('#contourRadiusValor');
+  sliderContourRadius.input(() => {
+    contourRadiusValor.html(sliderContourRadius.value());
+    generateContourCircle();
+  });
+  select('#btnCircleContour').mousePressed(() => {
+    contourLoaded = false;
+    generateContourCircle();
+  });
+  // input exclusivo para contorno
+  const fileInputContour = createFileInput(handleContourFile).parent('ui').hide();
+  select('#btnSubirSVGContour').mousePressed(() => {
+    suppressDrag = true;
+    fileInputContour.elt.click();
+  });
 
-  // Obstáculos
-  inputNumObstacles=select('#inputNumObstacles');
-  sliderRadiusObstacle=select('#sliderRadiusObstacle'); obstacleRadiusValor=select('#obstacleRadiusValor');
-  sliderObstacleSeed=select('#sliderObstacleSeed'); obstacleSeedValor=select('#obstacleSeedValor');
-  sliderScaleObstacles=select('#sliderScaleObstacles'); obstacleScaleValor=select('#obstacleScaleValor');
-  inputNumObstacles.input(()=>{ numObstacles=int(inputNumObstacles.value()); generateObstacleCircles(); });
-  sliderRadiusObstacle.input(()=>{ obstacleRadiusValor.html(sliderRadiusObstacle.value()); generateObstacleCircles(); });
-  sliderObstacleSeed.input(()=>{ obstacleSeedValor.html(sliderObstacleSeed.value()); generateObstacleCircles(); });
-  sliderScaleObstacles.input(()=>{ obstacleScaleValor.html(sliderScaleObstacles.value()); obstacleScale=float(sliderScaleObstacles.value()); generateObstacleCircles(); });
-  select('#toggleObstacles').changed(()=>showObstacles=select('#toggleObstacles').checked());
-  select('#btnCircleObstacle').mousePressed(()=>{ obstacleSVGPoints=[]; generateObstacleCircles(); });
-  createFileInput(handleObstaclesFile).parent('ui').hide();
-  select('#btnSubirSVGObstacles').mousePressed(()=>{ suppressDrag=true; select('input[type=file]').elt.click(); });
+  // — Obstáculos —
+  inputNumObstacles     = select('#inputNumObstacles');
+  sliderRadiusObstacle  = select('#sliderRadiusObstacle');
+  obstacleRadiusValor   = select('#obstacleRadiusValor');
+  sliderObstacleSeed    = select('#sliderObstacleSeed');
+  obstacleSeedValor     = select('#obstacleSeedValor');
+  sliderScaleObstacles  = select('#sliderScaleObstacles');
+  obstacleScaleValor    = select('#obstacleScaleValor');
 
-  // Nodos
-  inputPuntos=select('#inputPuntos'); inputMinDist=select('#inputMinDist'); inputMaxDist=select('#inputMaxDist'); inputMaxPoints=select('#inputMaxPoints');
-  inputPuntos.input(previewShape); inputMaxPoints.input(()=>maxPoints=int(inputMaxPoints.value()));
-  select('#playPauseBtn').mousePressed(togglePlayPause); select('#restartBtn').mousePressed(reiniciarCrecimiento);
+  inputNumObstacles.input(() => {
+    numObstacles = int(inputNumObstacles.value());
+    generateObstacleCircles();
+  });
+  sliderRadiusObstacle.input(() => {
+    obstacleRadiusValor.html(sliderRadiusObstacle.value());
+    generateObstacleCircles();
+  });
+  sliderObstacleSeed.input(() => {
+    obstacleSeedValor.html(sliderObstacleSeed.value());
+    generateObstacleCircles();
+  });
+  sliderScaleObstacles.input(() => {
+    obstacleScaleValor.html(sliderScaleObstacles.value());
+    obstacleScale = float(sliderScaleObstacles.value());
+    generateObstacleCircles();
+  });
+  select('#toggleObstacles').changed(() => {
+    showObstacles = select('#toggleObstacles').checked();
+  });
+  select('#btnCircleObstacle').mousePressed(() => {
+    obstacleSVGPoints = [];
+    generateObstacleCircles();
+  });
+  // input exclusivo para obstáculos SVG
+  const fileInputObstacles = createFileInput(handleObstaclesFile).parent('ui').hide();
+  select('#btnSubirSVGObstacles').mousePressed(() => {
+    suppressDrag = true;
+    fileInputObstacles.elt.click();
+  });
 
-  // Visualización
-  tipoVisualSelect=select('#tipoVisual');
-  toggleNodosBtn=select('#toggleNodosBtn').mousePressed(()=>{ mostrarNodos=!mostrarNodos; toggleNodosBtn.html(mostrarNodos?'🔘 Ocultar nodos':'🔘 Mostrar nodos'); });
-  toggleHistorialBtn=select('#toggleHistorialBtn').mousePressed(()=>{ mostrarHistorial=!mostrarHistorial; toggleHistorialBtn.html(mostrarHistorial?'🕘 Ocultar historial':'🕘 Ver historial'); });
-  clearHistorialBtn=select('#clearHistorialBtn').mousePressed(()=>{ historialFormas=[]; frameHistorial=0; });
-  select('#inputFrecuenciaHistorial').changed(()=>frecuenciaHistorial=int(select('#inputFrecuenciaHistorial').value()));
+  // — Nodos y Crecimiento —
+  inputPuntos      = select('#inputPuntos');
+  inputMinDist     = select('#inputMinDist');
+  inputMaxDist     = select('#inputMaxDist');
+  inputMaxPoints   = select('#inputMaxPoints');
+  inputPuntos.input(previewShape);
+  inputMaxPoints.input(() => maxPoints = int(inputMaxPoints.value()));
+  select('#playPauseBtn').mousePressed(togglePlayPause);
+  select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
-  // Experimental
-  tipoRuidoSelect=select('#tipoRuido');
-  sliderAmplitud=select('#sliderAmplitud'); valorAmplitudSpan=select('#valorAmplitud'); sliderFrecuencia=select('#sliderFrecuencia'); valorFrecuenciaSpan=select('#valorFrecuencia'); sliderRepulsion=select('#sliderRepulsion'); valorRepulsionSpan=select('#valorRepulsion');
-  sliderAmplitud.input(()=>valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(()=>valorFrecuenciaSpan.html(sliderFrecuencia.value()));
-  sliderRepulsion.input(()=>valorRepulsionSpan.html(sliderRepulsion.value()));
+  // — Visualización —
+  tipoVisualSelect   = select('#tipoVisual');
+  toggleNodosBtn     = select('#toggleNodosBtn').mousePressed(() => {
+    mostrarNodos = !mostrarNodos;
+    toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
+  });
+  toggleHistorialBtn = select('#toggleHistorialBtn').mousePressed(() => {
+    mostrarHistorial = !mostrarHistorial;
+    toggleHistorialBtn.html(mostrarHistorial ? '🕘 Ocultar historial' : '🕘 Ver historial');
+  });
+  clearHistorialBtn  = select('#clearHistorialBtn').mousePressed(() => {
+    historialFormas = [];
+    frameHistorial = 0;
+  });
+  select('#inputFrecuenciaHistorial').changed(() => {
+    frecuenciaHistorial = int(select('#inputFrecuenciaHistorial').value());
+  });
 
-  // Export
-  select('#btnExportPNG').mousePressed(()=>saveCanvas('crecimiento_diferencial','png'));
+  // — Experimental —
+  tipoRuidoSelect  = select('#tipoRuido');
+  sliderAmplitud    = select('#sliderAmplitud');
+  valorAmplitudSpan = select('#valorAmplitud');
+  sliderFrecuencia  = select('#sliderFrecuencia');
+  valorFrecuenciaSpan = select('#valorFrecuencia');
+  sliderRepulsion   = select('#sliderRepulsion');
+  valorRepulsionSpan = select('#valorRepulsion');
+
+  sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
+  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
+  sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
+
+  // — Export —
+  select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // Inicializar base y dibujar
+  // — Inicializar base y dibujar una vez —
   generarCurvaBase();
   redraw();
 }
+
 
 function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
