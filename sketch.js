@@ -559,51 +559,71 @@ function setup() {
     generateContourCircle();
   });
 
-  // Input exclusivo para contorno SVG
-  const fileInputContour = createFileInput((file) => {
-    handleContourFile(file);
-    // tras subir un SVG, habilitamos el slider de escalar y ocultamos el radio
-    scaleContainer.show();
-    sliderContourRadius.hide();
-    contourScaleValor.html(sliderScaleContour.value());
-  })
-    .parent('ui')
-    .hide();
+// — Contorno / Limitantes —
 
-  select('#btnSubirSVGContour').mousePressed(() => {
-    suppressDrag = true;
-    fileInputContour.elt.click();
+// Referencias a controles
+const scaleContainer     = select('#scaleContourContainer');
+sliderContourRadius     = select('#sliderContourRadius');
+contourRadiusValor      = select('#contourRadiusValor');
+sliderScaleContour      = select('#sliderScaleContour');
+contourScaleValor       = select('#contourScaleValor');
+
+// Slider Radio (10–200 mm)
+sliderContourRadius
+  .attribute('min', 10)
+  .attribute('max', 200)
+  .input(() => {
+    contourRadiusValor.html(sliderContourRadius.value());
+    generateContourCircle();
   });
 
-  // Ajuste del slider Escalar
-  sliderScaleContour.input(() => {
-    contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
-    // aquí puedes reprocesar contourPoints con el nuevo scale:
+// Botón “Círculo Genérico”
+select('#btnCircleContour').mousePressed(() => {
+  contourLoaded = false;
+  scaleContainer.hide();         // oculta “Escalar”
+  sliderContourRadius.show();    // muestra “Radio”
+  contourScaleValor.html('1.00');
+  generateContourCircle();
+});
+
+// Input exclusivo para Contorno SVG
+const fileInputContour = createFileInput(file => {
+  handleContourFile(file);
+  scaleContainer.show();         // muestra “Escalar”
+  sliderContourRadius.hide();    // oculta “Radio”
+  contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
+})
+  .parent('ui')
+  .hide();
+
+// Botón “Subir Contorno (SVG)”
+select('#btnSubirSVGContour').mousePressed(() => {
+  suppressDrag = true;
+  fileInputContour.elt.click();
+});
+
+// Slider Escalar (0.1–5.0)
+sliderScaleContour
+  .attribute('min', 0.1)
+  .attribute('max', 5.0)
+  .attribute('step', 0.01)
+  .input(() => {
+    const s = parseFloat(sliderScaleContour.value());
+    contourScaleValor.html(nf(s, 1, 2));
+    // reescala todos los puntos respecto al centro
     contourPoints = contourPoints.map(p =>
       createVector(
-        width/2 + (p.x - width/2) * sliderScaleContour.value(),
-        height/2 + (p.y - height/2) * sliderScaleContour.value()
+        width/2 + (p.x - width/2) * s,
+        height/2 + (p.y - height/2) * s
       )
     );
   });
 
-  
-  // — Mostrar Limitantes (contorno + obstáculos) —
-  const toggleLimit = select('#toggleLimitantes');
-  toggleLimit.changed(() => {
-    showLimitantes = toggleLimit.checked();
-  });
-
-  select('#btnCircleContour').mousePressed(() => {
-    contourLoaded = false;
-    generateContourCircle();
-  });
-  // input exclusivo para contorno
-  const fileInputContour = createFileInput(handleContourFile).parent('ui').hide();
-  select('#btnSubirSVGContour').mousePressed(() => {
-    suppressDrag = true;
-    fileInputContour.elt.click();
-  });
+// Checkbox “Mostrar Limitantes”
+const toggleLimit = select('#toggleLimitantes');
+toggleLimit.changed(() => {
+  showLimitantes = toggleLimit.checked();
+});
 
   // — Obstáculos —
   inputNumObstacles     = select('#inputNumObstacles');
