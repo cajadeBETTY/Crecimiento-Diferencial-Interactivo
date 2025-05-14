@@ -542,10 +542,58 @@ function setup() {
   // — Contorno —
   sliderContourRadius  = select('#sliderContourRadius');
   contourRadiusValor   = select('#contourRadiusValor');
+  sliderScaleContour   = select('#sliderScaleContour');
+  contourScaleValor    = select('#contourScaleValor');
+  const scaleContainer = select('#scaleContourContainer');
+
+  // Cuando ajustas radio (sólo para círculo genérico)
   sliderContourRadius.input(() => {
     contourRadiusValor.html(sliderContourRadius.value());
     generateContourCircle();
   });
+   // Botón círculo genérico
+  select('#btnCircleContour').mousePressed(() => {
+    contourLoaded = false;
+    scaleContainer.hide();            // oculta el slider de escalar
+    sliderContourRadius.show();      // muestra radio
+    generateContourCircle();
+  });
+
+  // Input exclusivo para contorno SVG
+  const fileInputContour = createFileInput((file) => {
+    handleContourFile(file);
+    // tras subir un SVG, habilitamos el slider de escalar y ocultamos el radio
+    scaleContainer.show();
+    sliderContourRadius.hide();
+    contourScaleValor.html(sliderScaleContour.value());
+  })
+    .parent('ui')
+    .hide();
+
+  select('#btnSubirSVGContour').mousePressed(() => {
+    suppressDrag = true;
+    fileInputContour.elt.click();
+  });
+
+  // Ajuste del slider Escalar
+  sliderScaleContour.input(() => {
+    contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
+    // aquí puedes reprocesar contourPoints con el nuevo scale:
+    contourPoints = contourPoints.map(p =>
+      createVector(
+        width/2 + (p.x - width/2) * sliderScaleContour.value(),
+        height/2 + (p.y - height/2) * sliderScaleContour.value()
+      )
+    );
+  });
+
+  
+  // — Mostrar Limitantes (contorno + obstáculos) —
+  const toggleLimit = select('#toggleLimitantes');
+  toggleLimit.changed(() => {
+    showLimitantes = toggleLimit.checked();
+  });
+
   select('#btnCircleContour').mousePressed(() => {
     contourLoaded = false;
     generateContourCircle();
@@ -675,36 +723,39 @@ function pointInPolygon(point, vs) {
 function draw() {
   background(255);
 
-  // 1) Dibujar contorno siempre
+  // 1-2) Dibujar LIMITANTES (contorno + obstáculos)
   push();
     translate(width/2 + offsetX, height/2 + offsetY);
     scale(zoom);
     translate(-width/2, -height/2);
 
-    if (contourLoaded) {
-      stroke(180);
-      noFill();
-      strokeWeight(1);
-      beginShape();
-        contourPoints.forEach(p => vertex(p.x, p.y));
-      endShape(CLOSE);
-    }
+    if (showLimitantes) {
+      // Contorno
+      if (contourLoaded) {
+        stroke(180);
+        noFill();
+        strokeWeight(1);
+        beginShape();
+          contourPoints.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+      }
 
-    // 2) Dibujar obstáculos siempre
-    obstacleCircles.forEach(o => {
-      stroke(255, 0, 0);
-      noFill();
-      strokeWeight(1);
-      circle(o.x, o.y, o.r * 2);
-    });
-    obstacleSVGPoints.forEach(shape => {
-      stroke(255, 0, 0);
-      noFill();
-      strokeWeight(1);
-      beginShape();
-        shape.forEach(p => vertex(p.x, p.y));
-      endShape(CLOSE);
-    });
+      // Obstáculos
+      obstacleCircles.forEach(o => {
+        stroke(255, 0, 0);
+        noFill();
+        strokeWeight(1);
+        circle(o.x, o.y, o.r * 2);
+      });
+      obstacleSVGPoints.forEach(shape => {
+        stroke(255, 0, 0);
+        noFill();
+        strokeWeight(1);
+        beginShape();
+          shape.forEach(p => vertex(p.x, p.y));
+        endShape(CLOSE);
+      });
+    }
 
     // 3) Dibujar historial si está activado
     if (mostrarHistorial) {
