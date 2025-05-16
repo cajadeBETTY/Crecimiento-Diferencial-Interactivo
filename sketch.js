@@ -368,8 +368,10 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
+  // Reset de estados de drag y supresión
   isDragging = false;
   draggingBase = draggingContour = draggingObstacle = false;
+  suppressDrag = false;
 }
 
 function mouseWheel(event) {
