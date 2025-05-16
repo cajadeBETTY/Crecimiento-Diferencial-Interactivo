@@ -528,7 +528,7 @@ function setup() {
 // — Contorno / Limitantes —
 
 // Referencias a controles
-const scaleContainer     = select('#scaleContourContainer');
+scaleContainer     = select('#scaleContourContainer');
 sliderContourRadius     = select('#sliderContourRadius');
 contourRadiusValor      = select('#contourRadiusValor');
 sliderScaleContour      = select('#sliderScaleContour');
