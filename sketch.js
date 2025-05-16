@@ -45,6 +45,8 @@ const uiMargin      = 10;
 const uiSpacing     = 20;
 const uiBoxSize     = 12;
 const uiTextOffset  = 5;
+let scaleContainer;
+let showLimitantes = true;
 
 // Historial
 let mostrarHistorial = false, mostrarNodos = true;
@@ -945,3 +947,4 @@ function drawOverlayUI() {
     image(logoImg, marginLogo, height - logoH - marginLogo, logoW, logoH);
   pop();
 }
+
