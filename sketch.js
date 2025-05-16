@@ -1,10 +1,4 @@
 // Sketch.js - Crecimiento Diferencial
-// 🟢 INSERTAR ESTA FUNCIÓN ANTES DE CUALQUIER SELECT/DRAG:
-// Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
-toLocalCoords = (mx, my) => ({
-  x: (mx - (width/2 + offsetX)) / zoom + width/2,
-  y: (my - (height/2 + offsetY)) / zoom + height/2
-});
 
 // Helper: convierte coordenadas de pantalla a coordenadas locales para operaciones de drag
 function toLocalCoords(mx, my) {
@@ -13,6 +7,7 @@ function toLocalCoords(mx, my) {
     y: (my - (height/2 + offsetY)) / zoom + height/2
   };
 }
+
 // — Variables globales —
 // Contorno
 let contourPoints = [];
@@ -46,10 +41,10 @@ let draggingContour = false;
 let draggingObstacle = false;
 
 // ■ UI layout
-const uiMargin      = 10;    // margen desde el borde
-const uiSpacing     = 20;    // separación vertical entre ítems
-const uiBoxSize     = 12;    // tamaño del checkbox
-const uiTextOffset  = 5;     // separación texto–caja
+const uiMargin      = 10;
+const uiSpacing     = 20;
+const uiBoxSize     = 12;
+const uiTextOffset  = 5;
 
 // Historial
 let mostrarHistorial = false, mostrarNodos = true;
@@ -71,21 +66,16 @@ let lastMouseX, lastMouseY;
 let logoImg, fuenteMonoLight;
 
 // — Helpers —
-// Umbral de selección en coordenadas de usuario (no de pantalla)
 const selectThreshold = 10;
-
-// — Variables de estado (coloca en globals) —
-let draggingIndexBase    = -1;
+let draggingIndexBase = -1;
 let draggingIndexContour = -1;
-let draggingObstacleIndex= -1;
-
+let draggingObstacleIndex = -1;
 
 function preload() {
   logoImg = loadImage('assets/logo.png');
   fuenteMonoLight = loadFont('assets/SourceCodePro-Light.ttf');
 }
 
-// 1) Manejador de archivo base SVG
 function handleFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
     svgText = file.data;
@@ -100,79 +90,55 @@ function handleFile(file) {
 function exportarSVG() {
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   const w = width, h = height;
-
-  // Cabecera del SVG
   let svg = '<?xml version="1.0" encoding="UTF-8"?>';
   svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-
-  // 1. Contorno
   if (contourLoaded) {
     const pts = contourPoints.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
     svg += `<polyline fill="none" stroke="gray" stroke-width="2" points="${pts}"/>`;
   }
-
-  // 2. Obstáculos
   if (showObstacles) {
-    // Círculos genéricos
     obstacleCircles.forEach(o => {
       svg += `<circle cx="${o.x.toFixed(3)}" cy="${o.y.toFixed(3)}" r="${o.r.toFixed(3)}" fill="none" stroke="red" stroke-width="2"/>`;
     });
-    // Formas SVG
     obstacleSVGPoints.forEach(shape => {
       const pts = shape.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
       svg += `<polyline fill="none" stroke="red" stroke-width="2" points="${pts}"/>`;
     });
   }
-
-  // 3. Historial
   if (mostrarHistorial) {
     historialFormas.forEach(f => {
       const pts = f.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
       svg += `<polyline fill="none" stroke="lightgray" stroke-width="1" points="${pts}"/>`;
     });
   }
-
-  // 4. Curva principal
   if (points.length > 1) {
     const pts = points.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
     svg += `<polyline fill="none" stroke="black" stroke-width="2" points="${pts}"/>`;
   }
-
-  // 5. Nodos
   if (mostrarNodos) {
     points.forEach(p => {
       svg += `<circle cx="${p.x.toFixed(3)}" cy="${p.y.toFixed(3)}" r="2" fill="black"/>`;
     });
   }
-
-// 6. Logo en esquina (exportar SVG)
-const margin = 30;
-
-const aspect = logoImg.width / logoImg.height;
-const lw = Math.min(750, w - 2 * margin);
-const lh = lw / aspect;
-const lx = margin;
-const ly = h - lh - margin;
-// Convertir el logo a base64 para incrustarlo
-const logoDataURL = logoImg.canvas.toDataURL();
-svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoDataURL}"/>`;
-
-// Cierre de SVG
-svg += '</svg>';
-
-// Descarga automática
-const blob = new Blob([svg], { type: 'image/svg+xml' });
-const url  = URL.createObjectURL(blob);
-const a    = document.createElement('a');
-a.href     = url;
-a.download = `crecimiento_diferencial_${ts}.svg`;
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-URL.revokeObjectURL(url);
-  
+  const margin = 30;
+  const aspect = logoImg.width / logoImg.height;
+  const lw = Math.min(750, w - 2 * margin);
+  const lh = lw / aspect;
+  const lx = margin;
+  const ly = h - lh - margin;
+  const logoDataURL = logoImg.canvas.toDataURL();
+  svg += `<image x="${lx}" y="${ly}" width="${lw}" height="${lh}" href="${logoDataURL}"/>`;
+  svg += '</svg>';
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `crecimiento_diferencial_${ts}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
-
 
 // 3) Contorno: genera un polígono circular y añade explícitamente el cierre
 function generateContourCircle() {
