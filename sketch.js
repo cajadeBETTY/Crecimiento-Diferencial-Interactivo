@@ -512,7 +512,8 @@ function setup() {
   contourRadiusValor   = select('#contourRadiusValor');
   sliderScaleContour   = select('#sliderScaleContour');
   contourScaleValor    = select('#contourScaleValor');
-  const scaleContainer = select('#scaleContourContainer');
+  // Inicializar contenedor de escala de contorno
+scaleContainer = select('#scaleContourContainer');
 
   // Cuando ajustas radio (sólo para círculo genérico)
   sliderContourRadius.input(() => {
