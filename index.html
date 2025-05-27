@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interfaz de Crecimiento Diferencial 2D en p5.js" />
   <title>Crecimiento Diferencial 2D</title>
   <link rel="stylesheet" href="style.css" />
 
   <!-- Favicon PNG de 32×32 -->
-  <link rel="icon"
-        type="image/png"
-        sizes="32x32"
-        href="assets/cajitaweb.png">
-  <link rel="shortcut icon"
-        href="assets/cajitaweb.png"
-        type="image/png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/cajitaweb.png" />
+  <link rel="shortcut icon" href="assets/cajitaweb.png" type="image/png" />
+
   <style>
     /* --------- Modificación Manual --------- */
     #modManualContainer {
@@ -90,8 +87,8 @@
       <input type="range" id="sliderBaseRadius" min="1" max="200" step="1" value="96">
       <span id="baseRadiusValor">96</span>
 
-      <button id="btnCircleBase">Círculo Genérico</button>
-      <button id="btnSubirSVGBase">Subir SVG</button>
+      <button type="button" id="btnCircleBase">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGBase">Subir SVG</button>
 
       <!-- VÉRTICES (antes NODOS) -->
       <fieldset>
@@ -108,8 +105,8 @@
         <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
         <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
 
-        <button id="playPauseBtn">▶ Reanudar</button>
-        <button id="restartBtn">🔄 Reiniciar</button>
+        <button type="button" id="playPauseBtn">▶ Reanudar</button>
+        <button type="button" id="restartBtn">🔄 Reiniciar</button>
       </fieldset>
     </fieldset>
 
@@ -120,35 +117,22 @@
       <!-- Contorno genérico -->
       <div class="subcampo">
         <label for="sliderContourRadius">Radio (mm):</label>
-        <input
-          type="range"
-          id="sliderContourRadius"
-          min="10" max="200" step="1"
-          value="100"
-        />
+        <input type="range" id="sliderContourRadius" min="10" max="200" step="1" value="100">
         <span id="contourRadiusValor">100</span>
       </div>
-      <button id="btnCircleContour">Círculo Genérico</button>
-      <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
+      <button type="button" id="btnCircleContour">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGContour">Subir Contorno (SVG)</button>
 
       <!-- Escalar SVG (oculto hasta subir un SVG) -->
       <div id="scaleContourContainer" class="subcampo" style="display:none;">
         <label for="sliderScaleContour">Escalar:</label>
-        <input
-          type="range"
-          id="sliderScaleContour"
-          min="0.1" max="5.0" step="0.01"
-          value="1.00"
-        />
+        <input type="range" id="sliderScaleContour" min="0.1" max="5.0" step="0.01" value="1.00">
         <span id="contourScaleValor">1.00</span>
       </div>
 
       <!-- Mostrar / ocultar todo lo de Limitantes -->
       <div class="subcampo">
-        <label>
-          <input type="checkbox" id="toggleLimitantes" checked />
-          Mostrar Limitantes
-        </label>
+        <label><input type="checkbox" id="toggleLimitantes" checked> Mostrar Limitantes</label>
       </div>
     </fieldset>
 
@@ -166,23 +150,20 @@
       <input type="range" id="sliderObstacleSeed" min="0" max="100" step="1" value="0">
       <span id="obstacleSeedValor">0</span>
 
-      <button id="btnCircleObstacle">Círculo Genérico</button>
-      <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+      <button type="button" id="btnCircleObstacle">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
 
       <label for="sliderScaleObstacles">Escalar:</label>
       <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
       <span id="obstacleScaleValor">1.00</span>
 
-      <label>
-        <input type="checkbox" id="toggleObstacles" checked>
-        Mostrar Obstáculos
-      </label>
+      <label><input type="checkbox" id="toggleObstacles" checked> Mostrar Obstáculos</label>
     </fieldset>
 
     <!-- VISUALIZACIÓN -->
     <fieldset>
       <div class="titulo-seccion">VISUALIZACIÓN</div>
-      <button id="toggleNodosBtn">🔘 Ocultar nodos</button>
+      <button type="button" id="toggleNodosBtn">🔘 Ocultar nodos</button>
 
       <label for="tipoVisual">Modo de visualización:</label>
       <select id="tipoVisual">
@@ -190,54 +171,26 @@
         <option value="curva">Curva suave</option>
       </select>
 
-      <button id="toggleHistorialBtn">🕘 Ver historial</button>
-      <button id="clearHistorialBtn">🧹 Limpiar historial</button>
+      <button type="button" id="toggleHistorialBtn">🕘 Ver historial</button>
+      <button type="button" id="clearHistorialBtn">🧹 Limpiar historial</button>
 
       <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
       <select id="inputFrecuenciaHistorial">
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-        <option value="40">40</option>
-        <option value="50">50</option>
-        <option value="60">60</option>
-        <option value="70">70</option>
-        <option value="80">80</option>
-        <option value="90">90</option>
-        <option value="100">100</option>
+        <!-- opciones -->
       </select>
     </fieldset>
 
     <!-- EXPERIMENTAL -->
     <fieldset>
       <div class="titulo-seccion">EXPERIMENTAL</div>
-      <label for="tipoRuido">Tipo de ruido:</label>
-      <select id="tipoRuido">
-        <option value="none">Sin ruido</option>
-        <option value="perlin">Perlin clásico</option>
-        <option value="perlinImproved">Perlin mejorado</option>
-        <option value="valor">Ruido por valor</option>
-        <option value="simple">Ruido simple</option>
-      </select>
-
-      <label for="sliderAmplitud">Amplitud:</label>
-      <input type="range" id="sliderAmplitud" min="0" max="10" step="0.1" value="1">
-      <span id="valorAmplitud">1.0</span>
-
-      <label for="sliderFrecuencia">Frecuencia:</label>
-      <input type="range" id="sliderFrecuencia" min="0" max="0.5" step="0.01" value="0.1">
-      <span id="valorFrecuencia">0.1</span>
-
-      <label for="sliderRepulsion">Repulsión:</label>
-      <input type="range" id="sliderRepulsion" min="0" max="10" step="0.1" value="1">
-      <span id="valorRepulsion">1.0</span>
+      <!-- controles experimentales -->
     </fieldset>
 
     <!-- EXPORTAR -->
     <fieldset>
       <div class="titulo-seccion">EXPORTAR</div>
-      <button id="btnExportPNG">📸 Exportar como PNG</button>
-      <button id="btnExportSVG">🧾 Exportar como SVG</button>
+      <button type="button" id="btnExportPNG">📸 Exportar como PNG</button>
+      <button type="button" id="btnExportSVG">🧾 Exportar como SVG</button>
     </fieldset>
   </div>
 
@@ -261,7 +214,7 @@
   </div>
 
   <!-- DATOS DINÁMICOS EN ESQUINA INFERIOR DERECHA -->
-  <div id="infoPanel">
+  <div id="infoPanel" aria-live="polite">
     <div id="infoBaseCrecimiento">Base de Crecimiento: Genérico</div>
     <div id="infoTipoCurva">Tipo de Curva: Cerrada</div>
     <div id="infoNumVertices">Número de vértices: 0</div>
@@ -269,47 +222,10 @@
   </div>
 
   <!-- Librerías p5.js y extensiones SVG -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-  <script src="https://unpkg.com/p5.js-svg@1.6.0/dist/p5.svg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@0.1.4/lib/p5.plotSvg.js"></script>
-  <script src="sketch.js"></script>
-  <script>
-    // --- Actualización dinámica del panel informativo ---
-    // Estos métodos deben ser llamados desde tu sketch.js según el estado actual del sistema.
-
-    // Inicialización
-    let baseTipo = "Genérico"; // "Genérico" o "Curva propia"
-    let tipoCurva = "Cerrada"; // "Cerrada" o "Abierta"
-    let numVertices = 0;
-    let numSegmentos = 0;
-
-    function setBaseCrecimiento(tipo) {
-      baseTipo = tipo;
-      document.getElementById("infoBaseCrecimiento").textContent = "Base de Crecimiento: " + baseTipo;
-    }
-    function setTipoCurva(tipo) {
-      tipoCurva = tipo;
-      document.getElementById("infoTipoCurva").textContent = "Tipo de Curva: " + tipoCurva;
-    }
-    function setNumVertices(n) {
-      numVertices = n;
-      document.getElementById("infoNumVertices").textContent = "Número de vértices: " + numVertices;
-    }
-    function setNumSegmentos(n) {
-      numSegmentos = n;
-      document.getElementById("infoNumSegmentos").textContent = "Número de segmentos: " + numSegmentos;
-    }
-
-    // Ejemplo: cambia el texto cuando el usuario hace click en un botón
-    document.getElementById("btnCircleBase").addEventListener("click", function() {
-      setBaseCrecimiento("Genérico");
-    });
-    document.getElementById("btnSubirSVGBase").addEventListener("click", function() {
-      setBaseCrecimiento("Curva propia");
-    });
-
-    // Desde tu lógica principal deberás llamar setTipoCurva("Abierta") o setTipoCurva("Cerrada")
-    // y setNumVertices(n), setNumSegmentos(n) cada vez que cambie la geometría
-  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js" defer></script>
+  <script src="https://unpkg.com/p5.js-svg@1.6.0/dist/p5.svg.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@0.1.4/lib/p5.plotSvg.js" defer></script>
+  <script src="sketch.js" defer></script>
+  <script src="ui-panel.js" defer></script>
 </body>
 </html>
