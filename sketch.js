@@ -398,7 +398,7 @@ function isMouseOverUI() {
          mouseY <= b.bottom;
 }
 
-// — Base Curve — 
+// — Base Curve —
 function selectBaseCurve(mx, my) {
   const loc = toLocalCoords(mx, my);
   // 1) buscar punto cercano
@@ -411,12 +411,12 @@ function selectBaseCurve(mx, my) {
     const minX = Math.min(...xs), maxX = Math.max(...xs);
     const minY = Math.min(...ys), maxY = Math.max(...ys);
     if (loc.x >= minX && loc.x <= maxX && loc.y >= minY && loc.y <= maxY) {
-      draggingIndexBase = -1; 
+      draggingIndexBase = -1;
       draggingBase = true;
     }
   }
   // guarda para calcular delta
-  lastMouseX = mx; 
+  lastMouseX = mx;
   lastMouseY = my;
 }
 
@@ -536,14 +536,14 @@ function setup() {
    // Botón círculo genérico
   select('#btnCircleContour').mousePressed(() => {
     contourLoaded = false;
-    scaleContainer.hide();            // oculta el slider de escalar
-    sliderContourRadius.show();      // muestra radio
+    scaleContainer.hide();          // oculta el slider de escalar
+    sliderContourRadius.show();     // muestra radio
     generateContourCircle();
   });
 
   // — Contorno / Limitantes —
   // Referencias a controles
-  scaleContainer     = select('#scaleContourContainer');
+  scaleContainer      = select('#scaleContourContainer');
   sliderContourRadius     = select('#sliderContourRadius');
   contourRadiusValor      = select('#contourRadiusValor');
   sliderScaleContour      = select('#sliderScaleContour');
@@ -561,8 +561,8 @@ function setup() {
   // Botón “Círculo Genérico”
   select('#btnCircleContour').mousePressed(() => {
     contourLoaded = false;
-    scaleContainer.hide();         // oculta “Escalar”
-    sliderContourRadius.show();    // muestra “Radio”
+    scaleContainer.hide();          // oculta “Escalar”
+    sliderContourRadius.show();     // muestra “Radio”
     contourScaleValor.html('1.00');
     generateContourCircle();
   });
@@ -570,8 +570,8 @@ function setup() {
   // Input exclusivo para Contorno SVG
   const fileInputContour = createFileInput(file => {
     handleContourFile(file);
-    scaleContainer.show();         // muestra “Escalar”
-    sliderContourRadius.hide();    // oculta “Radio”
+    scaleContainer.show();          // muestra “Escalar”
+    sliderContourRadius.hide();     // oculta “Radio”
     contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
   })
     .parent('ui')
@@ -607,7 +607,7 @@ function setup() {
   });
 
   // — Obstáculos —
-  inputNumObstacles     = select('#inputNumObstacles');
+  inputNumObstacles      = select('#inputNumObstacles');
   sliderRadiusObstacle  = select('#sliderRadiusObstacle');
   obstacleRadiusValor   = select('#obstacleRadiusValor');
   sliderObstacleSeed    = select('#sliderObstacleSeed');
@@ -657,8 +657,8 @@ function setup() {
   select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
   // — Visualización —
-  tipoVisualSelect   = select('#tipoVisual');
-  toggleNodosBtn     = select('#toggleNodosBtn').mousePressed(() => {
+  tipoVisualSelect    = select('#tipoVisual');
+  toggleNodosBtn      = select('#toggleNodosBtn').mousePressed(() => {
     mostrarNodos = !mostrarNodos;
     toggleNodosBtn.html(mostrarNodos ? '🔘 Ocultar nodos' : '🔘 Mostrar nodos');
   });
@@ -691,23 +691,46 @@ function setup() {
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
-  // <<--- NUEVO: ENLACE DE LOS TOGGLES MANUALES
+  // --- MODIFICACIONES APLICADAS AQUÍ ---
+  // <<--- NUEVO: ENLACE Y LECTURA INICIAL DE LOS TOGGLES MANUALES
   const chkCurvaBase = select('#chkCurvaBase');
   const chkCurvaContorno = select('#chkCurvaContorno');
   const chkObstaculos = select('#chkObstaculos');
 
+  // Lee el estado inicial de los checkboxes desde el HTML
+  manualCurvaBase = chkCurvaBase.checked();
+  manualCurvaContorno = chkCurvaContorno.checked();
+  manualObstaculos = chkObstaculos.checked();
+
+  // Y actualiza el texto de los toggles de acuerdo a su estado inicial, si es necesario.
+  // En tu caso actual, el texto es estático, pero si quisieras que cambiara dinámicamente
+  // basado en el estado checked, lo harías aquí. Por ahora, solo lo establezco tal cual.
+  select('#txtCurvaBase').html('CURVA BASE');
+  select('#txtCurvaContorno').html('CURVA CONTORNO');
+  select('#txtObstaculos').html('OBSTÁCULOS');
+
+
   chkCurvaBase.changed(() => {
     manualCurvaBase = chkCurvaBase.checked();
+    // Aquí puedes añadir llamadas a funciones si el cambio de este toggle
+    // debe desencadenar una acción específica (ej. regenerar la base)
+    // si eso no lo hace ya otra parte de tu lógica al interactuar con el canvas.
   });
   chkCurvaContorno.changed(() => {
     manualCurvaContorno = chkCurvaContorno.checked();
+    // Similarmente, lógica para el contorno si es necesaria
   });
   chkObstaculos.changed(() => {
     manualObstaculos = chkObstaculos.checked();
+    // Y para los obstáculos
   });
+  // --- FIN DE MODIFICACIONES ---
 
   // — Inicializar base y dibujar una vez —
-  generarCurvaBase();
+  generarCurvaBase(); // Esto puede ser sobrescrito si el HTML tiene una base SVG preseleccionada
+  // Si usas SVG, asegúrate de que el estado de fileLoaded se maneje primero.
+  // La función `previewShape()` se encarga de esto:
+  previewShape(); // Llama a previewShape() para asegurar que la base inicial se dibuje correctamente
   redraw();
 }
 
@@ -886,7 +909,7 @@ function draw() {
       }
 
       // obstáculos
-      if (activeObstacles || manualObstaculos) { // <<--- NUEVO: permite acción con toggle manual
+      if (activeObstacles || manualObstaculos) { // <<--- PERMITE ACCIÓN CON TOGGLE MANUAL
         obstacleCircles.forEach(o => {
           const centro = createVector(o.x, o.y);
           const dObs = p5.Vector.dist(nextPos, centro);
@@ -945,9 +968,9 @@ function drawOverlayUI() {
   const startX = width - uiMargin;
   const startY = uiMargin;
   const items = [
-    { label: 'Curva Base',     flag: () => activeBase },
+    { label: 'Curva Base',        flag: () => activeBase },
     { label: 'Curva Contorno', flag: () => activeContour },
-    { label: 'Obstáculos',     flag: () => activeObstacles }
+    { label: 'Obstáculos',        flag: () => activeObstacles }
   ];
   items.forEach((item, i) => {
     const y = startY + i * uiSpacing;
