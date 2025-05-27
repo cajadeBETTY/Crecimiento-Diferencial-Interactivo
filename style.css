@@ -75,3 +75,79 @@ button:hover {
 canvas {
   display: block;
 }
+
+/* ====== MODIFICACIÓN MANUAL (nuevo) ====== */
+#modManualContainer {
+  width: 100%;
+  margin: 16px 0 8px 0;
+  text-align: center;
+}
+#modManualTitulo {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+#modManualToggles {
+  display: flex;
+  justify-content: center;
+  gap: 2em;
+}
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 1em;
+  cursor: pointer;
+  user-select: none;
+}
+.toggleText {
+  background: #e0e0e0;
+  color: #7a7a7a;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+}
+.toggleLabel input[type="checkbox"]:checked + .toggleText {
+  background: #3498db;
+  color: #fff;
+}
+
+/* ====== PANEL INFORMATIVO ESQUINA INFERIOR DERECHA (nuevo) ====== */
+#infoPanel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: rgba(245,245,245,0.93);
+  color: #222;
+  padding: 18px 30px 16px 26px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  font-size: 1.07em;
+  text-align: right;
+  z-index: 10;
+  min-width: 260px;
+  pointer-events: none;
+  user-select: none;
+}
+#infoPanel div {
+  margin-bottom: 2px;
+}
+
+/* Opcional: responsividad para pantallas pequeñas */
+@media (max-width: 700px) {
+  #ui {
+    width: 98vw;
+    left: 1vw;
+    top: 4vw;
+  }
+  #infoPanel {
+    right: 6px;
+    bottom: 6px;
+    padding: 10px 10px 8px 8px;
+    min-width: 140px;
+    font-size: 0.92em;
+  }
+}
