@@ -14,6 +14,67 @@
   <link rel="shortcut icon"
         href="assets/cajitaweb.png"
         type="image/png">
+  <style>
+    /* --------- Modificación Manual --------- */
+    #modManualContainer {
+      width: 100%;
+      margin: 16px 0 8px 0;
+      text-align: center;
+    }
+    #modManualTitulo {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    #modManualToggles {
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+    }
+    .toggleLabel {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      font-size: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggleText {
+      background: #e0e0e0;
+      color: #7a7a7a;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+    }
+    .toggleLabel input[type="checkbox"]:checked + .toggleText {
+      background: #3498db;
+      color: #fff;
+    }
+
+    /* --------- Panel informativo --------- */
+    #infoPanel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: rgba(245,245,245,0.93);
+      color: #222;
+      padding: 18px 30px 16px 26px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      font-size: 1.07em;
+      text-align: right;
+      z-index: 10;
+      min-width: 260px;
+      pointer-events: none;
+      user-select: none;
+    }
+    #infoPanel div {
+      margin-bottom: 2px;
+    }
+  </style>
 </head>
 <body>
   <div id="ui">
@@ -22,7 +83,7 @@
       <div class="titulo-seccion">CRECIMIENTO DIFERENCIAL</div>
     </fieldset>
 
-    <!-- BASE DE CRECIMIENTO -->
+    <!-- BASE DE CRECIMIENTO (con VÉRTICES adentro) -->
     <fieldset>
       <legend>Base de Crecimiento</legend>
       <label for="sliderBaseRadius">Radio (mm):</label>
@@ -31,92 +92,91 @@
 
       <button id="btnCircleBase">Círculo Genérico</button>
       <button id="btnSubirSVGBase">Subir SVG</button>
-    </fieldset>
 
-  <!-- — LIMITANTES — -->
-<fieldset>
-  <legend>Limitantes</legend>
-
-  <!-- Contorno genérico -->
-  <div class="subcampo">
-    <label for="sliderContourRadius">Radio (mm):</label>
-    <input
-      type="range"
-      id="sliderContourRadius"
-      min="10" max="200" step="1"
-      value="100"
-    />
-    <span id="contourRadiusValor">100</span>
-  </div>
-  <button id="btnCircleContour">Círculo Genérico</button>
-  <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
-
-  <!-- Escalar SVG (oculto hasta subir un SVG) -->
-  <div id="scaleContourContainer" class="subcampo" style="display:none;">
-    <label for="sliderScaleContour">Escalar:</label>
-    <input
-      type="range"
-      id="sliderScaleContour"
-      min="0.1" max="5.0" step="0.01"
-      value="1.00"
-    />
-    <span id="contourScaleValor">1.00</span>
-  </div>
-
-  <!-- Mostrar / ocultar todo lo de Limitantes -->
-  <div class="subcampo">
-    <label>
-      <input type="checkbox" id="toggleLimitantes" checked />
-      Mostrar Limitantes
-    </label>
-  </div>
-</fieldset>
-
-      <!-- Obstáculos -->
+      <!-- VÉRTICES (antes NODOS) -->
       <fieldset>
-        <legend>Obstáculos</legend>
-        <label for="inputNumObstacles">Número de obstáculos:</label>
-        <input type="number" id="inputNumObstacles" min="0" value="0">
+        <legend>Vértices</legend>
+        <label for="inputPuntos">Número de puntos iniciales:</label>
+        <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
 
-        <label for="sliderRadiusObstacle">Radio (mm):</label>
-        <input type="range" id="sliderRadiusObstacle" min="1" max="200" step="1" value="50">
-        <span id="obstacleRadiusValor">50</span>
+        <label for="inputMinDist">Distancia mínima:</label>
+        <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
 
-        <label for="sliderObstacleSeed">Seed:</label>
-        <input type="range" id="sliderObstacleSeed" min="0" max="100" step="1" value="0">
-        <span id="obstacleSeedValor">0</span>
+        <label for="inputMaxDist">Distancia máxima:</label>
+        <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
 
-        <button id="btnCircleObstacle">Círculo Genérico</button>
-        <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+        <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
+        <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
 
-        <label for="sliderScaleObstacles">Escalar:</label>
-        <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
-        <span id="obstacleScaleValor">1.00</span>
-
-        <label>
-          <input type="checkbox" id="toggleObstacles" checked>
-          Mostrar Obstáculos
-        </label>
+        <button id="playPauseBtn">▶ Reanudar</button>
+        <button id="restartBtn">🔄 Reiniciar</button>
       </fieldset>
     </fieldset>
 
-    <!-- NODOS -->
+    <!-- LIMITANTES -->
     <fieldset>
-      <legend>Nodos</legend>
-      <label for="inputPuntos">Número de puntos iniciales:</label>
-      <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
+      <legend>Limitantes</legend>
 
-      <label for="inputMinDist">Distancia mínima:</label>
-      <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
+      <!-- Contorno genérico -->
+      <div class="subcampo">
+        <label for="sliderContourRadius">Radio (mm):</label>
+        <input
+          type="range"
+          id="sliderContourRadius"
+          min="10" max="200" step="1"
+          value="100"
+        />
+        <span id="contourRadiusValor">100</span>
+      </div>
+      <button id="btnCircleContour">Círculo Genérico</button>
+      <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
 
-      <label for="inputMaxDist">Distancia máxima:</label>
-      <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
+      <!-- Escalar SVG (oculto hasta subir un SVG) -->
+      <div id="scaleContourContainer" class="subcampo" style="display:none;">
+        <label for="sliderScaleContour">Escalar:</label>
+        <input
+          type="range"
+          id="sliderScaleContour"
+          min="0.1" max="5.0" step="0.01"
+          value="1.00"
+        />
+        <span id="contourScaleValor">1.00</span>
+      </div>
 
-      <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
-      <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
+      <!-- Mostrar / ocultar todo lo de Limitantes -->
+      <div class="subcampo">
+        <label>
+          <input type="checkbox" id="toggleLimitantes" checked />
+          Mostrar Limitantes
+        </label>
+      </div>
+    </fieldset>
 
-      <button id="playPauseBtn">▶ Reanudar</button>
-      <button id="restartBtn">🔄 Reiniciar</button>
+    <!-- Obstáculos -->
+    <fieldset>
+      <legend>Obstáculos</legend>
+      <label for="inputNumObstacles">Número de obstáculos:</label>
+      <input type="number" id="inputNumObstacles" min="0" value="0">
+
+      <label for="sliderRadiusObstacle">Radio (mm):</label>
+      <input type="range" id="sliderRadiusObstacle" min="1" max="200" step="1" value="50">
+      <span id="obstacleRadiusValor">50</span>
+
+      <label for="sliderObstacleSeed">Seed:</label>
+      <input type="range" id="sliderObstacleSeed" min="0" max="100" step="1" value="0">
+      <span id="obstacleSeedValor">0</span>
+
+      <button id="btnCircleObstacle">Círculo Genérico</button>
+      <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+
+      <label for="sliderScaleObstacles">Escalar:</label>
+      <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
+      <span id="obstacleScaleValor">1.00</span>
+
+      <label>
+        <input type="checkbox" id="toggleObstacles" checked>
+        Mostrar Obstáculos
+      </label>
     </fieldset>
 
     <!-- VISUALIZACIÓN -->
@@ -181,10 +241,75 @@
     </fieldset>
   </div>
 
+  <!-- MODIFICACIÓN MANUAL -->
+  <div id="modManualContainer">
+    <div id="modManualTitulo">Modificación Manual</div>
+    <div id="modManualToggles">
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkCurvaBase">
+        <span class="toggleText" id="txtCurvaBase">CURVA BASE</span>
+      </label>
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkCurvaContorno">
+        <span class="toggleText" id="txtCurvaContorno">CURVA CONTORNO</span>
+      </label>
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkObstaculos">
+        <span class="toggleText" id="txtObstaculos">OBSTÁCULOS</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- DATOS DINÁMICOS EN ESQUINA INFERIOR DERECHA -->
+  <div id="infoPanel">
+    <div id="infoBaseCrecimiento">Base de Crecimiento: Genérico</div>
+    <div id="infoTipoCurva">Tipo de Curva: Cerrada</div>
+    <div id="infoNumVertices">Número de vértices: 0</div>
+    <div id="infoNumSegmentos">Número de segmentos: 0</div>
+  </div>
+
   <!-- Librerías p5.js y extensiones SVG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <script src="https://unpkg.com/p5.js-svg@1.6.0/dist/p5.svg.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@0.1.4/lib/p5.plotSvg.js"></script>
   <script src="sketch.js"></script>
+  <script>
+    // --- Actualización dinámica del panel informativo ---
+    // Estos métodos deben ser llamados desde tu sketch.js según el estado actual del sistema.
+
+    // Inicialización
+    let baseTipo = "Genérico"; // "Genérico" o "Curva propia"
+    let tipoCurva = "Cerrada"; // "Cerrada" o "Abierta"
+    let numVertices = 0;
+    let numSegmentos = 0;
+
+    function setBaseCrecimiento(tipo) {
+      baseTipo = tipo;
+      document.getElementById("infoBaseCrecimiento").textContent = "Base de Crecimiento: " + baseTipo;
+    }
+    function setTipoCurva(tipo) {
+      tipoCurva = tipo;
+      document.getElementById("infoTipoCurva").textContent = "Tipo de Curva: " + tipoCurva;
+    }
+    function setNumVertices(n) {
+      numVertices = n;
+      document.getElementById("infoNumVertices").textContent = "Número de vértices: " + numVertices;
+    }
+    function setNumSegmentos(n) {
+      numSegmentos = n;
+      document.getElementById("infoNumSegmentos").textContent = "Número de segmentos: " + numSegmentos;
+    }
+
+    // Ejemplo: cambia el texto cuando el usuario hace click en un botón
+    document.getElementById("btnCircleBase").addEventListener("click", function() {
+      setBaseCrecimiento("Genérico");
+    });
+    document.getElementById("btnSubirSVGBase").addEventListener("click", function() {
+      setBaseCrecimiento("Curva propia");
+    });
+
+    // Desde tu lógica principal deberás llamar setTipoCurva("Abierta") o setTipoCurva("Cerrada")
+    // y setNumVertices(n), setNumSegmentos(n) cada vez que cambie la geometría
+  </script>
 </body>
 </html>
