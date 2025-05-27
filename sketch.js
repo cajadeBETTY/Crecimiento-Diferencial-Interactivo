@@ -40,6 +40,11 @@ let draggingBase = false;
 let draggingContour = false;
 let draggingObstacle = false;
 
+// <<--- NUEVO: Variables para los toggles manuales
+let manualCurvaBase = false;
+let manualCurvaContorno = false;
+let manualObstaculos = false;
+
 // ■ UI layout
 const uiMargin      = 10;
 const uiSpacing     = 20;
@@ -160,7 +165,6 @@ function generateContourCircle() {
   }
   contourLoaded = true;
 }
-
 
 function handleContourFile(file) {
   if (file.type === 'image' && file.subtype.includes('svg')) {
@@ -308,7 +312,6 @@ function reiniciarCrecimiento() {
   redraw();
 }
 
-
 // — Detectar clic en overlay —
 function checkUIClick(mx, my) {
   const startX = width - uiMargin;
@@ -337,7 +340,14 @@ function mousePressed() {
     if (checkUIClick(mouseX, mouseY)) {
       return; // solo toggles
     }
-    if (activeBase) {
+    // <<--- NUEVO: Usar toggles manuales como prioridad sobre los flags de overlay
+    if (manualCurvaBase) {
+      selectBaseCurve(mouseX, mouseY);
+    } else if (manualCurvaContorno) {
+      selectContourCurve(mouseX, mouseY);
+    } else if (manualObstaculos) {
+      selectObstacle(mouseX, mouseY);
+    } else if (activeBase) {
       selectBaseCurve(mouseX, mouseY);
     } else if (activeContour) {
       selectContourCurve(mouseX, mouseY);
@@ -363,7 +373,7 @@ function mouseDragged() {
     offsetX += mouseX - lastMouseX;
     offsetY += mouseY - lastMouseY;
     lastMouseX = mouseX;
-    lastMouseY = mouseY;
+    lastMouseY = my;
   }
 }
 
@@ -485,6 +495,7 @@ function dragObstacle(mx, my) {
   lastMouseX = mx;
   lastMouseY = my;
 }
+
 // 8) Setup
 function setup() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
@@ -515,7 +526,7 @@ function setup() {
   sliderScaleContour   = select('#sliderScaleContour');
   contourScaleValor    = select('#contourScaleValor');
   // Inicializar contenedor de escala de contorno
-scaleContainer = select('#scaleContourContainer');
+  scaleContainer = select('#scaleContourContainer');
 
   // Cuando ajustas radio (sólo para círculo genérico)
   sliderContourRadius.input(() => {
@@ -530,71 +541,70 @@ scaleContainer = select('#scaleContourContainer');
     generateContourCircle();
   });
 
-// — Contorno / Limitantes —
+  // — Contorno / Limitantes —
+  // Referencias a controles
+  scaleContainer     = select('#scaleContourContainer');
+  sliderContourRadius     = select('#sliderContourRadius');
+  contourRadiusValor      = select('#contourRadiusValor');
+  sliderScaleContour      = select('#sliderScaleContour');
+  contourScaleValor       = select('#contourScaleValor');
 
-// Referencias a controles
-scaleContainer     = select('#scaleContourContainer');
-sliderContourRadius     = select('#sliderContourRadius');
-contourRadiusValor      = select('#contourRadiusValor');
-sliderScaleContour      = select('#sliderScaleContour');
-contourScaleValor       = select('#contourScaleValor');
+  // Slider Radio (10–200 mm)
+  sliderContourRadius
+    .attribute('min', 10)
+    .attribute('max', 200)
+    .input(() => {
+      contourRadiusValor.html(sliderContourRadius.value());
+      generateContourCircle();
+    });
 
-// Slider Radio (10–200 mm)
-sliderContourRadius
-  .attribute('min', 10)
-  .attribute('max', 200)
-  .input(() => {
-    contourRadiusValor.html(sliderContourRadius.value());
+  // Botón “Círculo Genérico”
+  select('#btnCircleContour').mousePressed(() => {
+    contourLoaded = false;
+    scaleContainer.hide();         // oculta “Escalar”
+    sliderContourRadius.show();    // muestra “Radio”
+    contourScaleValor.html('1.00');
     generateContourCircle();
   });
 
-// Botón “Círculo Genérico”
-select('#btnCircleContour').mousePressed(() => {
-  contourLoaded = false;
-  scaleContainer.hide();         // oculta “Escalar”
-  sliderContourRadius.show();    // muestra “Radio”
-  contourScaleValor.html('1.00');
-  generateContourCircle();
-});
+  // Input exclusivo para Contorno SVG
+  const fileInputContour = createFileInput(file => {
+    handleContourFile(file);
+    scaleContainer.show();         // muestra “Escalar”
+    sliderContourRadius.hide();    // oculta “Radio”
+    contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
+  })
+    .parent('ui')
+    .hide();
 
-// Input exclusivo para Contorno SVG
-const fileInputContour = createFileInput(file => {
-  handleContourFile(file);
-  scaleContainer.show();         // muestra “Escalar”
-  sliderContourRadius.hide();    // oculta “Radio”
-  contourScaleValor.html(nf(sliderScaleContour.value(), 1, 2));
-})
-  .parent('ui')
-  .hide();
-
-// Botón “Subir Contorno (SVG)”
-select('#btnSubirSVGContour').mousePressed(() => {
-  suppressDrag = true;
-  fileInputContour.elt.click();
-});
-
-// Slider Escalar (0.1–5.0)
-sliderScaleContour
-  .attribute('min', 0.1)
-  .attribute('max', 5.0)
-  .attribute('step', 0.01)
-  .input(() => {
-    const s = parseFloat(sliderScaleContour.value());
-    contourScaleValor.html(nf(s, 1, 2));
-    // reescala todos los puntos respecto al centro
-    contourPoints = contourPoints.map(p =>
-      createVector(
-        width/2 + (p.x - width/2) * s,
-        height/2 + (p.y - height/2) * s
-      )
-    );
+  // Botón “Subir Contorno (SVG)”
+  select('#btnSubirSVGContour').mousePressed(() => {
+    suppressDrag = true;
+    fileInputContour.elt.click();
   });
 
-// Checkbox “Mostrar Limitantes”
-const toggleLimit = select('#toggleLimitantes');
-toggleLimit.changed(() => {
-  showLimitantes = toggleLimit.checked();
-});
+  // Slider Escalar (0.1–5.0)
+  sliderScaleContour
+    .attribute('min', 0.1)
+    .attribute('max', 5.0)
+    .attribute('step', 0.01)
+    .input(() => {
+      const s = parseFloat(sliderScaleContour.value());
+      contourScaleValor.html(nf(s, 1, 2));
+      // reescala todos los puntos respecto al centro
+      contourPoints = contourPoints.map(p =>
+        createVector(
+          width/2 + (p.x - width/2) * s,
+          height/2 + (p.y - height/2) * s
+        )
+      );
+    });
+
+  // Checkbox “Mostrar Limitantes”
+  const toggleLimit = select('#toggleLimitantes');
+  toggleLimit.changed(() => {
+    showLimitantes = toggleLimit.checked();
+  });
 
   // — Obstáculos —
   inputNumObstacles     = select('#inputNumObstacles');
@@ -681,11 +691,25 @@ toggleLimit.changed(() => {
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
   select('#btnExportSVG').mousePressed(exportarSVG);
 
+  // <<--- NUEVO: ENLACE DE LOS TOGGLES MANUALES
+  const chkCurvaBase = select('#chkCurvaBase');
+  const chkCurvaContorno = select('#chkCurvaContorno');
+  const chkObstaculos = select('#chkObstaculos');
+
+  chkCurvaBase.changed(() => {
+    manualCurvaBase = chkCurvaBase.checked();
+  });
+  chkCurvaContorno.changed(() => {
+    manualCurvaContorno = chkCurvaContorno.checked();
+  });
+  chkObstaculos.changed(() => {
+    manualObstaculos = chkObstaculos.checked();
+  });
+
   // — Inicializar base y dibujar una vez —
   generarCurvaBase();
   redraw();
 }
-
 
 function windowResized() {
   const uiWidth = document.getElementById('ui').getBoundingClientRect().width;
@@ -862,7 +886,7 @@ function draw() {
       }
 
       // obstáculos
-      if (activeObstacles) {
+      if (activeObstacles || manualObstaculos) { // <<--- NUEVO: permite acción con toggle manual
         obstacleCircles.forEach(o => {
           const centro = createVector(o.x, o.y);
           const dObs = p5.Vector.dist(nextPos, centro);
@@ -915,7 +939,6 @@ function draw() {
   drawOverlayUI();
 }
 
-
 // Función de dibujo del menú overlay y logo
 function drawOverlayUI() {
   push(); noFill(); stroke(0); strokeWeight(1); textAlign(LEFT, TOP); textSize(14);
@@ -950,4 +973,3 @@ function drawOverlayUI() {
     image(logoImg, marginLogo, height - logoH - marginLogo, logoW, logoH);
   pop();
 }
-
