@@ -13,6 +13,9 @@ function toLocalCoords(mx, my) {
 let contourPoints = [];
 let contourLoaded = false;
 let sliderContourRadius, contourRadiusValor;
+let sliderScaleContour, contourScaleValor;
+let scaleContainer;
+let showLimitantes = true;
 // Obstáculos
 let inputNumObstacles, numObstacles = 0;
 let obstacleCircles = [];
@@ -50,8 +53,6 @@ const uiMargin      = 10;
 const uiSpacing     = 20;
 const uiBoxSize     = 12;
 const uiTextOffset  = 5;
-let scaleContainer;
-let showLimitantes = true;
 
 // Historial
 let mostrarHistorial = false, mostrarNodos = true;
@@ -373,7 +374,7 @@ function mouseDragged() {
     offsetX += mouseX - lastMouseX;
     offsetY += mouseY - lastMouseY;
     lastMouseX = mouseX;
-    lastMouseY = my;
+    lastMouseY = mouseY; // <-- CORREGIDO: antes decía "my"
   }
 }
 
@@ -505,10 +506,12 @@ function setup() {
   // — Base de Crecimiento —
   sliderBaseRadius   = select('#sliderBaseRadius');
   baseRadiusValor    = select('#baseRadiusValor');
-  sliderBaseRadius.input(() => {
-    baseRadiusValor.html(sliderBaseRadius.value());
-    previewShape();
-  });
+  if (sliderBaseRadius && baseRadiusValor) {
+    sliderBaseRadius.input(() => {
+      baseRadiusValor.html(sliderBaseRadius.value());
+      previewShape();
+    });
+  }
   select('#btnCircleBase').mousePressed(() => {
     fileLoaded = false;
     previewShape();
@@ -529,11 +532,13 @@ function setup() {
   scaleContainer = select('#scaleContourContainer');
 
   // Cuando ajustas radio (sólo para círculo genérico)
-  sliderContourRadius.input(() => {
-    contourRadiusValor.html(sliderContourRadius.value());
-    generateContourCircle();
-  });
-   // Botón círculo genérico
+  if (sliderContourRadius && contourRadiusValor) {
+    sliderContourRadius.input(() => {
+      contourRadiusValor.html(sliderContourRadius.value());
+      generateContourCircle();
+    });
+  }
+  // Botón círculo genérico
   select('#btnCircleContour').mousePressed(() => {
     contourLoaded = false;
     scaleContainer.hide();          // oculta el slider de escalar
@@ -550,13 +555,15 @@ function setup() {
   contourScaleValor       = select('#contourScaleValor');
 
   // Slider Radio (10–200 mm)
-  sliderContourRadius
-    .attribute('min', 10)
-    .attribute('max', 200)
-    .input(() => {
-      contourRadiusValor.html(sliderContourRadius.value());
-      generateContourCircle();
-    });
+  if (sliderContourRadius && contourRadiusValor) {
+    sliderContourRadius
+      .attribute('min', 10)
+      .attribute('max', 200)
+      .input(() => {
+        contourRadiusValor.html(sliderContourRadius.value());
+        generateContourCircle();
+      });
+  }
 
   // Botón “Círculo Genérico”
   select('#btnCircleContour').mousePressed(() => {
@@ -584,27 +591,31 @@ function setup() {
   });
 
   // Slider Escalar (0.1–5.0)
-  sliderScaleContour
-    .attribute('min', 0.1)
-    .attribute('max', 5.0)
-    .attribute('step', 0.01)
-    .input(() => {
-      const s = parseFloat(sliderScaleContour.value());
-      contourScaleValor.html(nf(s, 1, 2));
-      // reescala todos los puntos respecto al centro
-      contourPoints = contourPoints.map(p =>
-        createVector(
-          width/2 + (p.x - width/2) * s,
-          height/2 + (p.y - height/2) * s
-        )
-      );
-    });
+  if (sliderScaleContour && contourScaleValor) {
+    sliderScaleContour
+      .attribute('min', 0.1)
+      .attribute('max', 5.0)
+      .attribute('step', 0.01)
+      .input(() => {
+        const s = parseFloat(sliderScaleContour.value());
+        contourScaleValor.html(nf(s, 1, 2));
+        // reescala todos los puntos respecto al centro
+        contourPoints = contourPoints.map(p =>
+          createVector(
+            width/2 + (p.x - width/2) * s,
+            height/2 + (p.y - height/2) * s
+          )
+        );
+      });
+  }
 
   // Checkbox “Mostrar Limitantes”
   const toggleLimit = select('#toggleLimitantes');
-  toggleLimit.changed(() => {
-    showLimitantes = toggleLimit.checked();
-  });
+  if (toggleLimit) {
+    toggleLimit.changed(() => {
+      showLimitantes = toggleLimit.checked();
+    });
+  }
 
   // — Obstáculos —
   inputNumObstacles      = select('#inputNumObstacles');
@@ -615,23 +626,31 @@ function setup() {
   sliderScaleObstacles  = select('#sliderScaleObstacles');
   obstacleScaleValor    = select('#obstacleScaleValor');
 
-  inputNumObstacles.input(() => {
-    numObstacles = int(inputNumObstacles.value());
-    generateObstacleCircles();
-  });
-  sliderRadiusObstacle.input(() => {
-    obstacleRadiusValor.html(sliderRadiusObstacle.value());
-    generateObstacleCircles();
-  });
-  sliderObstacleSeed.input(() => {
-    obstacleSeedValor.html(sliderObstacleSeed.value());
-    generateObstacleCircles();
-  });
-  sliderScaleObstacles.input(() => {
-    obstacleScaleValor.html(sliderScaleObstacles.value());
-    obstacleScale = float(sliderScaleObstacles.value());
-    generateObstacleCircles();
-  });
+  if (inputNumObstacles) {
+    inputNumObstacles.input(() => {
+      numObstacles = int(inputNumObstacles.value());
+      generateObstacleCircles();
+    });
+  }
+  if (sliderRadiusObstacle && obstacleRadiusValor) {
+    sliderRadiusObstacle.input(() => {
+      obstacleRadiusValor.html(sliderRadiusObstacle.value());
+      generateObstacleCircles();
+    });
+  }
+  if (sliderObstacleSeed && obstacleSeedValor) {
+    sliderObstacleSeed.input(() => {
+      obstacleSeedValor.html(sliderObstacleSeed.value());
+      generateObstacleCircles();
+    });
+  }
+  if (sliderScaleObstacles && obstacleScaleValor) {
+    sliderScaleObstacles.input(() => {
+      obstacleScaleValor.html(sliderScaleObstacles.value());
+      obstacleScale = float(sliderScaleObstacles.value());
+      generateObstacleCircles();
+    });
+  }
   select('#toggleObstacles').changed(() => {
     showObstacles = select('#toggleObstacles').checked();
   });
@@ -651,8 +670,8 @@ function setup() {
   inputMinDist     = select('#inputMinDist');
   inputMaxDist     = select('#inputMaxDist');
   inputMaxPoints   = select('#inputMaxPoints');
-  inputPuntos.input(previewShape);
-  inputMaxPoints.input(() => maxPoints = int(inputMaxPoints.value()));
+  if (inputPuntos) inputPuntos.input(previewShape);
+  if (inputMaxPoints) inputMaxPoints.input(() => maxPoints = int(inputMaxPoints.value()));
   select('#playPauseBtn').mousePressed(togglePlayPause);
   select('#restartBtn').mousePressed(reiniciarCrecimiento);
 
@@ -683,9 +702,15 @@ function setup() {
   sliderRepulsion   = select('#sliderRepulsion');
   valorRepulsionSpan = select('#valorRepulsion');
 
-  sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
-  sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
-  sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
+  if (sliderAmplitud && valorAmplitudSpan) {
+    sliderAmplitud.input(() => valorAmplitudSpan.html(sliderAmplitud.value()));
+  }
+  if (sliderFrecuencia && valorFrecuenciaSpan) {
+    sliderFrecuencia.input(() => valorFrecuenciaSpan.html(sliderFrecuencia.value()));
+  }
+  if (sliderRepulsion && valorRepulsionSpan) {
+    sliderRepulsion.input(() => valorRepulsionSpan.html(sliderRepulsion.value()));
+  }
 
   // — Export —
   select('#btnExportPNG').mousePressed(() => saveCanvas('crecimiento_diferencial', 'png'));
@@ -698,38 +723,28 @@ function setup() {
   const chkObstaculos = select('#chkObstaculos');
 
   // Lee el estado inicial de los checkboxes desde el HTML
-  manualCurvaBase = chkCurvaBase.checked();
-  manualCurvaContorno = chkCurvaContorno.checked();
-  manualObstaculos = chkObstaculos.checked();
+  manualCurvaBase = chkCurvaBase && chkCurvaBase.checked();
+  manualCurvaContorno = chkCurvaContorno && chkCurvaContorno.checked();
+  manualObstaculos = chkObstaculos && chkObstaculos.checked();
 
-  // Y actualiza el texto de los toggles de acuerdo a su estado inicial, si es necesario.
-  // En tu caso actual, el texto es estático, pero si quisieras que cambiara dinámicamente
-  // basado en el estado checked, lo harías aquí. Por ahora, solo lo establezco tal cual.
+  // Actualiza el texto de los toggles de acuerdo a su estado inicial, si es necesario.
   select('#txtCurvaBase').html('CURVA BASE');
   select('#txtCurvaContorno').html('CURVA CONTORNO');
   select('#txtObstaculos').html('OBSTÁCULOS');
 
-
-  chkCurvaBase.changed(() => {
+  if (chkCurvaBase) chkCurvaBase.changed(() => {
     manualCurvaBase = chkCurvaBase.checked();
-    // Aquí puedes añadir llamadas a funciones si el cambio de este toggle
-    // debe desencadenar una acción específica (ej. regenerar la base)
-    // si eso no lo hace ya otra parte de tu lógica al interactuar con el canvas.
   });
-  chkCurvaContorno.changed(() => {
+  if (chkCurvaContorno) chkCurvaContorno.changed(() => {
     manualCurvaContorno = chkCurvaContorno.checked();
-    // Similarmente, lógica para el contorno si es necesaria
   });
-  chkObstaculos.changed(() => {
+  if (chkObstaculos) chkObstaculos.changed(() => {
     manualObstaculos = chkObstaculos.checked();
-    // Y para los obstáculos
   });
   // --- FIN DE MODIFICACIONES ---
 
   // — Inicializar base y dibujar una vez —
   generarCurvaBase(); // Esto puede ser sobrescrito si el HTML tiene una base SVG preseleccionada
-  // Si usas SVG, asegúrate de que el estado de fileLoaded se maneje primero.
-  // La función `previewShape()` se encarga de esto:
   previewShape(); // Llama a previewShape() para asegurar que la base inicial se dibuje correctamente
   redraw();
 }
