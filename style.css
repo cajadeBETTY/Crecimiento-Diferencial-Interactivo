@@ -4,10 +4,10 @@
 body {
   margin: 0;
   padding: 0;
-  margin-left: 320px; /* espacio para el panel fijo */
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   background: #f9f9f9;
+  overflow: hidden;
 }
 
 #ui {
@@ -24,7 +24,6 @@ body {
   z-index: 100;
 }
 
-/* Navegación vertical de pestañas */
 #tabs {
   display: flex;
   flex-direction: column;
@@ -45,31 +44,32 @@ body {
 .tabBtn:hover { background: rgba(0,0,0,0.05); }
 .tabBtn.active { background: #e0f0ff; font-weight: bold; }
 
-/* Contenido de pestañas */
 .tabContent {
   display: none;
 }
 #base { display: block; }
 
-/* Estilos de fieldset y controles */
 fieldset {
   margin-bottom: 12px;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
-legend { font-weight: bold; margin-bottom: 8px; }
+legend {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
 label, select, input, button {
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
 }
 
-/* Ajustes de subcampo */
 .subcampo {
   margin: 6px 0;
 }
 
-/* Canvas principal */
 canvas {
-  display: block;
+  position: absolute;
+  top: 0;
+  left: 320px;
 }
