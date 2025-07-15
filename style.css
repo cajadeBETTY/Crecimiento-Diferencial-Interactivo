@@ -1,12 +1,17 @@
 /* style.css */
 /* Pega aquí tu CSS actual y estilos de pestañas en formato vertical */
 
-/* Reset básico */
+/* Import Google Font Roboto Mono para un aspecto tecnológico */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+/* Reset básico y fuente */
 body {
   margin: 0;
   padding: 0;
   /* Dejar espacio para el panel vertical */
   margin-left: 320px;
+  font-family: 'Roboto Mono', monospace;
+  background: #f9f9f9;
 }
 
 /* Contenedor del panel de control (#ui) */
@@ -22,6 +27,7 @@ body {
   padding: 10px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  font-family: 'Roboto Mono', monospace;
 }
 
 /* Navegación de pestañas en columna */
@@ -39,6 +45,7 @@ body {
   text-align: left;
   border-bottom: 1px solid #eee;
   transition: background 0.2s;
+  font-family: 'Roboto Mono', monospace;
 }
 .tabBtn:hover {
   background: rgba(0, 0, 0, 0.05);
@@ -54,6 +61,7 @@ body {
 .tabContent {
   display: none;
   padding-bottom: 20px;
+  font-family: 'Roboto Mono', monospace;
 }
 #tabContent1 {
   display: block;
