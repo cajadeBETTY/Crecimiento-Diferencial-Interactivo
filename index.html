@@ -7,119 +7,122 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Panel de Control Vertical con Pestañas -->
+  <!-- Panel fijo lateral izquierdo -->
   <div id="ui">
-    <!-- Navegación Vertical -->
+    <!-- Navegación vertical -->
     <nav id="tabs">
       <button class="tabBtn active" data-target="base">Base de Crecimiento</button>
       <button class="tabBtn" data-target="visual">Visualización</button>
       <button class="tabBtn" data-target="export">Exportar</button>
     </nav>
+    <!-- Contenido pestañas -->
+    <div id="tabContent">
+      <section id="base" class="tabContent">
+        <!-- Base de Crecimiento -->
+        <fieldset>
+          <legend>Base de Crecimiento</legend>
+          <label for="sliderBaseRadius">Radio (mm):</label>
+          <input type="range" id="sliderBaseRadius" min="1" max="200" value="96">
+          <span id="baseRadiusValor">96</span>
+          <button id="btnCircleBase">Círculo Genérico</button>
+          <button id="btnSubirSVGBase">Subir SVG</button>
+        </fieldset>
+        <fieldset>
+          <legend>Vértices</legend>
+          <label for="inputPuntos">N° puntos iniciales:</label>
+          <input type="number" id="inputPuntos" value="50">
+          <label for="inputMinDist">Distancia mínima:</label>
+          <input type="number" id="inputMinDist" value="5">
+          <label for="inputMaxDist">Distancia máxima:</label>
+          <input type="number" id="inputMaxDist" value="5">
+          <label for="inputMaxPoints">Máx. puntos:</label>
+          <input type="number" id="inputMaxPoints" value="1000">
+          <button id="playPauseBtn">▶ Reanudar</button>
+          <button id="restartBtn">🔄 Reiniciar</button>
+        </fieldset>
+        <fieldset>
+          <legend>Limitantes</legend>
+          <label for="sliderContourRadius">Radio (mm):</label>
+          <input type="range" id="sliderContourRadius" min="10" max="200" value="100">
+          <span id="contourRadiusValor">100</span>
+          <button id="btnCircleContour">Círculo Genérico</button>
+          <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
+          <div id="scaleContourContainer" class="subcampo" style="display:none;">
+            <label for="sliderScaleContour">Escalar:</label>
+            <input type="range" id="sliderScaleContour" min="0.1" max="5.0" step="0.01" value="1.00">
+            <span id="contourScaleValor">1.00</span>
+          </div>
+          <label><input type="checkbox" id="toggleLimitantes" checked> Mostrar Limitantes</label>
+        </fieldset>
+        <fieldset>
+          <legend>Obstáculos</legend>
+          <label for="inputNumObstacles">N° de obstáculos:</label>
+          <input type="number" id="inputNumObstacles" value="0">
+          <label for="sliderRadiusObstacle">Radio (mm):</label>
+          <input type="range" id="sliderRadiusObstacle" min="1" max="200" value="50">
+          <span id="obstacleRadiusValor">50</span>
+          <label for="sliderObstacleSeed">Seed:</label>
+          <input type="range" id="sliderObstacleSeed" min="0" max="1000" value="0">
+          <span id="obstacleSeedValor">0</span>
+          <button id="btnCircleObstacle">Círculo Genérico</button>
+          <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+          <label for="sliderScaleObstacles">Escalar:</label>
+          <input type="range" id="sliderScaleObstacles" min="0.1" max="5.0" value="1">
+          <span id="obstacleScaleValor">1.00</span>
+          <label><input type="checkbox" id="toggleObstacles" checked> Mostrar Obstáculos</label>
+        </fieldset>
+      </section>
 
-    <!-- Contenido Pestaña Base de Crecimiento -->
-    <section id="base" class="tabContent">
-      <fieldset>
-        <legend>Base de Crecimiento</legend>
-        <label for="sliderBaseRadius">Radio (mm):</label>
-        <input type="range" id="sliderBaseRadius" min="1" max="200" step="1" value="96">
-        <span id="baseRadiusValor">96</span>
-        <button id="btnCircleBase">Círculo Genérico</button>
-        <button id="btnSubirSVGBase">Subir SVG</button>
-      </fieldset>
-      <fieldset>
-        <legend>Vértices</legend>
-        <label for="inputPuntos">Número de puntos iniciales:</label>
-        <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
-        <label for="inputMinDist">Distancia mínima:</label>
-        <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
-        <label for="inputMaxDist">Distancia máxima:</label>
-        <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
-        <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
-        <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
-        <button id="playPauseBtn">▶ Reanudar</button>
-        <button id="restartBtn">🔄 Reiniciar</button>
-      </fieldset>
-      <fieldset>
-        <legend>Limitantes</legend>
-        <label for="sliderContourRadius">Radio (mm):</label>
-        <input type="range" id="sliderContourRadius" min="10" max="200" step="1" value="100">
-        <span id="contourRadiusValor">100</span>
-        <button id="btnCircleContour">Círculo Genérico</button>
-        <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
-        <div id="scaleContourContainer" style="display:none; margin-top:8px;">
-          <label for="sliderScaleContour">Escalar:</label>
-          <input type="range" id="sliderScaleContour" min="0.1" max="5.0" step="0.01" value="1.00">
-          <span id="contourScaleValor">1.00</span>
-        </div>
-        <label><input type="checkbox" id="toggleLimitantes" checked> Mostrar Limitantes</label>
-      </fieldset>
-      <fieldset>
-        <legend>Obstáculos</legend>
-        <label for="inputNumObstacles">Número de obstáculos:</label>
-        <input type="number" id="inputNumObstacles" min="0" value="0">
-        <label for="sliderRadiusObstacle">Radio (mm):</label>
-        <input type="range" id="sliderRadiusObstacle" min="1" max="200" step="1" value="50">
-        <span id="obstacleRadiusValor">50</span>
-        <label for="sliderObstacleSeed">Seed:</label>
-        <input type="range" id="sliderObstacleSeed" min="0" max="1000" step="1" value="0">
-        <span id="obstacleSeedValor">0</span>
-        <button id="btnCircleObstacle">Círculo Genérico</button>
-        <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
-        <label for="sliderScaleObstacles">Escalar:</label>
-        <input type="range" id="sliderScaleObstacles" min="0.1" max="5.0" step="0.01" value="1">
-        <span id="obstacleScaleValor">1.00</span>
-        <label><input type="checkbox" id="toggleObstacles" checked> Mostrar Obstáculos</label>
-      </fieldset>
-    </section>
+      <section id="visual" class="tabContent" style="display:none;">
+        <!-- Visualización -->
+        <fieldset>
+          <legend>Visualización</legend>
+          <label><input type="checkbox" id="toggleNodosBtn"> Ocultar nodos</label>
+          <label for="tipoVisual">Modo de visualización:</label>
+          <select id="tipoVisual">
+            <option value="poligonal">Poligonal</option>
+            <option value="curva">Curva suave</option>
+          </select>
+          <button id="toggleHistorialBtn">🕘 Ver historial</button>
+          <button id="clearHistorialBtn">🧹 Limpiar historial</button>
+          <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
+          <select id="inputFrecuenciaHistorial">
+            <option value="">–</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend>Experimental</legend>
+        </fieldset>
+      </section>
 
-    <!-- Contenido Pestaña Visualización -->
-    <section id="visual" class="tabContent" style="display:none;">
-      <fieldset>
-        <legend>Visualización</legend>
-        <label><input type="checkbox" id="toggleNodosBtn"> Ocultar nodos</label>
-        <label for="tipoVisual">Modo de visualización:</label>
-        <select id="tipoVisual">
-          <option value="poligonal">Poligonal</option>
-          <option value="curva">Curva suave</option>
-        </select>
-        <button id="toggleHistorialBtn">🕘 Ver historial</button>
-        <button id="clearHistorialBtn">🧹 Limpiar historial</button>
-        <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
-        <select id="inputFrecuenciaHistorial">
-          <option value="">–</option>
-          <option value="1">1</option>
-          <option value="5">5</option>
-          <option value="10">10</option>
-        </select>
-      </fieldset>
-      <fieldset>
-        <legend>Experimental</legend>
-        <!-- controles experimentales -->
-      </fieldset>
-    </section>
-
-    <!-- Contenido Pestaña Exportar -->
-    <section id="export" class="tabContent" style="display:none;">
-      <fieldset>
-        <legend>Exportar</legend>
-        <button id="btnExportPNG">📸 Exportar como PNG</button>
-        <button id="btnExportSVG">🧾 Exportar como SVG</button>
-      </fieldset>
-    </section>
+      <section id="export" class="tabContent" style="display:none;">
+        <!-- Exportar -->
+        <fieldset>
+          <legend>Exportar</legend>
+          <button id="btnExportPNG">📸 Exportar como PNG</button>
+          <button id="btnExportSVG">🧾 Exportar como SVG</button>
+        </fieldset>
+      </section>
+    </div>
   </div>
 
-  <!-- Scripts para pestañas -->
+  <!-- Script pestañas -->
   <script>
-    document.querySelectorAll('.tabBtn').forEach(btn => btn.addEventListener('click', () => {
-      const target = btn.dataset.target;
-      document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tabContent').forEach(c => c.style.display = 'none');
-      btn.classList.add('active');
-      document.getElementById(target).style.display = 'block';
-    }));
+    document.querySelectorAll('#tabs .tabBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#tabs .tabBtn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tabContent').forEach(sec => sec.style.display = 'none');
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).style.display = 'block';
+      });
+    });
   </script>
+
   <!-- p5.js y Sketch -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js" defer></script>
-  <script src="sketch.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
+  <script src="sketch.js"></script>
 </body>
 </html>
