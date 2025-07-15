@@ -1,52 +1,65 @@
 /* style.css */
-/* Pega aquí tu CSS actual */
+/* Pega aquí tu CSS actual y estilos de pestañas en formato vertical */
 
 /* Reset básico */
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  /* Dejar espacio para el panel vertical */
+  margin-left: 320px;
 }
 
-/* Estilos generales de UI */
+/* Contenedor del panel de control (#ui) */
 #ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
   padding: 10px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
-/* Navegación de pestañas */
+/* Navegación de pestañas en columna */
 #tabs {
   display: flex;
-  margin-bottom: 10px;
+  flex-direction: column;
+  margin-bottom: 15px;
 }
 .tabBtn {
   background: none;
   border: none;
-  padding: 8px 12px;
+  padding: 10px;
   cursor: pointer;
   font-size: 14px;
-  border-bottom: 2px solid transparent;
+  text-align: left;
+  border-bottom: 1px solid #eee;
   transition: background 0.2s;
 }
 .tabBtn:hover {
   background: rgba(0, 0, 0, 0.05);
 }
 .tabBtn.active {
-  border-color: #007bff;
+  background: #f0f0f0;
   font-weight: bold;
+  border-left: 3px solid #007bff;
+  margin-left: -3px;
 }
 
 /* Contenido de pestañas */
 .tabContent {
   display: none;
+  padding-bottom: 20px;
 }
-/* Mostrar inicialmente la primera pestaña */
 #tabContent1 {
+  display: block;
+}
+
+/* Asegurar que el lienzo principal ocupe el resto del espacio */
+canvas {
   display: block;
 }
