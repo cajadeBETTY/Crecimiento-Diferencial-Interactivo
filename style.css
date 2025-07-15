@@ -1,108 +1,233 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crecimiento Diferencial</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interfaz de Crecimiento Diferencial 2D en p5.js" />
+  <title>Crecimiento Diferencial 2D</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Favicon PNG de 32×32 -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/cajitaweb.png" />
+  <link rel="shortcut icon" href="assets/cajitaweb.png" type="image/png" />
+
+  <style>
+    /* --------- Modificación Manual --------- */
+    #modManualContainer {
+      width: 100%;
+      margin: 16px 0 8px 0;
+      text-align: center;
+    }
+    #modManualTitulo {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    #modManualToggles {
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+    }
+    .toggleLabel {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      font-size: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggleText {
+      background: #e0e0e0;
+      color: #7a7a7a;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+    }
+    .toggleLabel input[type="checkbox"]:checked + .toggleText {
+      background: #3498db;
+      color: #fff;
+    }
+
+    /* --------- Panel informativo --------- */
+    #infoPanel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: rgba(245,245,245,0.93);
+      color: #222;
+      padding: 18px 30px 16px 26px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      font-size: 1.07em;
+      text-align: right;
+      z-index: 10;
+      min-width: 260px;
+      pointer-events: none;
+      user-select: none;
+    }
+    #infoPanel div {
+      margin-bottom: 2px;
+    }
+  </style>
 </head>
 <body>
-  <!-- Panel de Control Interactivo -->
   <div id="ui">
-    <!-- Navegación de Pestañas -->
-    <div id="tabs">
-      <button class="tabBtn active" data-target="tabContent1">Base de crecimiento</button>
-      <button class="tabBtn" data-target="tabContent2">Visualización</button>
-      <button class="tabBtn" data-target="tabContent3">Exportar</button>
-    </div>
-    <!-- Contenido de Pestañas -->
-    <div id="tabContent1" class="tabContent">
+    <!-- TÍTULO -->
+    <fieldset>
+      <div class="titulo-seccion">CRECIMIENTO DIFERENCIAL</div>
+    </fieldset>
+
+    <!-- BASE DE CRECIMIENTO (con VÉRTICES adentro) -->
+    <fieldset>
+      <legend>Base de Crecimiento</legend>
+      <label for="sliderBaseRadius">Radio (mm):</label>
+      <input type="range" id="sliderBaseRadius" min="1" max="200" step="1" value="96">
+      <span id="baseRadiusValor">96</span>
+
+      <button type="button" id="btnCircleBase">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGBase">Subir SVG</button>
+
+      <!-- VÉRTICES (antes NODOS) -->
       <fieldset>
-        <legend>Base de Crecimiento</legend>
-        <label>Radio (mm): <input type="range" id="radius" min="1" max="200" value="100"></label>
-        <button id="genericCircle">Círculo Genérico</button>
-        <button id="uploadBaseSVG">Subir SVG</button>
-        <!-- Vértices -->
-        <fieldset>
-          <legend>Vértices</legend>
-          <label>Número de puntos iniciales: <input type="number" id="initialPoints" value="50"></label>
-          <label>Distancia mínima: <input type="number" id="minDistance" value="5"></label>
-          <label>Distancia máxima: <input type="number" id="maxDistance" value="5"></label>
-          <label>Máximo de puntos permitidos: <input type="number" id="maxPoints" value="1000"></label>
-          <button id="resume">Reanudar</button>
-          <button id="reset">Reiniciar</button>
-        </fieldset>
-        <!-- Limitantes -->
-        <fieldset>
-          <legend>Limitantes</legend>
-          <label>Radio (mm): <input type="range" id="limitRadius" min="1" max="200" value="100"></label>
-          <button id="genericLimitCircle">Círculo Genérico</button>
-          <button id="uploadLimitSVG">Subir Contorno (SVG)</button>
-          <label><input type="checkbox" id="showLimits" checked> Mostrar Limitantes</label>
-        </fieldset>
-        <!-- Obstáculos -->
-        <fieldset>
-          <legend>Obstáculos</legend>
-          <label>Número de obstáculos: <input type="number" id="obstacleCount" value="0"></label>
-          <label>Radio (mm): <input type="range" id="obstacleRadius" min="1" max="200" value="50"></label>
-          <label>Seed: <input type="range" id="obstacleSeed" min="0" max="1000" value="0"></label>
-          <button id="genericObstacle">Círculo Genérico</button>
-          <button id="uploadObstaclesSVG">Subir Obstáculos (SVG)</button>
-          <label>Escalar: <input type="range" id="obstacleScale" min="0.1" max="5" step="0.1" value="1.0"></label>
-          <label><input type="checkbox" id="showObstacles" checked> Mostrar Obstáculos</label>
-        </fieldset>
+        <legend>Vértices</legend>
+        <label for="inputPuntos">Número de puntos iniciales:</label>
+        <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
+
+        <label for="inputMinDist">Distancia mínima:</label>
+        <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
+
+        <label for="inputMaxDist">Distancia máxima:</label>
+        <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
+
+        <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
+        <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
+
+        <button type="button" id="playPauseBtn">▶ Reanudar</button>
+        <button type="button" id="restartBtn">🔄 Reiniciar</button>
       </fieldset>
-    </div>
-    <div id="tabContent2" class="tabContent">
-      <fieldset>
-        <legend>Visualización</legend>
-        <label><input type="checkbox" id="hideNodes"> Ocultar nodos</label>
-        <label>Modo de visualización:
-          <select id="visualMode">
-            <option value="polygon">Poligonal</option>
-            <option value="lines">Lineal</option>
-            <option value="points">Puntos</option>
-          </select>
-        </label>
-        <button id="viewHistory">Ver historial</button>
-        <button id="clearHistory">Limpiar historial</button>
-        <label>Grabar historial cada N iteraciones:
-          <select id="recordInterval">
-            <option value="">–</option>
-            <option value="1">1</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-          </select>
-        </label>
-      </fieldset>
-      <fieldset>
-        <legend>Experimental</legend>
-        <!-- Tus controles experimentales aquí -->
-      </fieldset>
-    </div>
-    <div id="tabContent3" class="tabContent">
-      <fieldset>
-        <legend>Exportar</legend>
-        <button id="exportPNG">Exportar PNG</button>
-        <button id="exportSVG">Exportar SVG</button>
-      </fieldset>
+    </fieldset>
+
+    <!-- LIMITANTES -->
+    <fieldset>
+      <legend>Limitantes</legend>
+
+      <!-- Contorno genérico -->
+      <div class="subcampo">
+        <label for="sliderContourRadius">Radio (mm):</label>
+        <input type="range" id="sliderContourRadius" min="10" max="200" step="1" value="100">
+        <span id="contourRadiusValor">100</span>
+      </div>
+      <button type="button" id="btnCircleContour">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGContour">Subir Contorno (SVG)</button>
+
+      <!-- Escalar SVG (oculto hasta subir un SVG) -->
+      <div id="scaleContourContainer" class="subcampo" style="display:none;">
+        <label for="sliderScaleContour">Escalar:</label>
+        <input type="range" id="sliderScaleContour" min="0.1" max="5.0" step="0.01" value="1.00">
+        <span id="contourScaleValor">1.00</span>
+      </div>
+
+      <!-- Mostrar / ocultar todo lo de Limitantes -->
+      <div class="subcampo">
+        <label><input type="checkbox" id="toggleLimitantes" checked> Mostrar Limitantes</label>
+      </div>
+    </fieldset>
+
+    <!-- Obstáculos -->
+    <fieldset>
+      <legend>Obstáculos</legend>
+      <label for="inputNumObstacles">Número de obstáculos:</label>
+      <input type="number" id="inputNumObstacles" min="0" value="0">
+
+      <label for="sliderRadiusObstacle">Radio (mm):</label>
+      <input type="range" id="sliderRadiusObstacle" min="1" max="200" step="1" value="50">
+      <span id="obstacleRadiusValor">50</span>
+
+      <label for="sliderObstacleSeed">Seed:</label>
+      <input type="range" id="sliderObstacleSeed" min="0" max="100" step="1" value="0">
+      <span id="obstacleSeedValor">0</span>
+
+      <button type="button" id="btnCircleObstacle">Círculo Genérico</button>
+      <button type="button" id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
+
+      <label for="sliderScaleObstacles">Escalar:</label>
+      <input type="range" id="sliderScaleObstacles" min="0" max="2" step="0.01" value="1">
+      <span id="obstacleScaleValor">1.00</span>
+
+      <label><input type="checkbox" id="toggleObstacles" checked> Mostrar Obstáculos</label>
+    </fieldset>
+
+    <!-- VISUALIZACIÓN -->
+    <fieldset>
+      <div class="titulo-seccion">VISUALIZACIÓN</div>
+      <button type="button" id="toggleNodosBtn">🔘 Ocultar nodos</button>
+
+      <label for="tipoVisual">Modo de visualización:</label>
+      <select id="tipoVisual">
+        <option value="poligonal">Poligonal</option>
+        <option value="curva">Curva suave</option>
+      </select>
+
+      <button type="button" id="toggleHistorialBtn">🕘 Ver historial</button>
+      <button type="button" id="clearHistorialBtn">🧹 Limpiar historial</button>
+
+      <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
+      <select id="inputFrecuenciaHistorial">
+        <!-- opciones -->
+      </select>
+    </fieldset>
+
+    <!-- EXPERIMENTAL -->
+    <fieldset>
+      <div class="titulo-seccion">EXPERIMENTAL</div>
+      <!-- controles experimentales -->
+    </fieldset>
+
+    <!-- EXPORTAR -->
+    <fieldset>
+      <div class="titulo-seccion">EXPORTAR</div>
+      <button type="button" id="btnExportPNG">📸 Exportar como PNG</button>
+      <button type="button" id="btnExportSVG">🧾 Exportar como SVG</button>
+    </fieldset>
+  </div>
+
+  <!-- MODIFICACIÓN MANUAL -->
+  <div id="modManualContainer">
+    <div id="modManualTitulo">Modificación Manual</div>
+    <div id="modManualToggles">
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkCurvaBase">
+        <span class="toggleText" id="txtCurvaBase">CURVA BASE</span>
+      </label>
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkCurvaContorno">
+        <span class="toggleText" id="txtCurvaContorno">CURVA CONTORNO</span>
+      </label>
+      <label class="toggleLabel">
+        <input type="checkbox" id="chkObstaculos">
+        <span class="toggleText" id="txtObstaculos">OBSTÁCULOS</span>
+      </label>
     </div>
   </div>
 
-  <!-- Librerías y Script de Navegación -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
-  <script>
-    const tabButtons = document.querySelectorAll('.tabBtn');
-    const tabContents = document.querySelectorAll('.tabContent');
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(tc => tc.style.display = 'none');
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.target).style.display = 'block';
-      });
-    });
-  </script>
-  <script src="sketch.js"></script>
+  <!-- DATOS DINÁMICOS EN ESQUINA INFERIOR DERECHA -->
+  <div id="infoPanel" aria-live="polite">
+    <div id="infoBaseCrecimiento">Base de Crecimiento: Genérico</div>
+    <div id="infoTipoCurva">Tipo de Curva: Cerrada</div>
+    <div id="infoNumVertices">Número de vértices: 0</div>
+    <div id="infoNumSegmentos">Número de segmentos: 0</div>
+  </div>
+
+  <!-- Librerías p5.js y extensiones SVG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js" defer></script>
+  <script src="https://unpkg.com/p5.js-svg@1.6.0/dist/p5.svg.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@0.1.4/lib/p5.plotSvg.js" defer></script>
+  <script src="sketch.js" defer></script>
+  
 </body>
 </html>
+
+
