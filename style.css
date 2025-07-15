@@ -1,108 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crecimiento Diferencial</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Panel de Control Interactivo -->
+  <!-- Panel de Control Vertical Accordion -->
   <div id="ui">
-    <!-- Navegación de Pestañas -->
-    <div id="tabs">
-      <button class="tabBtn active" data-target="tabContent1">Base de crecimiento</button>
-      <button class="tabBtn" data-target="tabContent2">Visualización</button>
-      <button class="tabBtn" data-target="tabContent3">Exportar</button>
-    </div>
-    <!-- Contenido de Pestañas -->
-    <div id="tabContent1" class="tabContent">
+    <details open>
+      <summary>Base de Crecimiento</summary>
       <fieldset>
-        <legend>Base de Crecimiento</legend>
-        <label>Radio (mm): <input type="range" id="radius" min="1" max="200" value="100"></label>
-        <button id="genericCircle">Círculo Genérico</button>
-        <button id="uploadBaseSVG">Subir SVG</button>
-        <!-- Vértices -->
-        <fieldset>
-          <legend>Vértices</legend>
-          <label>Número de puntos iniciales: <input type="number" id="initialPoints" value="50"></label>
-          <label>Distancia mínima: <input type="number" id="minDistance" value="5"></label>
-          <label>Distancia máxima: <input type="number" id="maxDistance" value="5"></label>
-          <label>Máximo de puntos permitidos: <input type="number" id="maxPoints" value="1000"></label>
-          <button id="resume">Reanudar</button>
-          <button id="reset">Reiniciar</button>
-        </fieldset>
-        <!-- Limitantes -->
-        <fieldset>
-          <legend>Limitantes</legend>
-          <label>Radio (mm): <input type="range" id="limitRadius" min="1" max="200" value="100"></label>
-          <button id="genericLimitCircle">Círculo Genérico</button>
-          <button id="uploadLimitSVG">Subir Contorno (SVG)</button>
-          <label><input type="checkbox" id="showLimits" checked> Mostrar Limitantes</label>
-        </fieldset>
-        <!-- Obstáculos -->
-        <fieldset>
-          <legend>Obstáculos</legend>
-          <label>Número de obstáculos: <input type="number" id="obstacleCount" value="0"></label>
-          <label>Radio (mm): <input type="range" id="obstacleRadius" min="1" max="200" value="50"></label>
-          <label>Seed: <input type="range" id="obstacleSeed" min="0" max="1000" value="0"></label>
-          <button id="genericObstacle">Círculo Genérico</button>
-          <button id="uploadObstaclesSVG">Subir Obstáculos (SVG)</button>
-          <label>Escalar: <input type="range" id="obstacleScale" min="0.1" max="5" step="0.1" value="1.0"></label>
-          <label><input type="checkbox" id="showObstacles" checked> Mostrar Obstáculos</label>
-        </fieldset>
-      </fieldset>
-    </div>
-    <div id="tabContent2" class="tabContent">
-      <fieldset>
-        <legend>Visualización</legend>
-        <label><input type="checkbox" id="hideNodes"> Ocultar nodos</label>
-        <label>Modo de visualización:
-          <select id="visualMode">
-            <option value="polygon">Poligonal</option>
-            <option value="lines">Lineal</option>
-            <option value="points">Puntos</option>
-          </select>
-        </label>
-        <button id="viewHistory">Ver historial</button>
-        <button id="clearHistory">Limpiar historial</button>
-        <label>Grabar historial cada N iteraciones:
-          <select id="recordInterval">
-            <option value="">–</option>
-            <option value="1">1</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-          </select>
-        </label>
+        <label>Radio (mm): <input type="range" id="sliderBaseRadius"></label>
+        <span id="baseRadiusValor"></span>
+        <button id="btnCircleBase">Círculo Genérico</button>
+        <button id="btnSubirSVGBase">Subir SVG</button>
       </fieldset>
       <fieldset>
-        <legend>Experimental</legend>
-        <!-- Tus controles experimentales aquí -->
+        <legend>Vértices</legend>
+        <label>Puntos iniciales: <input type="number" id="inputPuntos"></label>
+        <label>Distancia mínima: <input type="number" id="inputMinDist"></label>
+        <label>Distancia máxima: <input type="number" id="inputMaxDist"></label>
+        <label>Máx. puntos: <input type="number" id="inputMaxPoints"></label>
+        <button id="playPauseBtn">▶ Reanudar</button>
+        <button id="restartBtn">🔄 Reiniciar</button>
       </fieldset>
-    </div>
-    <div id="tabContent3" class="tabContent">
+    </details>
+
+    <details>
+      <summary>Visualización</summary>
       <fieldset>
-        <legend>Exportar</legend>
-        <button id="exportPNG">Exportar PNG</button>
-        <button id="exportSVG">Exportar SVG</button>
+        <label><input type="checkbox" id="toggleNodosBtn"> Ocultar nodos</label>
+        <label>Modo: <select id="tipoVisual"></select></label>
+        <button id="toggleHistorialBtn">Ver historial</button>
+        <button id="clearHistorialBtn">Limpiar historial</button>
+        <label>Grabar cada: <select id="inputFrecuenciaHistorial"></select> iteraciones</label>
       </fieldset>
-    </div>
+    </details>
+
+    <details>
+      <summary>Exportar</summary>
+      <button id="btnExportPNG">📸 Exportar PNG</button>
+      <button id="btnExportSVG">🧾 Exportar SVG</button>
+    </details>
   </div>
 
-  <!-- Librerías y Script de Navegación -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
-  <script>
-    const tabButtons = document.querySelectorAll('.tabBtn');
-    const tabContents = document.querySelectorAll('.tabContent');
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(tc => tc.style.display = 'none');
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.target).style.display = 'block';
-      });
-    });
-  </script>
   <script src="sketch.js"></script>
 </body>
 </html>
