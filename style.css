@@ -46,6 +46,7 @@ body {
 .tabContent {
   display: none;
 }
-.tabContent:first-of-type {
+/* Mostrar inicialmente la primera pestaña */
+#tabContent1 {
   display: block;
 }
