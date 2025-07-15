@@ -1,129 +1,75 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crecimiento Diferencial</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- Panel de Control Fijo Lateral Izquierdo -->
-  <div id="ui">
-    <!-- Navegación Vertical de Pestañas -->
-    <nav id="tabs">
-      <button class="tabBtn active" data-target="base">Base de Crecimiento</button>
-      <button class="tabBtn" data-target="visual">Visualización</button>
-      <button class="tabBtn" data-target="export">Exportar</button>
-    </nav>
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
-    <!-- Contenido de las Pestañas -->
-    <div id="tabContent">
-      <!-- Pestaña Base de Crecimiento -->
-      <section id="base" class="tabContent">
-        <fieldset>
-          <legend>Base de Crecimiento</legend>
-          <label for="sliderBaseRadius">Radio (mm):</label>
-          <input type="range" id="sliderBaseRadius" min="1" max="200" step="1" value="96">
-          <span id="baseRadiusValor">96</span>
-          <button id="btnCircleBase">Círculo Genérico</button>
-          <button id="btnSubirSVGBase">Subir SVG</button>
-        </fieldset>
-        <fieldset>
-          <legend>Vértices</legend>
-          <label for="inputPuntos">Número de puntos iniciales:</label>
-          <input type="number" id="inputPuntos" min="3" max="500" step="1" value="50">
-          <label for="inputMinDist">Distancia mínima:</label>
-          <input type="number" id="inputMinDist" min="0" step="0.1" value="5">
-          <label for="inputMaxDist">Distancia máxima:</label>
-          <input type="number" id="inputMaxDist" min="0" step="0.1" value="5">
-          <label for="inputMaxPoints">Máximo de puntos permitidos:</label>
-          <input type="number" id="inputMaxPoints" min="1" max="10000" step="1" value="1000">
-          <button id="playPauseBtn">▶ Reanudar</button>
-          <button id="restartBtn">🔄 Reiniciar</button>
-        </fieldset>
-        <fieldset>
-          <legend>Limitantes</legend>
-          <label for="sliderContourRadius">Radio (mm):</label>
-          <input type="range" id="sliderContourRadius" min="10" max="200" step="1" value="100">
-          <span id="contourRadiusValor">100</span>
-          <button id="btnCircleContour">Círculo Genérico</button>
-          <button id="btnSubirSVGContour">Subir Contorno (SVG)</button>
-          <div id="scaleContourContainer" style="display:none; margin-top:8px;">
-            <label for="sliderScaleContour">Escalar:</label>
-            <input type="range" id="sliderScaleContour" min="0.1" max="5.0" step="0.01" value="1.00">
-            <span id="contourScaleValor">1.00</span>
-          </div>
-          <label style="margin-top:8px;"><input type="checkbox" id="toggleLimitantes" checked> Mostrar Limitantes</label>
-        </fieldset>
-        <fieldset>
-          <legend>Obstáculos</legend>
-          <label for="inputNumObstacles">Número de obstáculos:</label>
-          <input type="number" id="inputNumObstacles" min="0" value="0">
-          <label for="sliderRadiusObstacle">Radio (mm):</label>
-          <input type="range" id="sliderRadiusObstacle" min="1" max="200" step="1" value="50">
-          <span id="obstacleRadiusValor">50</span>
-          <label for="sliderObstacleSeed">Seed:</label>
-          <input type="range" id="sliderObstacleSeed" min="0" max="1000" step="1" value="0">
-          <span id="obstacleSeedValor">0</span>
-          <button id="btnCircleObstacle">Círculo Genérico</button>
-          <button id="btnSubirSVGObstacles">Subir Obstáculos (SVG)</button>
-          <label for="sliderScaleObstacles">Escalar:</label>
-          <input type="range" id="sliderScaleObstacles" min="0.1" max="5.0" step="0.01" value="1">
-          <span id="obstacleScaleValor">1.00</span>
-          <label style="margin-top:8px;"><input type="checkbox" id="toggleObstacles" checked> Mostrar Obstáculos</label>
-        </fieldset>
-      </section>
+body {
+  margin: 0;
+  padding: 0;
+  margin-left: 320px; /* espacio para el panel fijo */
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  background: #f9f9f9;
+}
 
-      <!-- Pestaña Visualización -->
-      <section id="visual" class="tabContent" style="display:none;">
-        <fieldset>
-          <legend>Visualización</legend>
-          <label><input type="checkbox" id="toggleNodosBtn"> Ocultar nodos</label>
-          <label for="tipoVisual">Modo de visualización:</label>
-          <select id="tipoVisual">
-            <option value="poligonal">Poligonal</option>
-            <option value="curva">Curva suave</option>
-          </select>
-          <button id="toggleHistorialBtn">🕘 Ver historial</button>
-          <button id="clearHistorialBtn">🧹 Limpiar historial</button>
-          <label for="inputFrecuenciaHistorial">Grabar historial cada N iteraciones:</label>
-          <select id="inputFrecuenciaHistorial">
-            <option value="">–</option>
-            <option value="1">1</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-          </select>
-        </fieldset>
-        <fieldset>
-          <legend>Experimental</legend>
-          <!-- Controles experimentales -->
-        </fieldset>
-      </section>
+#ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 100vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 16px;
+  box-sizing: border-box;
+  z-index: 100;
+}
 
-      <!-- Pestaña Exportar -->
-      <section id="export" class="tabContent" style="display:none;">
-        <fieldset>
-          <legend>Exportar</legend>
-          <button id="btnExportPNG">📸 Exportar como PNG</button>
-          <button id="btnExportSVG">🧾 Exportar como SVG</button>
-        </fieldset>
-      </section>
-    </div>
-  </div>
+/* Navegación vertical de pestañas */
+#tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
 
-  <!-- Script de Navegación de Pestañas -->
-  <script>
-    const tabs = document.querySelectorAll('#tabs .tabBtn');
-    tabs.forEach(btn => btn.addEventListener('click', () => {
-      tabs.forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tabContent').forEach(sec => sec.style.display = 'none');
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.target).style.display = 'block';
-    }));
-  </script>
+.tabBtn {
+  background: none;
+  border: none;
+  padding: 8px;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.tabBtn:hover { background: rgba(0,0,0,0.05); }
+.tabBtn.active { background: #e0f0ff; font-weight: bold; }
 
-  <!-- p5.js y Sketch -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
-  <script src="sketch.js"></script>
-</body>
-</html>
+/* Contenido de pestañas */
+.tabContent {
+  display: none;
+}
+#base { display: block; }
+
+/* Estilos de fieldset y controles */
+fieldset {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+legend { font-weight: bold; margin-bottom: 8px; }
+label, select, input, button {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+}
+
+/* Ajustes de subcampo */
+.subcampo {
+  margin: 6px 0;
+}
+
+/* Canvas principal */
+canvas {
+  display: block;
+}
