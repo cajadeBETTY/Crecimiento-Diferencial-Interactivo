@@ -1,52 +1,68 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crecimiento Diferencial</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- Panel de Control Vertical Accordion -->
-  <div id="ui">
-    <details open>
-      <summary>Base de Crecimiento</summary>
-      <fieldset>
-        <label>Radio (mm): <input type="range" id="sliderBaseRadius"></label>
-        <span id="baseRadiusValor"></span>
-        <button id="btnCircleBase">Círculo Genérico</button>
-        <button id="btnSubirSVGBase">Subir SVG</button>
-      </fieldset>
-      <fieldset>
-        <legend>Vértices</legend>
-        <label>Puntos iniciales: <input type="number" id="inputPuntos"></label>
-        <label>Distancia mínima: <input type="number" id="inputMinDist"></label>
-        <label>Distancia máxima: <input type="number" id="inputMaxDist"></label>
-        <label>Máx. puntos: <input type="number" id="inputMaxPoints"></label>
-        <button id="playPauseBtn">▶ Reanudar</button>
-        <button id="restartBtn">🔄 Reiniciar</button>
-      </fieldset>
-    </details>
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
-    <details>
-      <summary>Visualización</summary>
-      <fieldset>
-        <label><input type="checkbox" id="toggleNodosBtn"> Ocultar nodos</label>
-        <label>Modo: <select id="tipoVisual"></select></label>
-        <button id="toggleHistorialBtn">Ver historial</button>
-        <button id="clearHistorialBtn">Limpiar historial</button>
-        <label>Grabar cada: <select id="inputFrecuenciaHistorial"></select> iteraciones</label>
-      </fieldset>
-    </details>
+body {
+  margin: 0;
+  padding: 0;
+  margin-left: 320px; /* espacio para el panel fijo */
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  background: #f9f9f9;
+}
 
-    <details>
-      <summary>Exportar</summary>
-      <button id="btnExportPNG">📸 Exportar PNG</button>
-      <button id="btnExportSVG">🧾 Exportar SVG</button>
-    </details>
-  </div>
+#ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 100vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 16px;
+  box-sizing: border-box;
+  z-index: 100;
+}
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
-  <script src="sketch.js"></script>
-</body>
-</html>
+/* Navegación vertical de pestañas */
+#tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  padding: 8px;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.tabBtn:hover { background: rgba(0,0,0,0.05); }
+.tabBtn.active { background: #e0f0ff; font-weight: bold; }
+
+/* Contenido de pestañas */
+.tabContent {
+  display: none;
+}
+#base { display: block; }
+
+/* Estilos de fieldset y controles */
+fieldset {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+legend { font-weight: bold; margin-bottom: 8px; }
+label, select, input, button {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+}
+
+/* Canvas principal */
+canvas { display: block; }
