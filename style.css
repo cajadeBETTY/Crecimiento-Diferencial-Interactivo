@@ -1,94 +1,62 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crecimiento Diferencial</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <!-- Panel de Control Interactivo -->
-  <div id="ui">
-    <!-- Navegación de Pestañas -->
-    <div id="tabs">
-      <button class="tabBtn active" data-target="tabContent1">Base de Crecimiento</button>
-      <button class="tabBtn" data-target="tabContent2">Visualización</button>
-      <button class="tabBtn" data-target="tabContent3">Exportar</button>
-    </div>
-    <!-- Contenido de Pestañas -->
-    <div id="tabContent1" class="tabContent">
-      <fieldset>
-        <legend>Base de Crecimiento</legend>
-        <label>Radio (mm): <input type="range" id="radius" min="1" max="200" value="100"></label>
-        <button id="genericCircle">Círculo Genérico</button>
-        <button id="uploadBaseSVG">Subir SVG</button>
-        <!-- Vértices -->
-        <fieldset>
-          <legend>Vértices</legend>
-          <label>Número de puntos iniciales: <input type="number" id="initialPoints" value="50"></label>
-          <label>Distancia mínima: <input type="number" id="minDistance" value="5"></label>
-          <label>Distancia máxima: <input type="number" id="maxDistance" value="5"></label>
-          <label>Máximo de puntos permitidos: <input type="number" id="maxPoints" value="1000"></label>
-          <button id="resume">Reanudar</button>
-          <button id="reset">Reiniciar</button>
-        </fieldset>
-      </fieldset>
-      <fieldset>
-        <legend>Limitantes</legend>
-        <label>Radio (mm): <input type="range" id="limitRadius" min="1" max="200" value="100"></label>
-        <button id="genericLimitCircle">Círculo Genérico</button>
-        <button id="uploadLimitSVG">Subir Contorno (SVG)</button>
-        <label><input type="checkbox" id="showLimits" checked> Mostrar Limitantes</label>
-      </fieldset>
-      <fieldset>
-        <legend>Obstáculos</legend>
-        <label>Número de obstáculos: <input type="number" id="obstacleCount" value="0"></label>
-        <label>Radio (mm): <input type="range" id="obstacleRadius" min="1" max="200" value="50"></label>
-        <label>Seed: <input type="range" id="obstacleSeed" min="0" max="1000" value="0"></label>
-        <button id="genericObstacle">Círculo Genérico</button>
-        <button id="uploadObstaclesSVG">Subir Obstáculos (SVG)</button>
-        <label>Escalar: <input type="range" id="obstacleScale" min="0.1" max="5" step="0.1" value="1.0"></label>
-        <label><input type="checkbox" id="showObstacles" checked> Mostrar Obstáculos</label>
-      </fieldset>
-    </div>
-    <div id="tabContent2" class="tabContent">
-      <fieldset>
-        <legend>Visualización</legend>
-        <label><input type="checkbox" id="hideNodes"> Ocultar nodos</label>
-        <label>Modo de visualización:
-          <select id="visualMode">
-            <option value="polygon">Poligonal</option>
-            <option value="lines">Lineal</option>
-            <option value="points">Puntos</option>
-          </select>
-        </label>
-        <button id="viewHistory">Ver historial</button>
-        <button id="clearHistory">Limpiar historial</button>
-        <label>Grabar historial cada N iteraciones:
-          <select id="recordInterval">
-            <option value="">–</option>
-            <option value="1">1</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-          </select>
-        </label>
-      </fieldset>
-      <fieldset>
-        <legend>Experimental</legend>
-        <!-- Controles experimentales -->
-      </fieldset>
-    </div>
-    <div id="tabContent3" class="tabContent">
-      <fieldset>
-        <legend>Exportar</legend>
-        <button id="exportPNG">Exportar como PNG</button>
-        <button id="exportSVG">Exportar como SVG</button>
-      </fieldset>
-    </div>
-  </div>
+/* style.css */
+/* Fuente tecnológica y panel fijo */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
-  <!-- Librerías y Script Principal -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
-  <script src="sketch.js"></script>
-</body>
-</html>
+body {
+  margin: 0;
+  padding: 0;
+  margin-left: 300px;         /* Deja espacio para el panel */
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  background: #f9f9f9;
+}
+
+#ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#tabs {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tabBtn:hover { background: rgba(0,0,0,0.05); }
+
+.tabBtn.active {
+  background: #f0f0f0;
+  font-weight: bold;
+  border-left: 3px solid #007bff;
+  margin-left: -3px;
+}
+
+.tabContent {
+  display: none;
+  margin-bottom: 10px;
+}
+
+#tabContent1 { display: block; }  /* Mostrar la primera pestaña al inicio */
+
+canvas {
+  display: block;  /* Asegura que el lienzo ocupe todo el espacio restante */
+}
